@@ -13,6 +13,7 @@ and controls both devices/measurement equipment in an alternating fashion to ach
 
 ## Installation
 
+``ToDo``
 OS X & Linux:
 
 ```sh
@@ -27,12 +28,14 @@ edit autoexec.bat
 
 ## Usage example
 
+``ToDo``
 A few motivating and useful examples of how your product can be used. Spice this up with code blocks and potentially more screenshots.
 
 _For more examples and usage, please refer to the [Wiki][wiki]._
 
 ## Development setup
 
+``ToDo``
 Describe how to install all development dependencies and how to run an automated test-suite of some kind. Potentially do this for multiple platforms.
 
 ```sh
@@ -42,18 +45,13 @@ npm test
 
 ## Release History
 
-* 0.2.1
-    * CHANGE: Update docs (module code remains unchanged)
-* 0.2.0
-    * CHANGE: Remove `setDefaultXYZ()`
-    * ADD: Add `init()`
-* 0.1.1
-    * FIX: Crash when calling `baz()` (Thanks @GenerousContributorName!)
-* 0.1.0
-    * The first proper release
-    * CHANGE: Rename `foo()` to `bar()`
+* 0.0.2
+    * ADD: Filestructure!
+    * FIX: nothing so far
+    * CHANGE: adaptations to readme file with personal data
+    * started file structure based on recommendations on [RealPython](https://realpython.com/python-application-layouts/#application-with-internal-packages)
 * 0.0.1
-    * Work in progress
+    * Initialization with templates for .gitignore file and readme
 
 ## Meta
 
@@ -61,15 +59,11 @@ Nils Bade – n.bade@tuhh.de
 
 Distributed under the GPL-3.0 license. See ``LICENSE`` for more information.
 
-[https://github.com/yourname/github-link](https://github.com/dbader/)
+[https://github.com/NilsBade](https://github.com/NilsBade)
 
 ## Contributing
 
-1. Fork it (<https://github.com/yourname/yourproject/fork>)
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -am 'Add some fooBar'`)
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Create a new Pull Request
+1. Only desired in cooperation with E3 institute of TUHH
 
 <!-- Markdown link & img dfn's -->
 [npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
