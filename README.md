@@ -1,10 +1,6 @@
 # PythonChamberApp
 > Python based app that automates measurement processes for the E3 institute at TUHH.
 
-[![NPM Version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Downloads Stats][npm-downloads]][npm-url]
-
 The app connects to the measurement chamber and a vector network analyzer (VNA) that are located in the same network as the app's host via http protocol.
 Given the IP addresses and API-commands of the chamber and the VNA, the app takes inputs about the desired near-field-scan (mesh, boundaries, ..) through an UI
 and controls both devices/measurement equipment in an alternating fashion to achieve an automated measurement process for a defined volume.
@@ -66,9 +62,6 @@ Distributed under the GPL-3.0 license. See ``LICENSE`` for more information.
 1. Only desired in cooperation with E3 institute of TUHH
 
 <!-- Markdown link & img dfn's -->
-[npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/datadog-metrics
-[npm-downloads]: https://img.shields.io/npm/dm/datadog-metrics.svg?style=flat-square
 [travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
 [travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
 [wiki]: https://github.com/yourname/yourproject/wiki
