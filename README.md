@@ -13,7 +13,7 @@ This section gives you an overview of the modules that are defined, what their p
 > [!NOTE]
 > The file structure is work in progress and  must be maintained manually!
 
-``
+```
 PythonChamberApp/
 │
 │
@@ -59,8 +59,8 @@ PythonChamberApp/
 │       └── world.py
 │
 ├── data/
-│   ├── input.csv
-│   └── output.xlsx
+│   ├── figures?
+│   └── logos?
 │
 ├── tests/
 │   ├── hello
@@ -77,13 +77,28 @@ PythonChamberApp/
 ├── .gitignore
 ├── LICENSE
 └── README.md
-``
+```
 
 ![](figures/SoftwareStructure.svg)
 
 ## Installation
+To run the PythonChamberApp the following steps are necessary:
 
-``ToDo``
+0. Clone this repository in a desired directory
+1. Install Python 3.11.9 if not already available
+2. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
+3. Install necessary modules for UI and network communication from terminal.
+    **PyQT6**
+    ```
+    python -m pip install PyQt6
+    ```
+    **requests**
+    ```
+    python -m pip install requests
+    ```
+4. Run PythonChamberApp from python console [?] ``ToDo``
+    
+<!-- 
 OS X & Linux:
 
 ```sh
@@ -94,7 +109,8 @@ Windows:
 
 ```sh
 edit autoexec.bat
-```
+``` 
+-->
 
 ## Usage example
 
