@@ -125,8 +125,13 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
+    # def update_statusbar(self, status_string):
+    #     self.setStatusTip(self, status_string)
+    #     return
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
+    # main_window.update_statusbar("updated!")
     sys.exit(app.exec())
