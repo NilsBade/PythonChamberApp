@@ -88,6 +88,7 @@ To run the PythonChamberApp the following steps are necessary:
 1. Install Python 3.11.9 if not already available
 2. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
 3. Install necessary modules for UI and network communication from terminal.
+
     **PyQT6**
     ```
     python -m pip install PyQt6
@@ -97,20 +98,6 @@ To run the PythonChamberApp the following steps are necessary:
     python -m pip install requests
     ```
 4. Run PythonChamberApp from python console [?] ``ToDo``
-    
-<!-- 
-OS X & Linux:
-
-```sh
-npm install my-crazy-module --save
-```
-
-Windows:
-
-```sh
-edit autoexec.bat
-``` 
--->
 
 ## Usage example
 
