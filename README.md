@@ -5,7 +5,7 @@ The app connects to the measurement chamber and a vector network analyzer (VNA) 
 Given the IP addresses and API-commands of the chamber and the VNA, the app takes inputs about the desired near-field-scan (mesh, boundaries, ..) through an UI
 and controls both devices/measurement equipment in an alternating fashion to achieve an automated measurement process for a defined volume.
 
-![](figures/header.svg)
+![](figures/header.png)
 
 ## File structure
 The app is structured in a modular fashion to achieve extendability and maintainability.
@@ -79,7 +79,7 @@ PythonChamberApp/
 └── README.md
 ```
 
-![](figures/SoftwareStructure.svg)
+![](figures/SoftwareStructure.png)
 
 ## Installation
 To run the PythonChamberApp the following steps are necessary:
@@ -90,11 +90,11 @@ To run the PythonChamberApp the following steps are necessary:
 3. Install necessary modules for UI and network communication from terminal.
 
     **PyQT6**
-    ```
+    ```sh
     python -m pip install PyQt6
     ```
     **requests**
-    ```
+    ```sh
     python -m pip install requests
     ```
 4. Run PythonChamberApp from python console [?] ``ToDo``
