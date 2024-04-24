@@ -63,11 +63,11 @@ PythonChamberApp/
 │   └── logos?
 │
 ├── tests/
-│   ├── hello
+│   ├── integration/
 │   │   ├── helpers_tests.py
 │   │   └── hello_tests.py
 │   │
-│   └── world/
+│   └── unit/
 │       ├── helpers_tests.py
 │       └── world_tests.py
 │
