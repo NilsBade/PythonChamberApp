@@ -97,11 +97,11 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install requests
     ```
-    > [!NOTE]
-    > If you plan to develop new features for the app, also install **pytest** to support unit test functionality
-    >   ```sh
-    >   python -m pip install pytest
-    >   ```
+> [!NOTE]
+> If you plan to develop new features for the app, also install **pytest** to support unit test functionality
+>   ```sh
+>   python -m pip install pytest
+>   ```
     
 5. Run PythonChamberApp from python console [?] ``ToDo``
 
