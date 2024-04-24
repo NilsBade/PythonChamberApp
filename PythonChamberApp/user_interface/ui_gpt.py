@@ -1,4 +1,5 @@
 import sys
+import tkinter
 from idlelib import statusbar
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox, QFrame, QStatusBar
@@ -66,6 +67,9 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Connection Settings")
         self.setGeometry(100, 100, 800, 400)  # Set window dimensions
+
+        self.ip_nwa_str_var = tkinter.StringVar(value="0.0.0.0.0")
+
 
         # Main Layout
         main_layout = QVBoxLayout()
