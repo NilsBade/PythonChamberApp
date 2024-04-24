@@ -84,10 +84,10 @@ PythonChamberApp/
 ## Installation
 To run the PythonChamberApp the following steps are necessary:
 
-0. Clone this repository in a desired directory
-1. Install Python 3.11.9 if not already available
-2. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
-3. Install necessary modules for UI and network communication from terminal.
+1. Clone this repository in a desired directory
+2. Install Python 3.11.9 if not already available
+3. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
+4. Install necessary modules for UI and network communication from terminal.
 
     **PyQt6**
     ```sh
@@ -97,7 +97,13 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install requests
     ```
-4. Run PythonChamberApp from python console [?] ``ToDo``
+    > [!NOTE]
+    > If you plan to develop new features for the app, also install **pytest** to support unit test functionality
+    >   ```sh
+    >   python -m pip install pytest
+    >   ```
+    
+5. Run PythonChamberApp from python console [?] ``ToDo``
 
 ## Usage example
 
