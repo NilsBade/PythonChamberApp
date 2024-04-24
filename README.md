@@ -89,7 +89,7 @@ To run the PythonChamberApp the following steps are necessary:
 2. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
 3. Install necessary modules for UI and network communication from terminal.
 
-    **PyQT6**
+    **PyQt6**
     ```sh
     python -m pip install PyQt6
     ```
