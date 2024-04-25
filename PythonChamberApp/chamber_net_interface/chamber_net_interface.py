@@ -34,8 +34,11 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
 
     def chamber_connect(self):
-        """Initiates Octoprint serial connection to chamber (printer).
-        Returns dict of ['status_code' : str , 'content' : str] from server response"""
+        """
+        Initiates Octoprint serial connection to chamber (printer).
+
+        Returns dict of ['status_code' : str , 'content' : str] from server response
+        """
         url = super().get_ip_address() + '/api/connection'
         payload = {
             "command": "connect"
@@ -47,8 +50,11 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
 
     def chamber_disconnect(self):
-        """Requests Octoprint to disconnect serial port to chamber (printer).
-        Returns dict of ['status_code' : str , 'content' : str] from server response"""
+        """
+        Requests Octoprint to disconnect serial port to chamber (printer).
+
+        Returns dict of ['status_code' : str , 'content' : str] from server response
+        """
         url = super().get_ip_address() + '/api/connection'
         payload = {
             "command": "disconnect"
@@ -59,14 +65,20 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             'content': response.content
         }
 
-    def chamber_jog_rel(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
-        url = super().get_ip_address() + 'api/printer/printhead'
+    def chamber_jog_rel(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 30.0):
+        """
+        Takes relative coordinates x,y,z in [mm] and moves with given speed [mm/min]
+
+        Returns dict of ['status_code' : str , 'content' : str] from server response
+        """
+        url = super().get_ip_address() + '/api/printer/printhead'
         payload = {
             "command": "jog",
             "x": x,
             "y": y,
             "z": z,
-            "absolute": False
+            "absolute": False,
+            "speed": speed
         }
         response = requests.post(url, headers=self.header_tjson, json=payload)
         return {
