@@ -1,9 +1,18 @@
 """
 In this file the core chamber-class is defined. It is derived from network device class
 and implements all high level commands necessary to control the measurement process.
+
+Server response status codes:
+200 -   Ok
+204 -   No Content (no error)
+400 -   Server did not understand message
+403 -   Server denied access
+409 -   Conflict
 """
 
 import PythonChamberApp.connection_handler as connection_handler
+import json
+import requests
 
 
 class ChamberNetworkCommands(connection_handler.NetworkDevice):
