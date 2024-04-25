@@ -24,7 +24,6 @@ class NetworkDevice:
     def set_api_key(self, new_key: str = None):
         if isinstance(new_key, str):
             self.api_key = new_key
-            self.set_ip_address()
             print("api set successfully!")
         else:
             print("please input api as string")
