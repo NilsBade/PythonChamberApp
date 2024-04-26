@@ -31,11 +31,18 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     gcode_reset_flag = 'M104 T0 S0'     # used to mark when (jog) cmd completed
 
     def __init__(self, ip_address: str = None, api_key: str = None):
-        """stores ip address of chamber and initializes private standard headers and addresses"""
+        """
+        Stores ip address of chamber and initializes private standard headers and addresses.
+        Also, directly requests the chamber to connect to driver board via serial
+        when initialized.
+
+        :param ip_address:  ip address of chamber in local network. e.g. '134.28.25.201'
+        :param api_key:     octoprint's application specific api key (self-generated) to register http requests
+        """
         super().set_ip_address('http://' + ip_address)
         super().set_api_key(api_key)
 
-        # headers
+        # initialize headers
         self.header_api = {
             'X-Api-Key': super().get_api_key()
         }
@@ -44,12 +51,15 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             'Content-Type': 'application/json'
         }
 
-        # api addresses
+        # initialize api addresses
         self.api_connection_endpoint = super().get_ip_address() + '/api/connection'
         self.api_printhead_endpoint = super().get_ip_address() + '/api/printer/printhead'
         self.api_system_cmd_endpoint = super().get_ip_address() + '/api/system/commands'
         self.api_printer_cmd_endpoint = super().get_ip_address() + '/api/printer/command'
         self.api_printer_tool_endpoint = super().get_ip_address() + '/api/printer/tool'
+
+        # connect to driver board
+        self.chamber_connect_serial()
 
     def chamber_connect_serial(self):
         """
