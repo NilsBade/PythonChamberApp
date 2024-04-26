@@ -1,5 +1,4 @@
 import sys
-import tkinter
 from idlelib import statusbar
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox, QFrame, QStatusBar
@@ -65,11 +64,8 @@ class ConnectionWidget(QWidget):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Connection Settings")
+        self.setWindowTitle("UI GPT V1")
         self.setGeometry(100, 100, 800, 400)  # Set window dimensions
-
-        self.ip_nwa_str_var = tkinter.StringVar(value="0.0.0.0.0")
-
 
         # Main Layout
         main_layout = QVBoxLayout()
@@ -122,20 +118,21 @@ class MainWindow(QWidget):
         main_layout.addWidget(center_widget)
 
         # Status Bar
-        status_bar = QStatusBar()
-        status_bar.showMessage("Hier steht der Programmstatus (Platzhalter) - Ready")
-        status_bar.setFixedHeight(20)
-        main_layout.addWidget(status_bar)
+        self.main_status_bar = QStatusBar()
+        self.main_status_bar.showMessage("Hier steht der Programmstatus (Platzhalter) - Ready")
+        self.main_status_bar.setFixedHeight(20)
+        main_layout.addWidget(self.main_status_bar)
 
         self.setLayout(main_layout)
 
-    # def update_statusbar(self, status_string):
-    #     self.setStatusTip(self, status_string)
-    #     return
+    def update_main_status(self, status_string):
+        self.main_status_bar.showMessage(status_string)
+        return True
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
-    # main_window.update_statusbar("updated!")
+    main_window.update_main_status("Hier ist der neue status!")
     sys.exit(app.exec())
