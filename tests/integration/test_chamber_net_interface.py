@@ -38,10 +38,9 @@ def test_chamber_serial_con_discon(chamber_ip_address, chamber_api_key):
 def test_chamber_jog_rel(chamber_ip_address, chamber_api_key):
     chamber = chamber_cmd.ChamberNetworkCommands(ip_address=chamber_ip_address, api_key=chamber_api_key)
     chamber.chamber_connect_serial()
-    response_jog = chamber.chamber_jog_rel(x=0, y=0, z=0, speed=10)
-    # print(response_jog['status_code'])
+    response_jog = chamber.chamber_jog_rel(x=10, y=0, z=0, speed=10)
     assert response_jog['status_code'] == 204, f"attempt to connect returned status code: {str(response_jog['status_code'])}, 204 expected"
-    chamber.chamber_disconnect_serial()
+    # chamber.chamber_disconnect_serial()
     return
 
 def test_chamber_level_bed(chamber_ip_address, chamber_api_key):
