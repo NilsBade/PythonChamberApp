@@ -117,12 +117,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     def chamber_home(self, axis: str = ''):
         """
         Receives axis to home as string. Independent of upper or lower case.
-
-        [**WARNING**]
-
-        Default home procedure of all axis places head in middle of the bed!
-        If the bed is modified in some way (holes etc.), better use
-        chamber_safe_home to account for a valid sensor-position while homing z.
+        printer.cfg [safe_z_home] should make sure that head is in right position when probing for z-axis.
 
         :param axis: arbitrary string containing x/X, y/Y, z/Z. e.g. axis = 'xyz' or 'xy' or 'Zyx' ...
         :return: dict {'status code' : str, 'content' : str} of server response
@@ -153,19 +148,6 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             "axes": list
         }
         response = requests.post(self.api_printhead_endpoint, headers=self.header_tjson, json=payload)
-        return {'status_code': response.status_code, 'content': response.content}
-
-    def chamber_safe_home(self):
-        """
-        Homes all axis in safe mode by first homing XY axis and then placing the head in a preconfigured
-        spot declared in the printer.cfg file, that makes sure the Z-sensor (BL-Touch) is not placed
-        above a screwing hole or similar.
-        :return: dict {'status code' : str, 'content' : str} of server response
-        """
-        gcode_cmd = {
-            "command": ""
-        }
-        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=gcode_cmd)
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_system_restart(self):
