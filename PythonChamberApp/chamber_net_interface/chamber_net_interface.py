@@ -13,6 +13,7 @@ Server response status codes:
 import PythonChamberApp.connection_handler as connection_handler
 import json
 import requests
+import time
 
 
 class ChamberNetworkCommands(connection_handler.NetworkDevice):
@@ -24,6 +25,10 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     api_connection_endpoint: str = None
     api_system_cmd_endpoint: str = None
     api_printer_cmd_endpoint: str = None
+    api_printer_tool_endpoint: str = None
+
+    gcode_set_flag = 'M104 T0 S1'       # used to mark when (jog) cmd started
+    gcode_reset_flag = 'M104 T0 S0'     # used to mark when (jog) cmd completed
 
     def __init__(self, ip_address: str = None, api_key: str = None):
         """stores ip address of chamber and initializes private standard headers and addresses"""
@@ -43,8 +48,10 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         self.api_connection_endpoint = super().get_ip_address() + '/api/connection'
         self.api_printhead_endpoint = super().get_ip_address() + '/api/printer/printhead'
         self.api_system_cmd_endpoint = super().get_ip_address() + '/api/system/commands'
+        self.api_printer_cmd_endpoint = super().get_ip_address() + '/api/printer/command'
+        self.api_printer_tool_endpoint = super().get_ip_address() + '/api/printer/tool'
 
-    def chamber_connect(self):
+    def chamber_connect_serial(self):
         """
         Initiates Octoprint serial connection to chamber (printer).
 
@@ -56,7 +63,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_connection_endpoint, headers=self.header_tjson, json=payload)
         return {'status_code': response.status_code, 'content': response.content}
 
-    def chamber_disconnect(self):
+    def chamber_disconnect_serial(self):
         """
         Requests Octoprint to disconnect serial port to chamber (printer).
 
@@ -88,6 +95,47 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             "speed": speed
         }
         response = requests.post(url=self.api_printhead_endpoint, headers=self.header_tjson, json=payload)
+        return {'status_code': response.status_code, 'content': response.content}
+
+    def __chamber_jog_with_flag(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 100.0,
+                              abs_coordinate: bool = False):
+        """
+        Receives x,y,z parameters, desired speed and coordinate-context and requests chamber movement via custom
+        G-Code list via http. This enables busy waiting for chamber movements to finish!
+
+        **This function only returns once the jog operation is finished! Polls every 0.5 sec**
+        :param x: x-direction distance or coordinate [mm], 2 decimal
+        :param y: y-direction distance or coordinate [mm], 2 decimal
+        :param z: z-direction distance or coordinate [mm], 2 decimal
+        :param speed: speed for movement in [mm/min], 2 decimal
+        :param abs_coordinate: boolean flag if total coordinates should be used
+        :return: dict {'status code' : str, 'content' : str} of server response
+        """
+        # round numbers and build XYZ-parts
+        x_code = ' X' + str(round(x,2))
+        y_code = ' Y' + str(round(y,2))
+        z_code = ' Z' + str(round(z,2))
+        speed_code = ' S' + str(round(speed,2))
+
+        # assemble custom GCode...
+        g_code_list = [self.gcode_set_flag]
+        if abs_coordinate:
+            g_code_list.append("G90")   # set absolute coordinates
+        else:
+            g_code_list.append("G91")   # set relative coordinates
+        g_code_list.append('G1'+x_code+y_code+z_code+speed_code)
+        g_code_list.append(self.gcode_reset_flag)
+
+        # send g-code-cmd-request via http
+        payload = {
+            "commands": g_code_list
+        }
+        response = requests.post(url= self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
+
+        # busy wait until flag is reset
+        while self.chamber_isflagset():
+            time.sleep(0.5)
+
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_jog_abs(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 5.0):
@@ -169,3 +217,63 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=gcode_cmd)
         return {'status_code': response.status_code, 'content': response.content}
+
+    def chamber_isflagset(self):
+        """
+        Reads Tool 0 target temperature and checks if it is ...
+
+        0   >>  flag was reset. Commands before are done.
+        1   >>  flag is still set. Commands are still running
+
+        This function can be used to realise busy waiting on the movements of the chamber.
+        :return: TRUE > flag is set | FALSE > flag not set
+        """
+        response = requests.get(url=self.api_printer_tool_endpoint, headers=self.header_tjson)
+        info = response.content
+        info_str = str(info, encoding='utf-8')
+        flag_position_offset = 10
+        flag_position = info_str.find('"target": ') + flag_position_offset
+
+        isflagset = bool(info_str[flag_position] == '1')
+        return isflagset
+
+    def chamber_set_flag(self):
+        """
+        **Debug function**
+        Tool 0 target temperature is set 1.
+
+        Tool 0 target temperature is used as flag to show position in G-Code.
+        Before every jog command the target is set to 1 and at the end reset to 0.
+        Thus reading the target value gives information if the jog command is done.
+        :return: dict {'status code' : str, 'content' : str} of server response
+        """
+        payload = {
+            "command": "target",
+            "targets": {
+                "tool0": 1
+            }
+        }
+        response = requests.post(url=self.api_printer_tool_endpoint, headers=self.header_tjson, json=payload)
+        return {'status_code': response.status_code, 'content': response.content}
+
+    def chamber_reset_flag(self):
+        """
+        **Debug function**
+        Tool 0 target temperature is set 0.
+
+        Tool 0 target temperature is used as flag to show position in G-Code.
+        Before every jog command the target is set to 1 and at the end reset to 0.
+        Thus reading the target value gives information if the jog command is done.
+        :return: dict {'status code' : str, 'content' : str} of server response
+        """
+        payload = {
+            "command": "target",
+            "targets": {
+                "tool0": 0
+            }
+        }
+        response = requests.post(url=self.api_printer_tool_endpoint, headers=self.header_tjson, json=payload)
+        return {'status_code': response.status_code, 'content': response.content}
+
+
+
