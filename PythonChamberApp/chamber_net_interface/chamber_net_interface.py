@@ -17,7 +17,6 @@ import time
 
 
 class ChamberNetworkCommands(connection_handler.NetworkDevice):
-
     # private properties
     header_api: dict = None
     header_tjson: dict = None
@@ -27,8 +26,8 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     api_printer_cmd_endpoint: str = None
     api_printer_tool_endpoint: str = None
 
-    gcode_set_flag = 'M104 T0 S1'       # used to mark when (jog) cmd started
-    gcode_reset_flag = 'M104 T0 S0'     # used to mark when (jog) cmd completed
+    gcode_set_flag = 'M104 T0 S1'  # used to mark when (jog) cmd started
+    gcode_reset_flag = 'M104 T0 S0'  # used to mark when (jog) cmd completed
 
     def __init__(self, ip_address: str = None, api_key: str = None):
         """
@@ -108,7 +107,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         return {'status_code': response.status_code, 'content': response.content}
 
     def __chamber_jog_with_flag(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 100.0,
-                              abs_coordinate: bool = False):
+                                abs_coordinate: bool = False):
         """
         Receives x,y,z parameters, desired speed and coordinate-context and requests chamber movement via custom
         G-Code list via http. This enables busy waiting for chamber movements to finish!
@@ -122,27 +121,30 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         :return: dict {'status code' : str, 'content' : str} of server response
         """
         # round numbers and build XYZ-parts
-        x_code = ' X' + str(round(x,2))
-        y_code = ' Y' + str(round(y,2))
-        z_code = ' Z' + str(round(z,2))
-        speed_code = ' S' + str(round(speed,2))
+        x_code = ' X' + str(round(x, 2))
+        y_code = ' Y' + str(round(y, 2))
+        z_code = ' Z' + str(round(z, 2))
+        speed_code = ' S' + str(round(speed, 2))
 
         # assemble custom GCode...
         g_code_list = [self.gcode_set_flag]
         if abs_coordinate:
-            g_code_list.append("G90")   # set absolute coordinates
+            g_code_list.append("G90")  # set absolute coordinates
         else:
-            g_code_list.append("G91")   # set relative coordinates
-        g_code_list.append('G1'+x_code+y_code+z_code+speed_code)
+            g_code_list.append("G91")  # set relative coordinates
+        g_code_list.append('G1' + x_code + y_code + z_code + speed_code)
         g_code_list.append(self.gcode_reset_flag)
 
         # send g-code-cmd-request via http
         payload = {
             "commands": g_code_list
         }
-        response = requests.post(url= self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
+        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
         # busy wait until flag is reset
+        # ToDo: Sometimes first response-message had empty 'content'. Maybe sleep time needed for server to
+        #  generate adequate response?
+        # time.sleep(1)
         while self.chamber_isflagset():
             time.sleep(0.5)
 
@@ -157,7 +159,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         :param speed: speed for movement in [mm/s]
         :return: dict {'status code' : str, 'content' : str} of server response
         """
-        response = self.__chamber_jog(x=x, y=y, z=z, speed=(speed * 60), abs_coordinate=True)
+        response = self.__chamber_jog_with_flag(x=x, y=y, z=z, speed=(speed * 60), abs_coordinate=True)
         return response
 
     def chamber_jog_rel(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 5.0):
@@ -169,7 +171,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         :param speed: speed for movement in [mm/s]
         :return: dict {'status code' : str, 'content' : str} of server response
         """
-        response = self.__chamber_jog(x=x, y=y, z=z, speed=(speed * 60), abs_coordinate=False)
+        response = self.__chamber_jog_with_flag(x=x, y=y, z=z, speed=(speed * 60), abs_coordinate=False)
         return response
 
     def chamber_home(self, axis: str = ''):
@@ -284,6 +286,3 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
         response = requests.post(url=self.api_printer_tool_endpoint, headers=self.header_tjson, json=payload)
         return {'status_code': response.status_code, 'content': response.content}
-
-
-
