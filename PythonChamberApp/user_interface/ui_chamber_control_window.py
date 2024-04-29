@@ -3,6 +3,9 @@ from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout,
 
 
 class UI_chamber_control_window(QWidget):
+
+    # Properties
+
     def __init__(self):
         super().__init__()
 
