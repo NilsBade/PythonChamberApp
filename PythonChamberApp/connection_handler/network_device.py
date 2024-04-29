@@ -7,14 +7,14 @@ import requests
 
 class NetworkDevice:
 
-    # Private Properties
-    ip_address = "0.0.0.0"
-    api_key = "x"
+    # Properties
+    __ip_address = "0.0.0.0"
+    __api_key = "x"
 
     # Interfaces
     def set_ip_address(self, new_ip: str = None):
         if isinstance(new_ip, str):
-            self.ip_address = new_ip
+            self.__ip_address = new_ip
             print("ip address set successfully!")
         else:
             print("please input ip address as string")
@@ -23,7 +23,7 @@ class NetworkDevice:
 
     def set_api_key(self, new_key: str = None):
         if isinstance(new_key, str):
-            self.api_key = new_key
+            self.__api_key = new_key
             print("api set successfully!")
         else:
             print("please input api as string")
@@ -31,16 +31,16 @@ class NetworkDevice:
 
     def get_ip_address(self):
         """returns IP-address (or url) as string"""
-        return self.ip_address
+        return self.__ip_address
 
     def get_api_key(self):
         """returns API key as string"""
-        return self.api_key
+        return self.__api_key
 
     def check_if_reachable(self):
         """ Checks if ip-address responses within 5 seconds. Otherwise, prints timeout error."""
         try:
-            response = requests.get(self.ip_address, timeout=5)
+            response = requests.get(self.__ip_address, timeout=5)
         except requests.Timeout as error:
             print(error)
             return None
