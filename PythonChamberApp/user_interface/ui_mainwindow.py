@@ -3,35 +3,26 @@ This file stores the mainwindow class and all necessary PyQt6 classes to constru
 """
 
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QStatusBar, QToolBar, QTabWidget
-from PyQt6.QtGui import QAction
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow, QWidget, QStatusBar, QTabWidget
 from PythonChamberApp.user_interface.ui_config_window import UI_config_window
 from PythonChamberApp.user_interface.ui_chamber_control_window import UI_chamber_control_window
 from PythonChamberApp.user_interface.ui_vna_control_window import UI_vna_control_window
 
 
-class Mainwindow(QMainWindow):
+class MainWindow(QMainWindow):
     """
-    This Class sets up the base for the PythonChamberApp.
-    It initializes the main-application-window with its tool- and menu-bars,
-    stores all sub-windows as QWidgets in its properties and organizes window-switching.
+    This Class initializes the main-application-window with its tabs and sub windows.
+    It organizes window-switching and stores input data when switching.
 
-    All sub-windows are organized as QWidgets and stored in separate classes.
+    All sub-windows are organized as QWidgets and stored/defined in separate classes.
     """
 
     # Properties
-    central_widget: QWidget = None
-
-    ui_config_window: QWidget = None
-    ui_chamber_control_window: QWidget = None
-    ui_vna_control_window: QWidget = None
+    ui_config_window: UI_config_window = None
+    ui_chamber_control_window: UI_chamber_control_window = None
+    ui_vna_control_window: UI_vna_control_window = None
 
     main_status_bar: QStatusBar = None
-    main_toolbar: QToolBar = None
-    toolbar_config_pressed: QAction = None
-    toolbar_chamber_pressed: QAction = None
-    toolbar_vna_pressed: QAction = None
 
     def __init__(self):
         super().__init__()
@@ -58,7 +49,7 @@ class Mainwindow(QMainWindow):
         self.tabs.addTab(self.ui_chamber_control_window, 'Chamber control')  # Tab 1
         self.tabs.addTab(self.ui_vna_control_window, 'VNA control')  # Tab 2
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, True)
+        self.tabs.setTabEnabled(1, False)
         self.tabs.setTabEnabled(2, False)
 
         self.setCentralWidget(self.tabs)
