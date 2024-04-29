@@ -36,7 +36,7 @@ class Mainwindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PythonChamberApp V1.0")
-        self.setGeometry(100, 100, 800, 400)  # Set window dimensions
+        self.setGeometry(100, 100, 900, 500)  # Set window dimensions
 
         self.__setup_center_widgets()
         self.__setup_statusbar()
