@@ -6,7 +6,6 @@ import requests
 
 
 class NetworkDevice:
-
     # Properties
     __ip_address = "0.0.0.0"
     __api_key = "x"
@@ -19,7 +18,6 @@ class NetworkDevice:
         else:
             print("please input ip address as string")
         return
-
 
     def set_api_key(self, new_key: str = None):
         if isinstance(new_key, str):
