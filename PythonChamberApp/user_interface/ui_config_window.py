@@ -51,6 +51,7 @@ class UI_config_window(QWidget):
         ip_label = QLabel("IP Address:")
         api_label = QLabel("API Key:")
         self.chamber_ip_line_edit = QLineEdit()
+        self.chamber_ip_line_edit.setInputMask("000.000.000.000")
         self.chamber_api_line_edit = QLineEdit()
         self.chamber_connect_button = QPushButton("Connect")
         self.chamber_connection_status_label = QLabel("Status: Not Connected")
