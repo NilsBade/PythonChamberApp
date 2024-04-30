@@ -80,7 +80,6 @@ class UI_config_window(QWidget):
         self.vna_ip_line_edit = QLineEdit()
         self.vna_dummy_line_edit = QLineEdit()
         self.vna_connect_button = QPushButton("Connect")
-        self.vna_connect_button.pressed.connect(self.dummy_function)                 # ToDo connect right function
         self.vna_connection_status_label = QLabel("Status: Not Connected")
         self.vna_connection_status_label.setStyleSheet("color : red;")
 
@@ -122,12 +121,10 @@ class UI_config_window(QWidget):
         """
         Adds the given 'message: str' with extra timestamp to the console field in the config window.
         """
-        current_text = self.config_console_textbox.toPlainText()
         time_now = datetime.now()
         timestamp = time_now.strftime("%H:%M:%S")
-        new_text = current_text + '['+ timestamp + ']: ' + message + '\n'
-        self.config_console_textbox.setPlainText(new_text)
-        QCoreApplication.processEvents()
+        new_text = '[' + timestamp + ']: ' + message
+        self.config_console_textbox.append(new_text)
         return
 
     def clear_console(self):
