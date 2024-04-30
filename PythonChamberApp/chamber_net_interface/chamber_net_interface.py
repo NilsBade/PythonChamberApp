@@ -78,7 +78,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             response = requests.post(url=self.api_connection_endpoint, headers=self.header_tjson, json=payload, timeout=2)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            return {'status_code': -1, 'error': 'An error occurred' + str(e)}
+            return {'status_code': -1, 'error': 'An error occurred! Status Code: ' + str(e)}
 
         return {'status_code': response.status_code, 'content': response.content}
 
