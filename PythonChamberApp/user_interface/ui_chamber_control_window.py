@@ -1,5 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow
+from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QGridLayout
+from PyQt6.QtGui import QIcon
 
 
 class UI_chamber_control_window(QWidget):
@@ -9,9 +10,14 @@ class UI_chamber_control_window(QWidget):
     def __init__(self):
         super().__init__()
 
-        label = QLabel("ich bin chamber widget")
+        self.button_navigation_widget = self.__init_button_navigation_widget()
 
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(label)
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.button_navigation_widget)
 
         self.setLayout(main_layout)
+
+    def __init_button_navigation_widget(self):
+        main_widget = QWidget()
+        main_layout = QGridLayout()
+
