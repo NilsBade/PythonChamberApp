@@ -65,6 +65,9 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         Initiates Octoprint serial connection to chamber (printer).
         Function can handle request exceptions! In case of an error other return.
 
+        **This function should be called first and enable all other chamber http-requests since it is
+        the only exception-proof implementation!**
+
         :return: Success >> dict of {'status_code' : int , 'content' : str} from server response |
                 Exception >> dict of {'status_code' : int = -1, 'error' : str} from requests module
         """
@@ -149,10 +152,6 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
-        # busy wait until flag is reset
-        # ToDo: Sometimes first response-message had empty 'content'. Maybe sleep time needed for server to
-        #  generate adequate response?
-        # time.sleep(1)
         while self.chamber_isflagset():
             time.sleep(0.5)
 
