@@ -1,13 +1,11 @@
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
+import sys
+import traceback
 
-import time
-import traceback, sys
+from PyQt6.QtCore import *  # QObject, pyqtSignal, pyqtSlot, QRunnable
 
 
 class WorkerSignals(QObject):
-    '''
+    """
     Defines the signals available from a running worker thread.
 
     Supported signals are:
@@ -16,7 +14,7 @@ class WorkerSignals(QObject):
         No data
 
     error
-        tuple (exctype, value, traceback.format_exc() )
+        dict {'error_code': int = -1, 'error_msg': str}
 
     result
         object data returned from processing, anything
@@ -24,15 +22,19 @@ class WorkerSignals(QObject):
     progress
         dict with key-value pairs dependend on usecase
 
-    '''
+    update
+        str with information that can be displayed in statusbar or console
+
+    """
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
     progress = pyqtSignal(dict)
+    update = pyqtSignal(str)
 
 
 class Worker(QRunnable):
-    '''
+    """
     Worker thread
 
     Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
@@ -43,7 +45,7 @@ class Worker(QRunnable):
     :param args: Arguments to pass to the callback function
     :param kwargs: Keywords to pass to the callback function
 
-    '''
+    """
 
     def __init__(self, callback, *args, **kwargs):
         super(Worker, self).__init__()
@@ -55,6 +57,7 @@ class Worker(QRunnable):
         self.signals = WorkerSignals()
 
         # Add the callback to our kwargs
+        self.kwargs['update_callback'] = self.signals.update
         self.kwargs['progress_callback'] = self.signals.progress
 
     @pyqtSlot()
