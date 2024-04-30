@@ -81,7 +81,8 @@ class ProcessController:
         response_connect = new_chamber.chamber_connect_serial()
 
         if response_connect['status_code'] == 204:
-            update_callback.emit("Requesting a zero movement to check API-key")
+            update_callback.emit("OK")
+            update_callback.emit("Requesting a zero movement to check API-key...")
             response_jog = new_chamber.chamber_jog_rel(x=0, y=0, z=0, speed=50)
             update_callback.emit(str(response_jog))
         else:
@@ -89,6 +90,7 @@ class ProcessController:
             raise Exception("Connection request failed")
 
         if response_jog['status_code'] == 204:
+            update_callback.emit("OK")
             return new_chamber
         else:
             update_callback.emit("Jog request failed! No chamber saved.")

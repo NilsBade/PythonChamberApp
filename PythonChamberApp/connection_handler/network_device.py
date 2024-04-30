@@ -14,18 +14,18 @@ class NetworkDevice:
     def set_ip_address(self, new_ip: str = None):
         if isinstance(new_ip, str):
             self.__ip_address = new_ip
-            print("ip address set successfully!")
+            # print("ip address set successfully!")
         else:
-            print("please input ip address as string")
-        return
+            # print("please input ip address as string")
+            return
 
     def set_api_key(self, new_key: str = None):
         if isinstance(new_key, str):
             self.__api_key = new_key
-            print("api set successfully!")
+            # print("api set successfully!")
         else:
-            print("please input api as string")
-        return
+            # print("please input api as string")
+            return
 
     def get_ip_address(self):
         """returns IP-address (or url) as string"""
