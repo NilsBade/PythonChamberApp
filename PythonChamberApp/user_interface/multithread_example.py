@@ -110,12 +110,13 @@ class MainWindow(QMainWindow):
         self.timer.start()
 
     def progress_fn(self, n: int):
-        print(n)
+        print(str(n) + '%')
 
     def execute_this_fn(self, progress_callback):
-        for n in range(0, 5):
-            time.sleep(1)
-            progress_callback.emit(n*100/4)
+        for n in range(0, 9):
+            time.sleep(0.5)
+            prog = n*100/8
+            progress_callback.emit(int(prog))
 
         return "Done."
 
