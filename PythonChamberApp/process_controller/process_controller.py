@@ -25,10 +25,14 @@ class ProcessController:
         # input default values into GUI
         self.gui_mainWindow.ui_config_window.chamber_ip_line_edit.setText("134.28.25.201")
         self.gui_mainWindow.ui_config_window.chamber_api_line_edit.setText("03DEBAA8A11941879C08AE1C224A6E2C")
-        # Connect all Slots & Signals
+
+        # Connect all Slots & Signals - **CHAMBER**
         self.gui_mainWindow.ui_config_window.chamber_connect_button.pressed.connect(self.chamber_connect_button_handler)
 
-    # Following methods represent Slots that are connected to the GUI buttons
+        # Connect all Slots & Signals - **VNA**
+        # ...nothing so far...
+
+    # Following methods represent Slots that are connected to GUI buttons
     def chamber_connect_button_handler(self):
         """
         Reads ip and api-key from user interface and initializes a ChamberNetworkCommands object that is stored
@@ -42,8 +46,13 @@ class ProcessController:
         ip_address = connect_data['ip_address']
         api_key = connect_data['api_key']
 
+        # reset chamber data and disable chamber control section when clicked 'connect'
+        self.chamber = None
+        self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
+        self.gui_mainWindow.tabs.setTabEnabled(1, False)    # disables first tab == Chamber Control
+
         # initialize ChamberNetworkCommands Object and store in 'chamber' property if valid
-        self.gui_mainWindow.ui_config_window.append_message2console(f"Trying to connect to chamber\n ip: {ip_address}, Api-key: {api_key}...")
+        self.gui_mainWindow.ui_config_window.append_message2console(f"Trying to connect to chamber\n ip: {ip_address}, Api-key: {api_key}")
         new_chamber = ChamberNetworkCommands(ip_address=ip_address, api_key=api_key)
 
         self.gui_mainWindow.ui_config_window.append_message2console("Requesting to connect serial port to driver board...")
@@ -61,7 +70,9 @@ class ProcessController:
         if response_jog['status_code'] == 204:
             self.chamber = new_chamber
             self.gui_mainWindow.tabs.setTabEnabled(1, True)     # enables first tab == Chamber Control
-            self.gui_mainWindow.ui_config_window.append_message2console("Jog Request was accepted! Printer was saved in ProcessController and manual printer control enabled.")
+            self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
+            self.gui_mainWindow.ui_config_window.append_message2console("Jog Request was accepted!")
+            self.gui_mainWindow.ui_config_window.append_message2console("Printer object was generated and saved to app. Chamber control enabled.")
         else:
             self.gui_mainWindow.ui_config_window.append_message2console("Jog Request failed! No chamber saved.")
 

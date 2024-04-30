@@ -63,20 +63,27 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     def chamber_connect_serial(self):
         """
         Initiates Octoprint serial connection to chamber (printer).
+        Function can handle request exceptions! In case of an error other return.
 
-        Returns dict of ['status_code' : str , 'content' : str] from server response
+        :return: Success >> dict of {'status_code' : int , 'content' : str} from server response |
+                Exception >> dict of {'status_code' : int = -1, 'error' : str} from requests module
         """
         payload = {
             "command": "connect"
         }
-        response = requests.post(url=self.api_connection_endpoint, headers=self.header_tjson, json=payload)
+        try:    # handle wrong ip address or similar network connection problems
+            response = requests.post(url=self.api_connection_endpoint, headers=self.header_tjson, json=payload, timeout=2)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            return {'status_code': -1, 'error': 'An error occurred' + str(e)}
+
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_disconnect_serial(self):
         """
         Requests Octoprint to disconnect serial port to chamber (printer).
 
-        Returns dict of ['status_code' : str , 'content' : str] from server response
+        :return: dict of {'status_code' : str , 'content' : str} from server response
         """
         payload = {
             "command": "disconnect"
@@ -134,6 +141,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             g_code_list.append("G91")  # set relative coordinates
         g_code_list.append('G1' + x_code + y_code + z_code + speed_code)
         g_code_list.append(self.gcode_reset_flag)
+        g_code_list.append('M105')  # requests Tool 0 Temp info. Necessary in first server request.
 
         # send g-code-cmd-request via http
         payload = {
@@ -240,11 +248,17 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         This function can be used to realise busy waiting on the movements of the chamber.
         :return: TRUE > flag is set | FALSE > flag not set
         """
-        response = requests.get(url=self.api_printer_tool_endpoint, headers=self.header_tjson)
-        info = response.content
-        info_str = str(info, encoding='utf-8')
+        str_found_position = -1
         flag_position_offset = 10
-        flag_position = info_str.find('"target": ') + flag_position_offset
+        info_str = ""
+        while str_found_position < 0:
+            response = requests.get(url=self.api_printer_tool_endpoint, headers=self.header_tjson)
+            info = response.content
+            info_str = str(info, encoding='utf-8')
+            str_found_position = info_str.find('"target": ')
+            time.sleep(0.5)
+
+        flag_position = str_found_position + flag_position_offset
 
         isflagset = bool(info_str[flag_position] == '1')
         return isflagset

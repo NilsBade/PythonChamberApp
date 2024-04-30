@@ -1,5 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit
+from PyQt6.QtCore import QCoreApplication
 from datetime import datetime
 
 
@@ -102,7 +103,9 @@ class UI_config_window(QWidget):
 
         self.config_console_textbox = QTextEdit()
         self.config_console_textbox.setReadOnly(True)
-        self.config_console_textbox.setPlainText("Here are all logged messages displayed the process controller receives...\n")
+        self.config_console_textbox.setPlainText("Here are all logged messages displayed the process controller "
+                                                 "receives...\nPlease input your network device's network parameters "
+                                                 "on the left and click 'Connect' to enable more functionality!")
 
         console_clear_button = QPushButton("Clear Console")
         console_clear_button.pressed.connect(self.clear_console)
@@ -124,6 +127,7 @@ class UI_config_window(QWidget):
         timestamp = time_now.strftime("%H:%M:%S")
         new_text = current_text + '['+ timestamp + ']: ' + message + '\n'
         self.config_console_textbox.setPlainText(new_text)
+        QCoreApplication.processEvents()
         return
 
     def clear_console(self):
