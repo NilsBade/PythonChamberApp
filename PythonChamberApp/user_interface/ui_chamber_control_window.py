@@ -28,14 +28,21 @@ class UI_chamber_control_window(QWidget):
         buttons_layout = QGridLayout()
 
         # Get Icons from library
-        #   calculate absolute path for QIcon class
+        #   calculate absolute path for QIcon class -
+        #   > implemented check in case somehow the root directory is one level too low
         path_user_interface_module = os.getcwd()
-        #   get icons with absolute path
-        icon_arrow_up = QIcon(os.path.join(path_user_interface_module, "fugue_icons/icons_large/arrow-090.png"))
-        icon_arrow_right = QIcon(os.path.join(path_user_interface_module, "fugue_icons/icons_large/arrow.png"))
-        icon_arrow_left = QIcon(os.path.join(path_user_interface_module, "fugue_icons/icons_large/arrow-180.png"))
-        icon_arrow_down = QIcon(os.path.join(path_user_interface_module, "fugue_icons/icons_large/arrow-270.png"))
-        icon_home = QIcon(os.path.join(path_user_interface_module, "fugue_icons/home.png"))
+        file_is_at_location = os.path.isfile(os.path.join(path_user_interface_module, "fugue_icons/icons_large/arrow-090.png"))
+        if file_is_at_location:
+            abs_path_root = path_user_interface_module
+        else:
+            abs_path_root = os.path.join(path_user_interface_module, 'PythonChamberApp')
+
+        #   get icons by absolute path
+        icon_arrow_up = QIcon(os.path.join(abs_path_root, "fugue_icons/icons_large/arrow-090.png"))
+        icon_arrow_right = QIcon(os.path.join(abs_path_root, "fugue_icons/icons_large/arrow.png"))
+        icon_arrow_left = QIcon(os.path.join(abs_path_root, "fugue_icons/icons_large/arrow-180.png"))
+        icon_arrow_down = QIcon(os.path.join(abs_path_root, "fugue_icons/icons_large/arrow-270.png"))
+        icon_home = QIcon(os.path.join(abs_path_root, "fugue_icons/home.png"))
         # assign icons to movement buttons
         self.button_move_x_inc = QPushButton(icon=icon_arrow_right)
         self.button_move_x_inc.setFixedSize(50, 50)
