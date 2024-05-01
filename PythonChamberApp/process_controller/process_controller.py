@@ -20,29 +20,34 @@ class ProcessController:
 
     threadpool: QThreadPool = None
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
-    ui_chamber_control_process: Worker = None   # Assure that only one jog command at a time is requested
+    ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
 
     def __init__(self):
         self.gui_app = QApplication([])
         self.gui_mainWindow = ui_pkg.MainWindow()
         self.gui_mainWindow.show()
 
-        # input default values into GUI
+        # input default values into config GUI
         self.gui_mainWindow.ui_config_window.chamber_ip_line_edit.setText("134.28.25.201")
         self.gui_mainWindow.ui_config_window.chamber_api_line_edit.setText("03DEBAA8A11941879C08AE1C224A6E2C")
 
-        # Connect all Slots & Signals - **CHAMBER**
-        self.gui_mainWindow.ui_config_window.chamber_connect_button.pressed.connect(self.chamber_connect_button_handler_threaded)
+        # Connect all Slots & Signals config_window - **CHAMBER**
+        self.gui_mainWindow.ui_config_window.chamber_connect_button.pressed.connect(
+            self.chamber_connect_button_handler_threaded)
 
-        # Connect all Slots & Signals - **VNA**
+        # Connect all Slots & Signals config_window - **VNA**
         self.gui_mainWindow.ui_config_window.vna_connect_button.pressed.connect(self.auto_measurement_start_handler)
         # ...nothing so far...
+
+        # connect all Slots & Signals Chamber control window
+        self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.pressed.connect(
+            self.chamber_control_home_all_handler)
 
         # setup AutoMeasurement Thread
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-
+    # **UI_config_window Callbacks**
     def chamber_connect_button_handler_threaded(self):
         """
         Reads ip and api-key from user interface.
@@ -104,18 +109,68 @@ class ProcessController:
             "Printer object was generated and saved to app. Chamber control enabled.")
         return
 
+    # **UI_chamber_control_window Callbacks**
+    def chamber_control_thread_finished_handler(self):
+        if self.ui_chamber_control_process is None:
+            raise Exception("chamber control finished handler was called but no thread was running!")
+        else:
+            self.ui_chamber_control_process = None
+        return
+
+    def chamber_control_home_all_handler(self):
+        if self.ui_chamber_control_process is None:
+            self.ui_chamber_control_process = Worker(self.chamber_control_home_all_routine, self.chamber)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.progress.connect(self.chamber_control_home_all_progress_handler)
+            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+            self.threadpool.start(self.ui_chamber_control_process)
+        else:
+            self.gui_mainWindow.prompt_warning(
+                "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
+                "Too many Requests")
+        return
+
+    def chamber_control_home_all_progress_handler(self, progress: dict):
+        """
+        This handler enables all chamber control widgets if server response to home request valid
+        """
+        if progress['status_code'] == 204:
+            self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+            self.gui_mainWindow.ui_chamber_control_window.append_message2console("Manual chamber control enabled")
+            self.gui_mainWindow.prompt_info("Please wait until homing is finished.", "Check chamber state manually")
+        else:
+            self.gui_mainWindow.ui_chamber_control_window.append_message2console(
+                "Something went wrong! HTTP response status code: " + str(progress['status_code']))
+        return
+
+    def chamber_control_home_all_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback):
+        """
+        This routine can be given to a worker to request homing in seperate thread
+        """
+        update_callback.emit("Request to home all axis")
+        response = chamber.chamber_home(axis='xyz')
+        progress_callback.emit(response)
+        return
+
+    # **UI_vna_control_window Callbacks**
+
+    # **UI_automeasurement_window Callbacks**
     def auto_measurement_start_handler(self):
         if self.auto_measurement_process is None:
             self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=(1.0, 2.0, 3.0),
-                                                            y_vec=(1.0, 2.0, 3.0), z_vec=(1.0, 2.0, 3.0), mov_speed=10.0)
+                                                            y_vec=(1.0, 2.0, 3.0), z_vec=(1.0, 2.0, 3.0),
+                                                            mov_speed=10.0)
 
-            self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
+            self.auto_measurement_process.signals.update.connect(
+                self.gui_mainWindow.ui_config_window.append_message2console)
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
             self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
 
             self.threadpool.start(self.auto_measurement_process)
         else:
-            self.gui_mainWindow.prompt_warning("An Automated Measurement Process Thread is already running!", "More than one Measurement Process")
+            self.gui_mainWindow.prompt_warning("An Automated Measurement Process Thread is already running!",
+                                               "More than one Measurement Process")
         return
 
     def auto_measurement_finished_handler(self):
