@@ -16,6 +16,7 @@ This section gives you an overview of the modules that are defined, what their p
 ```
 PythonChamberApp/
 │
+├── .venv/ **[local!]**
 │
 ├── docs/
 │   ├── user_interface.md
@@ -86,8 +87,12 @@ To run the PythonChamberApp the following steps are necessary:
 
 1. Clone this repository in a desired directory
 2. Install Python 3.11.9 if not already available
-3. Create a virtual environment and set Python 3.11.9 as active interpreter inside the cloned directory
-4. Install necessary modules for UI and network communication from terminal.
+3. Open the upper/first PythonChamberApp directory of the repository and create a virtual environment there. Set Python 3.11.9 as active interpreter.
+4. Make sure to activate your virtual environment from terminal. (Terminal in './PythonChamberApp' directory)
+    ```sh
+    .\.venv\Scripts\activate
+    ```
+5. Install necessary modules for UI and network communication in your virtual environment from terminal.
 
     **PyQt6**
     ```sh
