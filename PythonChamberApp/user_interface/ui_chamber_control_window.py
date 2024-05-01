@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
@@ -31,6 +32,7 @@ class UI_chamber_control_window(QWidget):
         super().__init__()
 
         self.button_navigation_widget = self.__init_button_navigation_widget()
+        self.control_buttons_widget.setEnabled(False)
 
         main_layout = QHBoxLayout()
         self.button_navigation_widget.setFixedWidth(320)
@@ -177,6 +179,16 @@ class UI_chamber_control_window(QWidget):
         :returns: desired stepsize as float
         """
         return float(self.button_move_stepsize_input_line.text())
+
+    def append_message2console(self, message: str):
+        """
+        Adds the given 'message: str' with extra timestamp to the console field in the chamber_control_window.
+        """
+        time_now = datetime.now()
+        timestamp = time_now.strftime("%H:%M:%S")
+        new_text = '[' + timestamp + ']: ' + message
+        self.chamber_control_console.append(new_text)
+        return
 
 
 
