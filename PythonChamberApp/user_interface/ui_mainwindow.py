@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_chamber_control_window, 'Chamber control')  # Tab 1
         self.tabs.addTab(self.ui_vna_control_window, 'VNA control')  # Tab 2
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, False)
+        self.tabs.setTabEnabled(1, True)  # ToDo: Disable tab when design finished!
         self.tabs.setTabEnabled(2, False)
 
         self.setCentralWidget(self.tabs)
