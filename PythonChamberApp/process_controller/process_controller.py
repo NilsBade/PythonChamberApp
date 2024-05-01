@@ -20,6 +20,7 @@ class ProcessController:
 
     threadpool: QThreadPool = None
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
+    ui_chamber_control_process: Worker = None   # Assure that only one jog command at a time is requested
 
     def __init__(self):
         self.gui_app = QApplication([])
