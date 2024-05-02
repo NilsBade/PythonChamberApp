@@ -40,7 +40,7 @@ class UI_chamber_control_window(QWidget):
         self.control_buttons_widget.setEnabled(False)
 
         main_layout = QHBoxLayout()
-        self.button_navigation_widget.setFixedWidth(320)
+        self.button_navigation_widget.setFixedWidth(350)
         main_layout.addWidget(self.button_navigation_widget, stretch=0)
 
         right_layout = QVBoxLayout()
@@ -107,6 +107,10 @@ class UI_chamber_control_window(QWidget):
         self.button_move_stepsize_input_line.setInputMask('000.00')  # input as float with two decimals
         self.button_move_stepsize_input_line.setAlignment(Qt.AlignmentFlag.AlignRight)
 
+        self.button_move_jogspeed_input_line = QLineEdit('05.0')
+        self.button_move_jogspeed_input_line.setInputMask('00.0')  # input as float with two decimals
+        self.button_move_jogspeed_input_line.setAlignment(Qt.AlignmentFlag.AlignRight)
+
         # control section headers
         xy_label = QLabel("X/Y")
         xy_label.setStyleSheet("text-decoration: underline; font-size: 18px;")
@@ -119,6 +123,11 @@ class UI_chamber_control_window(QWidget):
         stepsize_label = QLabel("<< Stepsize 000.00 [mm]")
         buttons_layout.addWidget(stepsize_label, 4, 2, 1, 3)
         buttons_layout.addWidget(self.button_move_stepsize_input_line, 4, 0, 1, 2)
+
+        # jogspeed input
+        jogspeed_label = QLabel("<< Speed 00.0 [mm/s]")
+        buttons_layout.addWidget(jogspeed_label, 5, 2, 1, 3)
+        buttons_layout.addWidget(self.button_move_jogspeed_input_line, 5, 0, 1, 2)
 
         # buttons xy
         buttons_layout.addWidget(self.button_move_y_inc, 1, 1)
@@ -135,7 +144,7 @@ class UI_chamber_control_window(QWidget):
         # Add Menu to go to absolut coordinates
         label_go_abs_coor = QLabel("Go to absolute coordinates [mm]:")
         label_go_abs_coor.setStyleSheet("text-decoration: underline; font-size: 14px;")
-        buttons_layout.addWidget(label_go_abs_coor,5,0,1,4)
+        buttons_layout.addWidget(label_go_abs_coor,6,0,1,4)
 
         xyz_go_abs_layout = QHBoxLayout()
         go_abs_coor_x_label = QLabel("X: ")
@@ -162,7 +171,7 @@ class UI_chamber_control_window(QWidget):
         xyz_go_abs_layout.addWidget(self.go_abs_coor_z_editfield)
         xyz_go_abs_layout.addWidget(self.go_abs_coor_go_button)
 
-        buttons_layout.addLayout(xyz_go_abs_layout, 6, 0, 1, 5)
+        buttons_layout.addLayout(xyz_go_abs_layout, 7, 0, 1, 5)
 
         main_layout.addWidget(self.control_buttons_widget)
         self.control_buttons_widget.setEnabled(False)
@@ -221,6 +230,12 @@ class UI_chamber_control_window(QWidget):
         :returns: desired stepsize as float
         """
         return float(self.button_move_stepsize_input_line.text())
+
+    def get_button_move_jogspeed(self):
+        """
+        :returns: desired jog speed in [mm/s]
+        """
+        return float(self.button_move_jogspeed_input_line.text())
 
     def append_message2console(self, message: str):
         """
