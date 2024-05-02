@@ -65,7 +65,7 @@ class ProcessController:
         api_key = connect_data['api_key']
 
         # reset chamber data and disable chamber control section when clicked 'connect'
-        self.chamber = None
+        self.chamber : ChamberNetworkCommands = None
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
         self.gui_mainWindow.tabs.setTabEnabled(1, False)  # disables first tab == Chamber Control
 
@@ -138,7 +138,7 @@ class ProcessController:
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
             self.gui_mainWindow.ui_chamber_control_window.append_message2console("Manual chamber control enabled")
-            self.gui_mainWindow.prompt_info("Please wait until homing is finished.", "Check chamber state manually")
+            self.gui_mainWindow.prompt_info("Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.", "Check chamber state manually")
         else:
             self.gui_mainWindow.ui_chamber_control_window.append_message2console(
                 "Something went wrong! HTTP response status code: " + str(progress['status_code']))
@@ -149,7 +149,7 @@ class ProcessController:
         This routine can be given to a worker to request homing in seperate thread
         """
         update_callback.emit("Request to home all axis")
-        response = chamber.chamber_home(axis='xyz')
+        response = chamber.chamber_home_with_flag(axis='xyz')
         progress_callback.emit(response)
         return
 

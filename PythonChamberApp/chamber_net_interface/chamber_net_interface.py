@@ -28,6 +28,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
 
     gcode_set_flag = 'M104 T0 S1'  # used to mark when (jog) cmd started
     gcode_reset_flag = 'M104 T0 S0'  # used to mark when (jog) cmd completed
+    __debug_gcode_sleep_5s = 'G4 P5000'
 
     def __init__(self, ip_address: str = None, api_key: str = None):
         """
@@ -215,6 +216,53 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             "axes": list
         }
         response = requests.post(self.api_printhead_endpoint, headers=self.header_tjson, json=payload)
+        return {'status_code': response.status_code, 'content': response.content}
+
+    def chamber_home_with_flag(self,axis: str = ''):
+        """
+        Receives axis to home as string. Independent of upper or lower case.
+        printer.cfg [safe_z_home] should make sure that head is in right position when probing for z-axis.
+        The used custom GCode request, send via http, enables busy waiting until homing is finished.
+
+        :param axis: arbitrary string containing x/X, y/Y, z/Z. e.g. axis = 'xyz' or 'xy' or 'Zyx' ...
+        :return: dict {'status code' : str, 'content' : str} of server response
+        """
+        # initialize flags if letter found
+        flag_x = False
+        flag_y = False
+        flag_z = False
+
+        # check for letters in string
+        for i in axis:
+            if i == 'x' or i == 'X':
+                flag_x = True
+            if i == 'y' or i == 'Y':
+                flag_y = True
+            if i == 'z' or i == 'Z':
+                flag_z = True
+
+        home_gcode = 'G28 '
+        if flag_x:
+            home_gcode += 'X0 '
+        if flag_y:
+            home_gcode += 'Y0 '
+        if flag_z:
+            home_gcode += 'Z0'
+
+        # assemble custom GCode...
+        g_code_list = [self.gcode_set_flag]
+        g_code_list.append(home_gcode)
+        g_code_list.append(self.gcode_reset_flag)
+
+        # send g-code-cmd-request via http
+        payload = {
+            "commands": g_code_list
+        }
+        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
+
+        while self.chamber_isflagset():
+            time.sleep(0.5)
+
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_system_restart(self):
