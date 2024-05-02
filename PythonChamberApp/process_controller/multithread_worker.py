@@ -19,6 +19,10 @@ class WorkerSignals(QObject):
     result
         object data returned from processing, anything
 
+    position_update
+        dict with {'abs_x': float, 'abs_y': float, 'abs_z': float, 'rel_x': float, 'rel_y': float, 'rel_z': float}
+        all key-values optional and can be input to update the live head position monitored by the app
+
     progress
         dict with key-value pairs dependend on usecase
 
@@ -29,6 +33,7 @@ class WorkerSignals(QObject):
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
+    position_update = pyqtSignal(dict)
     progress = pyqtSignal(dict)
     update = pyqtSignal(str)
 
@@ -59,6 +64,7 @@ class Worker(QRunnable):
         # Add the callback to our kwargs
         self.kwargs['update_callback'] = self.signals.update
         self.kwargs['progress_callback'] = self.signals.progress
+        self.kwargs['position_update_callback'] = self.signals.position_update
 
     @pyqtSlot()
     def run(self):
