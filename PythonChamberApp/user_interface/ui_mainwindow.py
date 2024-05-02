@@ -33,8 +33,8 @@ class MainWindow(QMainWindow):
         self.__setup_statusbar()
 
     def __setup_statusbar(self):
-        main_status_bar = self.statusBar()
-        main_status_bar.showMessage("I have been initialized!")
+        self.main_status_bar = self.statusBar()
+        self.main_status_bar.showMessage("I have been initialized!")
         return
 
     def __setup_center_widgets(self):
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_chamber_control_window, 'Chamber control')  # Tab 1
         self.tabs.addTab(self.ui_vna_control_window, 'VNA control')  # Tab 2
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, True)  # ToDo: Disable tab when design finished!
+        self.tabs.setTabEnabled(1, False)
         self.tabs.setTabEnabled(2, False)
 
         self.setCentralWidget(self.tabs)
@@ -79,4 +79,8 @@ class MainWindow(QMainWindow):
         dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
         dlg.setIcon(QMessageBox.Icon.Warning)
         dlg.exec()
+        return
+
+    def update_status_bar(self, status_msg: str):
+        self.main_status_bar.showMessage(status_msg)
         return

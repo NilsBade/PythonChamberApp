@@ -6,10 +6,18 @@ operates as interface between GUI and Network commands.
 from PythonChamberApp.chamber_net_interface import ChamberNetworkCommands
 import PythonChamberApp.user_interface as ui_pkg
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QThreadPool
+from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
 from PythonChamberApp.process_controller.multithread_worker import Worker
 
+class ProcessControllerSignals(QObject):
+    """
+    This class defines signals related to the ProcessController
+
+    position_changed
+        >> signals that callback has updated the live position of the chamber head
+    """
+    position_changed = pyqtSignal()
 
 class ProcessController:
     # Properties
@@ -21,6 +29,11 @@ class ProcessController:
     threadpool: QThreadPool = None
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
     ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
+
+    # Position logging
+    __x_live: float = None
+    __y_live: float = None
+    __z_live: float = None
 
     def __init__(self):
         self.gui_app = QApplication([])
@@ -47,6 +60,48 @@ class ProcessController:
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
+    # General Callbacks
+    def chamber_control_update_live_position(self, pos_update_info: dict):
+        """
+        This function **must be connected to POSITION_UPDATE SIGNAL of every method that requests movement by the chamber** and therefore changes its head position.
+        Given the movement information via the 'pos_update_info : dict', this function logs and updates the live position of the chamber head
+        to enable display in the UI and start of AutoMeasurements without homing the chamber.
+
+        There are following keywords that can be used to describe a postion change:
+            >> 'abs_x' : the new absolute x coordinate of the chamber head [mm]
+
+            >> 'abs_y' : the new absolute y coordinate of the chamber head [mm]
+
+            >> 'abs_z' : the new absolute z coordinate of the chamber head [mm]
+
+            >> 'rel_x' : the new relative change to x position [mm]
+
+            >> 'rel_y' : the new relative change to y position [mm]
+
+            >> 'rel_z' : the new relative change to z position [mm]
+
+        If a key is not used in the info dct, it is ignored. Thus it is possible to give the change-info only.
+        There is no need for 'zero-changes' or similar.
+
+        :param pos_update_info: {'abs_x': float, 'abs_y': float, 'abs_z': float, 'rel_x': float, 'rel_y': float, 'rel_z': float} all key-values optional!
+        """
+        if 'abs_x' in pos_update_info:
+            self.__x_live = pos_update_info['abs_x']
+        if 'abs_y' in pos_update_info:
+            self.__y_live = pos_update_info['abs_y']
+        if 'abs_z' in pos_update_info:
+            self.__z_live = pos_update_info['abs_z']
+        if 'rel_x' in pos_update_info:
+            self.__x_live += pos_update_info['rel_x']
+        if 'rel_y' in pos_update_info:
+            self.__y_live += pos_update_info['rel_y']
+        if 'rel_z' in pos_update_info:
+            self.__z_live += pos_update_info['rel_z']
+
+        self.gui_mainWindow.ui_chamber_control_window.update_live_coor_display(self.__x_live, self.__y_live, self.__z_live)
+
+        return
+
     # **UI_config_window Callbacks**
     def chamber_connect_button_handler_threaded(self):
         """
@@ -71,11 +126,12 @@ class ProcessController:
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
+        connect_thread.signals.update.connect(self.gui_mainWindow.update_status_bar)
         connect_thread.signals.result.connect(self.chamber_connect_finished_handler)
 
         self.threadpool.start(connect_thread)
 
-    def chamber_connect_routine(self, ip_address: str, api_key: str, update_callback, progress_callback):
+    def chamber_connect_routine(self, ip_address: str, api_key: str, update_callback, progress_callback, position_update_callback):
         """
         This routine can be run by a worker thread and pushes intermediate updates as string via signals.update
         """
@@ -120,10 +176,16 @@ class ProcessController:
     def chamber_control_home_all_handler(self):
         if self.ui_chamber_control_process is None:
             self.ui_chamber_control_process = Worker(self.chamber_control_home_all_routine, self.chamber)
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+
+            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+
             self.ui_chamber_control_process.signals.progress.connect(self.chamber_control_home_all_progress_handler)
+
             self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
             self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
@@ -137,20 +199,21 @@ class ProcessController:
         """
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
-            self.gui_mainWindow.ui_chamber_control_window.append_message2console("Manual chamber control enabled")
             self.gui_mainWindow.prompt_info("Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.", "Check chamber state manually")
-        else:
-            self.gui_mainWindow.ui_chamber_control_window.append_message2console(
-                "Something went wrong! HTTP response status code: " + str(progress['status_code']))
         return
 
-    def chamber_control_home_all_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback):
+    def chamber_control_home_all_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback):
         """
-        This routine can be given to a worker to request homing in seperate thread
+        This routine can be given to a worker to request homing in separate thread
         """
         update_callback.emit("Request to home all axis")
         response = chamber.chamber_home_with_flag(axis='xyz')
-        progress_callback.emit(response)
+        if response['status_code'] == 204:
+            update_callback.emit("Manual chamber control enabled")
+            position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
+            progress_callback.emit(response)
+        else:
+            update_callback.emit("Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response['content'])
         return
 
     # **UI_vna_control_window Callbacks**
@@ -164,6 +227,7 @@ class ProcessController:
 
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
+            self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
             self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
 

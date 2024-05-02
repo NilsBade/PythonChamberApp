@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit
+from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit, QFrame
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
@@ -26,19 +26,29 @@ class UI_chamber_control_window(QWidget):
     go_abs_coor_y_editfield: QLineEdit = None
     go_abs_coor_z_editfield: QLineEdit = None
     go_abs_coor_go_button: QPushButton = None
+    # live_position_widget
+    live_x_coor_label: QLabel = None
+    live_y_coor_label: QLabel = None
+    live_z_coor_label: QLabel = None
 
 
     def __init__(self):
         super().__init__()
 
         self.button_navigation_widget = self.__init_button_navigation_widget()
+        live_position_widget = self.__init_live_position_widget()
         self.control_buttons_widget.setEnabled(False)
 
         main_layout = QHBoxLayout()
         self.button_navigation_widget.setFixedWidth(320)
         main_layout.addWidget(self.button_navigation_widget, stretch=0)
-        main_layout.addStretch()
 
+        right_layout = QVBoxLayout()
+        live_position_widget.setMaximumHeight(100)
+        right_layout.addWidget(live_position_widget)
+        right_layout.addStretch()
+
+        main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
 
     def __init_button_navigation_widget(self):
@@ -164,6 +174,38 @@ class UI_chamber_control_window(QWidget):
 
         return main_widget
 
+    def __init_live_position_widget(self):
+        main_frame = QFrame()
+        main_frame.setFrameShape(QFrame.Shape.Box)  # Set the frame shape
+        main_frame.setFrameShadow(QFrame.Shadow.Raised)  # Set the frame shadow
+        main_frame.setLineWidth(2)  # Set the width of the frame line
+        main_frame.setStyleSheet("background-color: lightGray;")  # Set frame background color
+        main_frame.setContentsMargins(5,5,5,5)
+
+        frame_layout = QGridLayout()
+        main_frame.setLayout(frame_layout)
+
+        pos_header = QLabel("Live Head Position [mm]:")
+        pos_header.setStyleSheet("text-decoration: underline; font-size: 16px;")
+        frame_layout.addWidget(pos_header, 0, 0, 1, 6, alignment= Qt.AlignmentFlag.AlignCenter)
+        live_x_coor_header = QLabel("X:")
+        frame_layout.addWidget(live_x_coor_header, 1, 0, 1, 1, alignment= Qt.AlignmentFlag.AlignCenter)
+        live_y_coor_header = QLabel("Y:")
+        frame_layout.addWidget(live_y_coor_header, 1, 2, 1, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+        live_z_coor_header = QLabel("Z:")
+        frame_layout.addWidget(live_z_coor_header, 1, 4, 1, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.live_x_coor_label = QLabel("unknown")
+        self.live_x_coor_label.setStyleSheet("font-size: 16px;")
+        frame_layout.addWidget(self.live_x_coor_label, 1, 1, 1, 1, alignment= Qt.AlignmentFlag.AlignLeft)
+        self.live_y_coor_label = QLabel("unknown")
+        self.live_y_coor_label.setStyleSheet("font-size: 16px;")
+        frame_layout.addWidget(self.live_y_coor_label, 1, 3, 1, 1, alignment= Qt.AlignmentFlag.AlignLeft)
+        self.live_z_coor_label = QLabel("unknown")
+        self.live_z_coor_label.setStyleSheet("font-size: 16px;")
+        frame_layout.addWidget(self.live_z_coor_label, 1, 5, 1, 1, alignment= Qt.AlignmentFlag.AlignLeft)
+
+        return main_frame
     def get_go_abs_coor_inputs(self):
         """
         Function gets absolute coordinates put into X,Y,Z fields to react to "GO" button pressed
@@ -190,5 +232,10 @@ class UI_chamber_control_window(QWidget):
         self.chamber_control_console.append(new_text)
         return
 
+    def update_live_coor_display(self, x:float, y:float, z:float):
+        self.live_x_coor_label.setText(str(x))
+        self.live_y_coor_label.setText(str(y))
+        self.live_z_coor_label.setText(str(z))
+        return
 
 
