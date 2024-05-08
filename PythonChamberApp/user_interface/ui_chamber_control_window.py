@@ -4,6 +4,9 @@ from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout,
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
+import pyqtgraph as pg
+import pyqtgraph.opengl as gl
+import numpy
 
 class UI_chamber_control_window(QWidget):
 
@@ -30,6 +33,10 @@ class UI_chamber_control_window(QWidget):
     live_x_coor_label: QLabel = None
     live_y_coor_label: QLabel = None
     live_z_coor_label: QLabel = None
+    # position_graph_widget
+    position_graph_bed_object: gl.GLMeshItem = None
+    position_graph_head_object: gl.GLScatterPlotItem = None
+
 
 
     def __init__(self):
@@ -37,6 +44,7 @@ class UI_chamber_control_window(QWidget):
 
         self.button_navigation_widget = self.__init_button_navigation_widget()
         live_position_widget = self.__init_live_position_widget()
+        self.chamber_position_graph_widget = self.__init_position_graph_widget()
         self.control_buttons_widget.setEnabled(False)
 
         main_layout = QHBoxLayout()
@@ -46,7 +54,7 @@ class UI_chamber_control_window(QWidget):
         right_layout = QVBoxLayout()
         live_position_widget.setMaximumHeight(100)
         right_layout.addWidget(live_position_widget)
-        right_layout.addStretch()
+        right_layout.addWidget(self.chamber_position_graph_widget)
 
         main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
@@ -215,6 +223,74 @@ class UI_chamber_control_window(QWidget):
         frame_layout.addWidget(self.live_z_coor_label, 1, 5, 1, 1, alignment= Qt.AlignmentFlag.AlignLeft)
 
         return main_frame
+
+    def __init_position_graph_widget(self):
+        chamber_position_widget = gl.GLViewWidget()
+        chamber_position_widget.setBackgroundColor("d")
+
+        # Properties to adapt
+        # ToDo read size from printer config and put in values here?
+        chamber_max_x = 500
+        chamber_max_y = 500
+        chamber_max_z = 900
+        chamber_min_z = 50
+
+        # create movable print bed
+        vertices = numpy.array([
+            [chamber_max_x, chamber_max_y, -chamber_min_z],
+            [0, chamber_max_y, -chamber_min_z],
+            [0, 0, -chamber_min_z],
+            [chamber_max_x, 0, -chamber_min_z]
+        ])
+        # Define vertex indices to form triangles
+        faces = numpy.array([
+            [0, 1, 2],
+            [0, 2, 3]
+        ])
+        # Create mesh data for bed
+        md = gl.MeshData(vertexes=vertices, faces=faces)
+        # Create GLMeshItem and add it to chamber position widget
+        self.position_graph_bed_object = gl.GLMeshItem(meshdata=md, smooth=False, color=(0.7, 0.7, 1.0, 1.0))
+        chamber_position_widget.addItem(self.position_graph_bed_object)
+
+        # Draw Red Chamber border
+        gl_chamber_border = gl.GLLinePlotItem()
+        vertices_chamber_border = numpy.array([
+            [0, 0, 0], [0, 0, -chamber_max_z], [0, 0, 0], # draw one vertical line and back ...
+            [chamber_max_x, 0, 0], [chamber_max_x, 0, -chamber_max_z], [chamber_max_x, 0, 0], # draw one vertical line and back ...
+            [chamber_max_x, chamber_max_y, 0], [chamber_max_x, chamber_max_y, -chamber_max_z], [chamber_max_x, chamber_max_y, 0], # draw one vertical line and back ...
+            [0, chamber_max_y, 0], [0, chamber_max_y, -chamber_max_z], [0, chamber_max_y, 0], # draw one vertical line and back ...
+            [0, 0, 0],  # Close the square by connecting back to the first vertex
+            [0, 0, -chamber_max_z], # Draw lower rectangle
+            [chamber_max_x, 0, -chamber_max_z],
+            [chamber_max_x, chamber_max_y, -chamber_max_z],
+            [0, chamber_max_y, -chamber_max_z],
+            [0, 0, -chamber_max_z]
+        ])
+        gl_chamber_border.setData(pos=vertices_chamber_border, color=(1, 0, 0, 1), width=2.0)
+        chamber_position_widget.addItem(gl_chamber_border)
+
+        # Draw COS axis at 0,0,0
+        cos = gl.GLAxisItem()
+        cos.setSize(x=50, y=50, z=50)
+        chamber_position_widget.addItem(cos)
+
+        # Label Front side of work-volume
+        frontlabel = gl.GLTextItem(pos= numpy.array([chamber_max_x + 5, chamber_max_y/2 -50, 5]), text= "FrontSide")
+        chamber_position_widget.addItem(frontlabel)
+
+        # set view point roughly
+        chamber_position_widget.pan(0, 0, -200)
+        chamber_position_widget.setCameraPosition(distance=900)
+
+        # create spot to display head position
+        self.position_graph_head_object = gl.GLScatterPlotItem()
+        self.position_graph_head_object.setData(pos=(0, 0, 0), size=10)
+        chamber_position_widget.addItem(self.position_graph_head_object)
+
+        return chamber_position_widget
+
+
     def get_go_abs_coor_inputs(self):
         """
         Function gets absolute coordinates put into X,Y,Z fields to react to "GO" button pressed.
@@ -250,9 +326,19 @@ class UI_chamber_control_window(QWidget):
         return
 
     def update_live_coor_display(self, x: float, y: float, z: float):
+        """
+        Updates the live position coordinate-labels and the graph visualization
+        """
+        # Update labels
         self.live_x_coor_label.setText(str(x))
         self.live_y_coor_label.setText(str(y))
         self.live_z_coor_label.setText(str(z))
+
+        # Update visualization bed and head
+        self.position_graph_bed_object.resetTransform()
+        self.position_graph_bed_object.translate(dx=0, dy=0, dz=-z)
+        self.position_graph_head_object.resetTransform()
+        self.position_graph_head_object.translate(dx=x, dy=y, dz=0)
         return
 
 
