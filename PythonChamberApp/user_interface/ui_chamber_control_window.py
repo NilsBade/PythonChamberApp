@@ -280,8 +280,8 @@ class UI_chamber_control_window(QWidget):
         chamber_position_widget.addItem(frontlabel)
 
         # set view point roughly
-        chamber_position_widget.pan(0, 0, -200)
-        chamber_position_widget.setCameraPosition(distance=900)
+        chamber_position_widget.pan(chamber_max_x/2, chamber_max_y/2, -chamber_max_z/3)
+        chamber_position_widget.setCameraPosition(distance=1200)
 
         # create spot to display head position
         self.position_graph_head_object = gl.GLScatterPlotItem()
