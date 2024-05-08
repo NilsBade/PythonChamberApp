@@ -249,7 +249,7 @@ class UI_chamber_control_window(QWidget):
         self.chamber_control_console.append(new_text)
         return
 
-    def update_live_coor_display(self, x:float, y:float, z:float):
+    def update_live_coor_display(self, x: float, y: float, z: float):
         self.live_x_coor_label.setText(str(x))
         self.live_y_coor_label.setText(str(y))
         self.live_z_coor_label.setText(str(z))

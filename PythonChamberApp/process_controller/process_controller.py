@@ -458,6 +458,11 @@ class ProcessController:
         :param axis: the axis that should be jogged - either 'x' or 'y' or 'z'
         :param jogspeed: speed to move in [mm/s]
         :param rel_coor: relative coordinate change on axis
+        :param update_callback: Callback signal to send string messages to consoles, status labels or similiar. Provided by Worker-class (Thread).
+        :param progress_callback: Callback signal to send dict with key-value pairs dependend on usecase. Provided by Worker-class (Thread).
+        :param position_update_callback: Callback signal to send new chamber position as dict
+            {'abs_x': float, 'abs_y': float, 'abs_z': float, 'rel_x': float, 'rel_y': float, 'rel_z': float}
+            all key-values optional! Provided by Worker-class (Thread).
         """
         update_callback.emit(
             "Request Jog " + axis.upper() + " by " + str(rel_coor) + " mm with " + str(jogspeed) + " mm/s")
@@ -514,6 +519,11 @@ class ProcessController:
         :param y_coor: new desired y coordinate in [mm]
         :param z_coor: new desired z coordinate in [mm]
         :param jogspeed: speed to move in [mm/s]
+        :param update_callback: Callback signal to send string messages to consoles, status labels or similiar. Provided by Worker-class (Thread).
+        :param progress_callback: Callback signal to send dict with key-value pairs dependend on usecase. Provided by Worker-class (Thread).
+        :param position_update_callback: Callback signal to send new chamber position as dict
+            {'abs_x': float, 'abs_y': float, 'abs_z': float, 'rel_x': float, 'rel_y': float, 'rel_z': float}
+            all key-values optional! Provided by Worker-class (Thread).
         """
         update_callback.emit(
             "Request Jog to X: " + str(x_coor) + " Y: " + str(y_coor) + " Z: " + str(z_coor) + " with " + str(
