@@ -98,6 +98,10 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install PyQt6
     ```
+   **PyQtGraph**
+    ```sh
+    python -m pip install pyqtgraph
+    ```
     **requests**
     ```sh
     python -m pip install requests
@@ -110,7 +114,7 @@ To run the PythonChamberApp the following steps are necessary:
 > Installing pytest, make sure that it is installed **in the same virtual environment** the whole app is running in.
 > Otherwise pytest will not be able to find the modules imported by the unit-tests but throw a "ModuleNotFoundError".
     
-5. Run PythonChamberApp from python console [?] ``ToDo``
+5. Execute the 'runner.py' script in './PythonChamberApp/PythonChamberApp/runner.py' (in your virtual environment).
 
 ## Usage example
 

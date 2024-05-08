@@ -10,6 +10,7 @@ from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
 from PythonChamberApp.process_controller.multithread_worker import Worker
 
+
 class ProcessControllerSignals(QObject):
     """
     This class defines signals related to the ProcessController
@@ -18,6 +19,7 @@ class ProcessControllerSignals(QObject):
         >> signals that callback has updated the live position of the chamber head
     """
     position_changed = pyqtSignal()
+
 
 class ProcessController:
     # Properties
@@ -53,15 +55,26 @@ class ProcessController:
         # ...nothing so far...
 
         # connect all Slots & Signals Chamber control window
-        self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.pressed.connect(self.chamber_control_home_all_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_home_xy.pressed.connect(self.chamber_control_home_xy_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_home_z.pressed.connect(self.chamber_control_home_z_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_x_inc.pressed.connect(self.chamber_control_x_inc_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_x_dec.pressed.connect(self.chamber_control_x_dec_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_y_inc.pressed.connect(self.chamber_control_y_inc_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_y_dec.pressed.connect(self.chamber_control_y_dec_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_z_inc.pressed.connect(self.chamber_control_z_inc_button_handler)
-        self.gui_mainWindow.ui_chamber_control_window.button_move_z_dec.pressed.connect(self.chamber_control_z_dec_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.pressed.connect(
+            self.chamber_control_home_all_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_home_xy.pressed.connect(
+            self.chamber_control_home_xy_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_home_z.pressed.connect(
+            self.chamber_control_home_z_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_x_inc.pressed.connect(
+            self.chamber_control_x_inc_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_x_dec.pressed.connect(
+            self.chamber_control_x_dec_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_y_inc.pressed.connect(
+            self.chamber_control_y_inc_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_y_dec.pressed.connect(
+            self.chamber_control_y_dec_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_z_inc.pressed.connect(
+            self.chamber_control_z_inc_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.button_move_z_dec.pressed.connect(
+            self.chamber_control_z_dec_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_go_button.pressed.connect(
+            self.chamber_control_go_to_button_handler)
 
         # setup AutoMeasurement Thread
         self.threadpool = QThreadPool()
@@ -105,7 +118,8 @@ class ProcessController:
         if 'rel_z' in pos_update_info:
             self.__z_live += pos_update_info['rel_z']
 
-        self.gui_mainWindow.ui_chamber_control_window.update_live_coor_display(self.__x_live, self.__y_live, self.__z_live)
+        self.gui_mainWindow.ui_chamber_control_window.update_live_coor_display(self.__x_live, self.__y_live,
+                                                                               self.__z_live)
 
         return
 
@@ -138,7 +152,8 @@ class ProcessController:
 
         self.threadpool.start(connect_thread)
 
-    def chamber_connect_routine(self, ip_address: str, api_key: str, update_callback, progress_callback, position_update_callback):
+    def chamber_connect_routine(self, ip_address: str, api_key: str, update_callback, progress_callback,
+                                position_update_callback):
         """
         This routine can be run by a worker thread and pushes intermediate updates as string via signals.update
         """
@@ -184,7 +199,8 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             self.ui_chamber_control_process = Worker(self.chamber_control_home_all_routine, self.chamber)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -206,10 +222,13 @@ class ProcessController:
         """
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
-            self.gui_mainWindow.prompt_info("Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.", "Check chamber state manually")
+            self.gui_mainWindow.prompt_info(
+                "Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.",
+                "Check chamber state manually")
         return
 
-    def chamber_control_home_all_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback):
+    def chamber_control_home_all_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
+                                         position_update_callback):
         """
         This routine can be given to a worker to request all-axis-homing in separate thread
         """
@@ -220,14 +239,17 @@ class ProcessController:
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
             progress_callback.emit(response)
         else:
-            update_callback.emit("Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response['content'])
+            update_callback.emit(
+                "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
+                    'content'])
         return
 
     def chamber_control_home_xy_button_handler(self):
         if self.ui_chamber_control_process is None:
             self.ui_chamber_control_process = Worker(self.chamber_control_home_xy_routine, self.chamber)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -240,7 +262,9 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
-    def chamber_control_home_xy_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback):
+
+    def chamber_control_home_xy_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
+                                        position_update_callback):
         """
         This routine can be given to a worker to request xy-axis-homing in separate thread
         """
@@ -250,14 +274,17 @@ class ProcessController:
             update_callback.emit("OK")
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0})
         else:
-            update_callback.emit("Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response['content'])
+            update_callback.emit(
+                "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
+                    'content'])
         return
 
     def chamber_control_home_z_button_handler(self):
         if self.ui_chamber_control_process is None:
             self.ui_chamber_control_process = Worker(self.chamber_control_home_z_routine, self.chamber)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -271,7 +298,8 @@ class ProcessController:
                 "Too many Requests")
         return
 
-    def chamber_control_home_z_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback):
+    def chamber_control_home_z_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
+                                       position_update_callback):
         """
         This routine can be given to a worker to request z-axis-homing in separate thread
         """
@@ -286,14 +314,15 @@ class ProcessController:
                     'content'])
         return
 
-
     def chamber_control_x_inc_button_handler(self):
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -311,9 +340,11 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -326,13 +357,16 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
+
     def chamber_control_y_inc_button_handler(self):
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -350,9 +384,11 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -365,13 +401,16 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
+
     def chamber_control_z_inc_button_handler(self):
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -384,13 +423,16 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
+
     def chamber_control_z_dec_button_handler(self):
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z', jogspeed, stepsize)
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
             self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
             self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
@@ -403,25 +445,30 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
-    def chamber_control_jog_one_axis_rel_routine(self, chamber: ChamberNetworkCommands, axis: str, jogspeed: float, rel_coor: float, update_callback, progress_callback, position_update_callback):
+
+    def chamber_control_jog_one_axis_rel_routine(self, chamber: ChamberNetworkCommands, axis: str, jogspeed: float,
+                                                 rel_coor: float, update_callback, progress_callback,
+                                                 position_update_callback):
         """
-        This routine receives chamber object and desired new absolute coordinate on given axis.
+        This routine receives a chamber object and the desired relative coordinate-change on a given axis.
         It should be used in combination with arrow-button menu.
+            * No Error handling when Server denies request!
 
         :param chamber: stored network chamber of process controller providing (network) interface to chamber
         :param axis: the axis that should be jogged - either 'x' or 'y' or 'z'
         :param jogspeed: speed to move in [mm/s]
-        :param rel_coor: new desired absolute coordinate calculated from live coordinate beforehand!
+        :param rel_coor: relative coordinate change on axis
         """
-        update_callback.emit("Request Jog " + axis + " by " + str(rel_coor) + " mm with " + str(jogspeed) + " mm/s")
+        update_callback.emit(
+            "Request Jog " + axis.upper() + " by " + str(rel_coor) + " mm with " + str(jogspeed) + " mm/s")
         if axis == 'x':
-            response = chamber.chamber_jog_rel(x= rel_coor, speed = jogspeed)
+            response = chamber.chamber_jog_rel(x=rel_coor, speed=jogspeed)
             position_update_callback.emit({'rel_x': rel_coor})
         elif axis == 'y':
-            response = chamber.chamber_jog_rel(y= rel_coor, speed = jogspeed)
+            response = chamber.chamber_jog_rel(y=rel_coor, speed=jogspeed)
             position_update_callback.emit({'rel_y': rel_coor})
         elif axis == 'z':
-            response = chamber.chamber_jog_rel(z= rel_coor, speed = jogspeed)
+            response = chamber.chamber_jog_rel(z=rel_coor, speed=jogspeed)
             position_update_callback.emit({'rel_z': rel_coor})
         else:
             update_callback("jog_one_axis routine got invalid axis parameter!")
@@ -429,7 +476,52 @@ class ProcessController:
 
         return
 
+    def chamber_control_go_to_button_handler(self):
+        if self.ui_chamber_control_process is None:
+            jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
+            new_coordinates = self.gui_mainWindow.ui_chamber_control_window.get_go_abs_coor_inputs()
+            new_x = new_coordinates['x']
+            new_y = new_coordinates['y']
+            new_z = new_coordinates['z']
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,self.chamber, new_x, new_y, new_z,
+                                                     jogspeed)
 
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+
+            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+            self.threadpool.start(self.ui_chamber_control_process)
+        else:
+            self.gui_mainWindow.prompt_warning(
+                "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
+                "Too many Requests")
+        return
+    def chamber_control_jog_to_abs_coor_routine(self, chamber: ChamberNetworkCommands, x_coor: float, y_coor: float,
+                                                z_coor: float, jogspeed: float, update_callback, progress_callback,
+                                                position_update_callback):
+        """
+        This routine a receives chamber object and the desired new position as x,y,z coordinates.
+        It requests the chamber to move to the new position and signals updates.
+        It should be used with the "Go to absolute coordinates" menu in UI_chamber_control_window and auto-measurement procedure.
+            * No Error handling when Server denies request!
+
+        :param chamber: stored network chamber of process controller providing (network) interface to chamber
+        :param x_coor: new desired x coordinate in [mm]
+        :param y_coor: new desired y coordinate in [mm]
+        :param z_coor: new desired z coordinate in [mm]
+        :param jogspeed: speed to move in [mm/s]
+        """
+        update_callback.emit(
+            "Request Jog to X: " + str(x_coor) + " Y: " + str(y_coor) + " Z: " + str(z_coor) + " with " + str(
+                jogspeed) + "[mm/s]")
+        response = chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=jogspeed)
+        position_update_callback.emit({'abs_x': x_coor, 'abs_y': y_coor, 'abs_z': z_coor})
+
+        return
 
     # **UI_vna_control_window Callbacks**
 
