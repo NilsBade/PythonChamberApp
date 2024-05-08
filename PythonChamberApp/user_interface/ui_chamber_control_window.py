@@ -217,9 +217,11 @@ class UI_chamber_control_window(QWidget):
         return main_frame
     def get_go_abs_coor_inputs(self):
         """
-        Function gets absolute coordinates put into X,Y,Z fields to react to "GO" button pressed
+        Function gets absolute coordinates put into X,Y,Z fields to react to "GO" button pressed.
+
         :returns: dict {'x': float, 'y': float, 'z': float}
         """
+
         x_desired = float(self.go_abs_coor_x_editfield.text())
         y_desired = float(self.go_abs_coor_y_editfield.text())
         z_desired = float(self.go_abs_coor_z_editfield.text())
