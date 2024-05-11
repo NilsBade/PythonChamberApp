@@ -32,10 +32,13 @@ class ProcessController:
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
     ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
 
-    # Position logging
+    # Position logging & validity check
     __x_live: float = None
     __y_live: float = None
     __z_live: float = None
+    __x_max_coor: float = 500.0
+    __y_max_coor: float = 500.0
+    __z_max_coor: float = 850.0
 
     def __init__(self):
         self.gui_app = QApplication([])
@@ -122,6 +125,16 @@ class ProcessController:
                                                                                self.__z_live)
 
         return
+
+    def check_movement_valid(self, pos_update_info: dict) -> bool:
+        """
+        This function checks if the requested movement leads to a valid position.
+
+        :return: True >> movement valid, False >> invalid movement request
+        """
+        # ToDo Checks einbauen die in alle koordinaten richtungen gegen den null und den maximalwert vergleichen!
+        #  Funktion soll auf selben position update dicts laufen wie der live-position-logger!
+
 
     # **UI_config_window Callbacks**
     def chamber_connect_button_handler_threaded(self):
