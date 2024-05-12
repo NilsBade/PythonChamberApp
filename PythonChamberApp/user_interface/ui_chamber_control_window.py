@@ -53,7 +53,7 @@ class UI_chamber_control_window(QWidget):
         self.position_graph_x_max_coor = position_graph_x_max_coor
         self.position_graph_y_max_coor = position_graph_y_max_coor
         self.position_graph_z_max_coor = position_graph_z_max_coor
-        self.position_graph_z_head_bed_offset = chamber_z_head_bed_offset  # ToDo think where/how to use bed coordinate offset in graph display. Measure in reality!
+        self.position_graph_z_head_bed_offset = chamber_z_head_bed_offset
         self.chamber_position_graph_widget = self.__init_position_graph_widget()
 
         main_layout = QHBoxLayout()

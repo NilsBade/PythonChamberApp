@@ -39,7 +39,7 @@ class ProcessController:
     __x_max_coor: float = 500.0     # ToDo measure / check max coordinates of real setup and put numbers in *here*!
     __y_max_coor: float = 500.0
     __z_max_coor: float = 850.0
-    __z_head_bed_offset = 50.0
+    __z_head_bed_offset = 50.0      # ToDo think where/how to use bed coordinate offset. Measure in reality!
 
     def __init__(self):
         self.gui_app = QApplication([])
@@ -133,11 +133,52 @@ class ProcessController:
     def check_movement_valid(self, pos_update_info: dict) -> bool:
         """
         This function checks if the requested movement leads to a valid position.
+        If not a warning is prompted that gives the reason for position-error in detail.
 
+        :param pos_update_info: {'abs_x': float, 'abs_y': float, 'abs_z': float, 'rel_x': float, 'rel_y': float, 'rel_z': float} all key-values optional!
         :return: True >> movement valid, False >> invalid movement request
         """
-        # ToDo Checks einbauen die in alle koordinaten richtungen gegen den null und den maximalwert vergleichen!
-        #  Funktion soll auf selben position update dicts laufen wie der live-position-logger!
+        invalid_flag = False
+        warn_msg = ""
+
+        if 'abs_x' in pos_update_info:
+            new_x = pos_update_info['abs_x']
+            if new_x < 0 or new_x > self.__x_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid absolute movement!\nRequest leads to X: " + str(new_x) + " but allowed range is [0, " + str(self.__x_max_coor) +"].\n"
+        if 'abs_y' in pos_update_info:
+            new_y = pos_update_info['abs_y']
+            if new_y < 0 or new_y > self.__y_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid absolute movement!\nRequest leads to Y: " + str(new_y) + " but allowed range is [0, " + str(self.__y_max_coor) +"].\n"
+        if 'abs_z' in pos_update_info:
+            new_z = pos_update_info['abs_z']
+            if new_z < 0 or new_z > self.__z_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid absolute movement!\nRequest leads to Z: " + str(new_z) + " but allowed range is [0, " + str(self.__z_max_coor) +"].\n"
+        if 'rel_x' in pos_update_info:
+            new_x = self.__x_live + pos_update_info['rel_x']
+            if new_x < 0 or new_x > self.__x_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid relative movement!\nRequest leads to X: " + str(new_x) + " but allowed range is [0, " + str(self.__x_max_coor) +"].\n"
+        if 'rel_y' in pos_update_info:
+            new_y = self.__y_live + pos_update_info['rel_y']
+            if new_y < 0 or new_y > self.__y_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid relative movement!\nRequest leads to Y: " + str(new_y) + " but allowed range is [0, " + str(self.__y_max_coor) + "].\n"
+        if 'rel_z' in pos_update_info:
+            new_z = self.__z_live + pos_update_info['rel_z']
+            if new_z < 0 or new_z > self.__z_max_coor:
+                invalid_flag = True
+                warn_msg += "Invalid relative movement!\nRequest leads to Z: " + str(new_z) + " but allowed range is [0, " + str(self.__z_max_coor) + "].\n"
+
+        if invalid_flag:
+            self.gui_mainWindow.prompt_warning(warn_msg=warn_msg, window_title="Invalid movement requested")
+            return False
+        else:
+            return True
+
+
 
 
     # **UI_config_window Callbacks**
@@ -335,18 +376,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_x': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -357,18 +400,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_x': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -379,18 +424,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_y': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -401,18 +448,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_y': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -423,18 +472,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_z': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -445,18 +496,20 @@ class ProcessController:
         if self.ui_chamber_control_process is None:
             jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
-                                                     jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'rel_z': stepsize}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                                                         jogspeed, stepsize)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -505,18 +558,20 @@ class ProcessController:
             new_x = new_coordinates['x']
             new_y = new_coordinates['y']
             new_z = new_coordinates['z']
-            self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,self.chamber, new_x, new_y, new_z,
-                                                     jogspeed)
 
-            self.ui_chamber_control_process.signals.update.connect(
-                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
-            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+            if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': new_z}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,self.chamber, new_x, new_y, new_z,
+                                                         jogspeed)
 
-            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.threadpool.start(self.ui_chamber_control_process)
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
