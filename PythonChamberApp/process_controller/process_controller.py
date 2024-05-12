@@ -36,13 +36,17 @@ class ProcessController:
     __x_live: float = None
     __y_live: float = None
     __z_live: float = None
-    __x_max_coor: float = 500.0
+    __x_max_coor: float = 500.0     # ToDo measure / check max coordinates of real setup and put numbers in *here*!
     __y_max_coor: float = 500.0
     __z_max_coor: float = 850.0
+    __z_head_bed_offset = 50.0
 
     def __init__(self):
         self.gui_app = QApplication([])
-        self.gui_mainWindow = ui_pkg.MainWindow()
+        self.gui_mainWindow = ui_pkg.MainWindow(chamber_x_max_coor=self.__x_max_coor,
+                                                chamber_y_max_coor=self.__y_max_coor,
+                                                chamber_z_max_coor=self.__z_max_coor,
+                                                chamber_z_head_bed_offset=self.__z_head_bed_offset)
         self.gui_mainWindow.show()
 
         # input default values into config GUI

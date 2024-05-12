@@ -24,12 +24,12 @@ class MainWindow(QMainWindow):
 
     main_status_bar: QStatusBar = None
 
-    def __init__(self):
+    def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
         self.setWindowTitle("PythonChamberApp V1.0")
         self.setGeometry(100, 100, 900, 500)  # Set window dimensions
 
-        self.__setup_center_widgets()
+        self.__setup_center_widgets(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
         self.__setup_statusbar()
 
     def __setup_statusbar(self):
@@ -37,12 +37,12 @@ class MainWindow(QMainWindow):
         self.main_status_bar.showMessage("I have been initialized!")
         return
 
-    def __setup_center_widgets(self):
+    def __setup_center_widgets(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
 
         self.ui_config_window = UI_config_window()
-        self.ui_chamber_control_window = UI_chamber_control_window()
+        self.ui_chamber_control_window = UI_chamber_control_window(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
         self.ui_vna_control_window = UI_vna_control_window()
 
         self.tabs.addTab(self.ui_config_window, 'Config')  # Tab 0

@@ -40,9 +40,9 @@ class UI_chamber_control_window(QWidget):
     position_graph_x_max_coor: float = None
     position_graph_y_max_coor: float = None
     position_graph_z_max_coor: float = None
-    position_graph_z_min_coor: float = None
+    position_graph_z_head_bed_offset: float = None
 
-    def __init__(self):
+    def __init__(self, position_graph_x_max_coor: float, position_graph_y_max_coor: float, position_graph_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
 
         self.button_navigation_widget = self.__init_button_navigation_widget()
@@ -50,10 +50,10 @@ class UI_chamber_control_window(QWidget):
 
         live_position_widget = self.__init_live_position_widget()
         # initial graph setup
-        self.position_graph_x_max_coor = 500
-        self.position_graph_y_max_coor = 500
-        self.position_graph_z_max_coor = 850
-        self.position_graph_z_min_coor = 50  # ToDo think where/how to use bed coordinate offset in graph display
+        self.position_graph_x_max_coor = position_graph_x_max_coor
+        self.position_graph_y_max_coor = position_graph_y_max_coor
+        self.position_graph_z_max_coor = position_graph_z_max_coor
+        self.position_graph_z_head_bed_offset = chamber_z_head_bed_offset  # ToDo think where/how to use bed coordinate offset in graph display. Measure in reality!
         self.chamber_position_graph_widget = self.__init_position_graph_widget()
 
         main_layout = QHBoxLayout()
@@ -241,9 +241,9 @@ class UI_chamber_control_window(QWidget):
         chamber_max_x = self.position_graph_x_max_coor
         chamber_max_y = self.position_graph_y_max_coor
         chamber_max_z = self.position_graph_z_max_coor
-        chamber_min_z = self.position_graph_z_min_coor
+        chamber_min_z = self.position_graph_z_head_bed_offset
 
-        # create movable print bed
+        # create movable *print bed*
         vertices = numpy.array([
             [chamber_max_x, chamber_max_y, -chamber_min_z],
             [0, chamber_max_y, -chamber_min_z],
@@ -263,7 +263,10 @@ class UI_chamber_control_window(QWidget):
 
         # Draw Red Chamber border
         self.chamber_workspace_plot = gl.GLLinePlotItem()
-        vertices_chamber_border = self.__generate_chamber_workspace_vertices(self.position_graph_x_max_coor, self.position_graph_y_max_coor, self.position_graph_z_max_coor)
+        vertices_chamber_border = self.__generate_chamber_workspace_vertices(self.position_graph_x_max_coor,
+                                                                             self.position_graph_y_max_coor,
+                                                                             self.position_graph_z_max_coor,
+                                                                             self.position_graph_z_head_bed_offset)
         self.chamber_workspace_plot.setData(pos=vertices_chamber_border, color=(1, 0, 0, 1), width=2.0)
         chamber_position_widget.addItem(self.chamber_workspace_plot)
 
@@ -288,35 +291,42 @@ class UI_chamber_control_window(QWidget):
         return chamber_position_widget
 
 
-    def __generate_chamber_workspace_vertices(self, chamber_max_x: float, chamber_max_y: float, chamber_max_z: float):
+    def __generate_chamber_workspace_vertices(self, chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
         """
         generates vertices to display in line plot as chamber workspace outline
         """
+        z_end_of_workspace = chamber_max_z + chamber_z_head_bed_offset
+
         vertices_chamber_border = numpy.array([
-            [0, 0, 0], [0, 0, -chamber_max_z], [0, 0, 0],  # draw one vertical line and back ...
-            [chamber_max_x, 0, 0], [chamber_max_x, 0, -chamber_max_z], [chamber_max_x, 0, 0],
-            # draw one vertical line and back ...
-            [chamber_max_x, chamber_max_y, 0], [chamber_max_x, chamber_max_y, -chamber_max_z],
-            [chamber_max_x, chamber_max_y, 0],  # draw one vertical line and back ...
-            [0, chamber_max_y, 0], [0, chamber_max_y, -chamber_max_z], [0, chamber_max_y, 0],
-            # draw one vertical line and back ...
+            # Draw upper rectangle and vertical lines to bottom at each corner
+            [0, 0, 0], [0, 0, -z_end_of_workspace], [0, 0, 0],  # draw one vertical line and back ...
+            [chamber_max_x, 0, 0], [chamber_max_x, 0, -z_end_of_workspace], [chamber_max_x, 0, 0],
+            [chamber_max_x, chamber_max_y, 0], [chamber_max_x, chamber_max_y, -z_end_of_workspace], [chamber_max_x, chamber_max_y, 0],
+            [0, chamber_max_y, 0], [0, chamber_max_y, -z_end_of_workspace], [0, chamber_max_y, 0],
             [0, 0, 0],  # Close the square by connecting back to the first vertex
-            [0, 0, -chamber_max_z],  # Draw lower rectangle
-            [chamber_max_x, 0, -chamber_max_z],
-            [chamber_max_x, chamber_max_y, -chamber_max_z],
-            [0, chamber_max_y, -chamber_max_z],
-            [0, 0, -chamber_max_z]
+            # Draw middle rectangle from z_head_bed_offset
+            [0, 0, -chamber_z_head_bed_offset],
+            [chamber_max_x, 0, -chamber_z_head_bed_offset],
+            [chamber_max_x, chamber_max_y, -chamber_z_head_bed_offset],
+            [0, chamber_max_y, -chamber_z_head_bed_offset],
+            [0, 0, -chamber_z_head_bed_offset],
+            # Draw the lowest rectangle from total workspace z_distance
+            [0, 0, -z_end_of_workspace],
+            [chamber_max_x, 0, -z_end_of_workspace],
+            [chamber_max_x, chamber_max_y, -z_end_of_workspace],
+            [0, chamber_max_y, -z_end_of_workspace],
+            [0, 0, -z_end_of_workspace]
         ])
         return vertices_chamber_border
 
-    def update_chamber_workspace_plot(self, x_max: float, y_max: float, z_max: float, z_min: float):    #ToDo check if this function works and no duplicate data appears!
+    def update_chamber_workspace_plot(self, x_max: float, y_max: float, z_max: float, z_head_bed_offset: float):    #ToDo check if this function works and no duplicate data appears!
         """
         updates local workspace sizes and returns plot object / updates chamber outlines in position graph
         """
         self.position_graph_x_max_coor = x_max
         self.position_graph_y_max_coor = y_max
         self.position_graph_z_max_coor = z_max
-        self.position_graph_z_min_coor = z_min
+        self.position_graph_z_head_bed_offset = z_head_bed_offset
 
         new_chamber_workspace_vertices = self.__generate_chamber_workspace_vertices(x_max, y_max, z_max)
         self.chamber_workspace_plot.setData(pos=new_chamber_workspace_vertices)
