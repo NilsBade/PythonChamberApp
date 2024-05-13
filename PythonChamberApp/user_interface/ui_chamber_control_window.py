@@ -44,8 +44,10 @@ class UI_chamber_control_window(QWidget):
 
     def __init__(self, position_graph_x_max_coor: float, position_graph_y_max_coor: float, position_graph_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
+        main_layout = QHBoxLayout()
 
         self.button_navigation_widget = self.__init_button_navigation_widget()
+        self.button_navigation_widget.setFixedWidth(350)
         self.control_buttons_widget.setEnabled(False)
 
         live_position_widget = self.__init_live_position_widget()
@@ -56,8 +58,6 @@ class UI_chamber_control_window(QWidget):
         self.position_graph_z_head_bed_offset = chamber_z_head_bed_offset
         self.chamber_position_graph_widget = self.__init_position_graph_widget()
 
-        main_layout = QHBoxLayout()
-        self.button_navigation_widget.setFixedWidth(350)
         main_layout.addWidget(self.button_navigation_widget, stretch=0)
 
         right_layout = QVBoxLayout()
