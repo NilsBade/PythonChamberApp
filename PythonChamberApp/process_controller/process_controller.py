@@ -239,7 +239,8 @@ class ProcessController:
 
     def chamber_connect_finished_handler(self, new_chamber: ChamberNetworkCommands):
         self.chamber = new_chamber
-        self.gui_mainWindow.tabs.setTabEnabled(1, True)  # enables first tab == Chamber Control
+        self.gui_mainWindow.enable_chamber_control_window()
+        self.gui_mainWindow.enable_auto_measurement_window()    # ToDo enable automeasurement tab (or parts of functionality) only after vna and chamber are both connected
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
@@ -607,8 +608,21 @@ class ProcessController:
 
     # **UI_vna_control_window Callbacks**
 
-    # **UI_automeasurement_window Callbacks**
+    # **UI_auto_measurement_window Callbacks**
     def auto_measurement_start_handler(self):
+        """
+        Checks if chamber is not in operation and present.
+        Check if vna is available and operating (how?)
+
+        Gets config data from auto measurement window, creates auto measurement thread and starts operation
+        """
+        if self.ui_chamber_control_process is not None:
+            self.gui_mainWindow.prompt_warning("Please wait until process from chamber control menu is "
+                                               "finished before starting the measurement.",
+                                               "Chamber is in operation")
+            return
+
+
         if self.auto_measurement_process is None:
             self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=(1.0, 2.0, 3.0),
                                                             y_vec=(1.0, 2.0, 3.0), z_vec=(1.0, 2.0, 3.0),
@@ -617,6 +631,7 @@ class ProcessController:
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
             self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
             self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
 

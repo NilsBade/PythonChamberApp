@@ -8,6 +8,9 @@ class UI_auto_measurement_window(QWidget):
     # Properties
 
     def __init__(self):
-        super.__init__()
+        super().__init__()
+        main_layout = QHBoxLayout()
+        #  ...
+        self.setLayout(main_layout)
 
         
