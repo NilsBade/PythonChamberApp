@@ -37,12 +37,13 @@ class UI_config_window(QWidget):
 
         main_layout.addLayout(main_left_layout, stretch=0)
 
-        main_layout.addWidget(self.config_console_widget, stretch=4)
+        main_layout.addWidget(self.config_console_widget, stretch=2)
 
         self.setLayout(main_layout)
 
     def __init_chamber_connection_block(self):
         chamber_connect_widget = QWidget()
+        chamber_connect_widget.setMinimumWidth(250)
         chamber_connect_layout = QVBoxLayout()
         chamber_connect_widget.setLayout(chamber_connect_layout)
 
