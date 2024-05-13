@@ -243,25 +243,14 @@ class UI_chamber_control_window(QWidget):
         chamber_max_z = self.position_graph_z_max_coor
         chamber_min_z = self.position_graph_z_head_bed_offset
 
-        # create movable *print bed*
-        vertices = numpy.array([
-            [chamber_max_x, chamber_max_y, -chamber_min_z],
-            [0, chamber_max_y, -chamber_min_z],
-            [0, 0, -chamber_min_z],
-            [chamber_max_x, 0, -chamber_min_z]
-        ])
-        # Define vertex indices to form triangles
-        faces = numpy.array([
-            [0, 1, 2],
-            [0, 2, 3]
-        ])
-        # Create mesh data for bed
-        md = gl.MeshData(vertexes=vertices, faces=faces)
         # Create GLMeshItem and add it to chamber position widget
-        self.position_graph_bed_object = gl.GLMeshItem(meshdata=md, smooth=False, color=(0.7, 0.7, 1.0, 1.0))
+        self.position_graph_bed_object = self.__generate_chamber_print_bed_object(self.position_graph_x_max_coor,
+                                                                                  self.position_graph_y_max_coor,
+                                                                                  self.position_graph_z_max_coor,
+                                                                                  self.position_graph_z_head_bed_offset)
         chamber_position_widget.addItem(self.position_graph_bed_object)
 
-        # Draw Red Chamber border
+        # Draw Red Chamber border and add it to chamber position widget
         self.chamber_workspace_plot = gl.GLLinePlotItem()
         vertices_chamber_border = self.__generate_chamber_workspace_vertices(self.position_graph_x_max_coor,
                                                                              self.position_graph_y_max_coor,
@@ -276,7 +265,7 @@ class UI_chamber_control_window(QWidget):
         chamber_position_widget.addItem(cos)
 
         # Label Front side of work-volume
-        frontlabel = gl.GLTextItem(pos= numpy.array([chamber_max_x + 5, chamber_max_y/2 -50, 5]), text= "FrontSide")
+        frontlabel = gl.GLTextItem(pos=numpy.array([chamber_max_x + 5, (chamber_max_y/2)-50, 5]), text="FrontSide")
         chamber_position_widget.addItem(frontlabel)
 
         # set view point roughly
@@ -289,6 +278,30 @@ class UI_chamber_control_window(QWidget):
         chamber_position_widget.addItem(self.position_graph_head_object)
 
         return chamber_position_widget
+
+    def __generate_chamber_print_bed_object(self, chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
+        """
+        Given the workspace dimensions this method generates a mesh object to display a print bed with initial z-position at 'chamber_position_z_head_bed_offset'.
+
+        Returns bed object as opengl.GLMeshItem
+        """
+        # create movable *print bed*
+        vertices = numpy.array([
+            [chamber_max_x, chamber_max_y, -chamber_z_head_bed_offset],
+            [0, chamber_max_y, -chamber_z_head_bed_offset],
+            [0, 0, -chamber_z_head_bed_offset],
+            [chamber_max_x, 0, -chamber_z_head_bed_offset]
+        ])
+        # Define vertex indices to form triangles
+        faces = numpy.array([
+            [0, 1, 2],
+            [0, 2, 3]
+        ])
+        # Create mesh data for bed
+        md = gl.MeshData(vertexes=vertices, faces=faces)
+        # Create GLMeshItem and return it
+        bed_object = gl.GLMeshItem(meshdata=md, smooth=False, color=(0.7, 0.7, 1.0, 1.0))
+        return bed_object
 
 
     def __generate_chamber_workspace_vertices(self, chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
