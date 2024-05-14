@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         self.ui_config_window = UI_config_window()
         self.ui_chamber_control_window = UI_chamber_control_window(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
         self.ui_vna_control_window = UI_vna_control_window()
-        self.ui_auto_measurement_window = UI_auto_measurement_window()
+        self.ui_auto_measurement_window = UI_auto_measurement_window(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
 
         self.tabs.addTab(self.ui_config_window, 'Config')  # Tab 0
         self.tabs.addTab(self.ui_chamber_control_window, 'Chamber control')  # Tab 1
