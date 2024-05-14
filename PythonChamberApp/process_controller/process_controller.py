@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
 from PythonChamberApp.process_controller.multithread_worker import Worker
+import numpy as np
 
 
 class ProcessControllerSignals(QObject):
