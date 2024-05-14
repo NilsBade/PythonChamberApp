@@ -2,6 +2,9 @@ import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, QFrame, QComboBox, QStackedWidget
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
+from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
+import numpy as np
+import pyqtgraph.opengl as gl
 
 class UI_auto_measurement_window(QWidget):
 
@@ -55,6 +58,11 @@ class UI_auto_measurement_window(QWidget):
 
     #   measurement_data_config_field
 
+    #   start auto measurement button
+    auto_measurement_start_button: QPushButton = None
+
+    #   graph visualization of mesh
+    auto_measurement_visualization_mesh: np.array = None
 
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
@@ -78,13 +86,15 @@ class UI_auto_measurement_window(QWidget):
         second_column = QVBoxLayout()
         vna_measurement_config_widget = self.__init_vna_measurement_config_widget()
         measurement_data_config_widget = self.__init_measurement_data_config_widget()
+        self.auto_measurement_start_button = QPushButton("Start Auto Measurement Process")
         second_column.addWidget(vna_measurement_config_widget)
         second_column.addWidget(measurement_data_config_widget)
+        second_column.addWidget(self.auto_measurement_start_button, alignment=Qt.AlignmentFlag.AlignBottom)
         # ...
 
         third_column = QVBoxLayout()
-        auto_measurement_progress_widget = QLabel("Here comes depiction of progress and mesh...")
-        third_column.addWidget(auto_measurement_progress_widget)
+        view_widget = self.__init_3d_graphic()
+        third_column.addWidget(view_widget)
 
         main_layout.addLayout(first_column, stretch=0)
         main_layout.addLayout(second_column, stretch=0)
@@ -286,6 +296,23 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
 
         return measurement_data_config_frame
+
+    def __init_3d_graphic(self):
+        view_widget = gl.GLViewWidget()
+        view_widget.setBackgroundColor("d")
+        #   Print bed
+        self.graphic_bed_object = Visualizer.generate_chamber_print_bed_obj(self.chamber_x_max_coor,
+                                                                            self.chamber_y_max_coor,
+                                                                            self.chamber_z_max_coor,
+                                                                            self.chamber_z_head_bed_offset)
+        view_widget.addItem(self.graphic_bed_object)
+        #   Workspace Chamber
+        chamber_lineplot = Visualizer.generate_chamber_workspace(self.chamber_x_max_coor, self.chamber_y_max_coor,
+                                                                 self.chamber_z_max_coor, self.chamber_z_head_bed_offset)
+        view_widget.addItem(chamber_lineplot)
+
+        return view_widget
+
 
     def update_live_coor_display(self, new_x: float, new_y: float, new_z: float):
         """
