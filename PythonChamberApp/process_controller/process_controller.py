@@ -22,6 +22,7 @@ class ProcessControllerSignals(QObject):
 
 
 class ProcessController:
+
     # Properties
     chamber: ChamberNetworkCommands = None
     # vna: VNA_NetworkCommands = None
@@ -40,6 +41,11 @@ class ProcessController:
     __y_max_coor: float = 500.0
     __z_max_coor: float = 850.0
     __z_head_bed_offset = 50.0      # ToDo think where/how to use bed coordinate offset. Measure in reality!
+
+    # Auto measurement data
+    zero_pos_x: float = None
+    zero_pos_y: float = None
+    zero_pos_z: float = None
 
     def __init__(self):
         self.gui_app = QApplication([])
@@ -83,7 +89,15 @@ class ProcessController:
         self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_go_button.pressed.connect(
             self.chamber_control_go_to_button_handler)
 
-        # setup AutoMeasurement Thread
+        # setup AutoMeasurement
+        self.zero_pos_x = self.__x_max_coor/2
+        self.zero_pos_y = self.__y_max_coor/2
+        self.zero_pos_z = 50
+        self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
+                                                                               self.zero_pos_z)
+        # connect all Slots & Signals Auto measurement window
+
+        # enable Multithread via threadpool
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
@@ -127,6 +141,8 @@ class ProcessController:
 
         self.gui_mainWindow.ui_chamber_control_window.update_live_coor_display(self.__x_live, self.__y_live,
                                                                                self.__z_live)
+        self.gui_mainWindow.ui_auto_measurement_window.update_live_coor_display(self.__x_live, self.__y_live,
+                                                                                self.__z_live)
 
         return
 
@@ -561,8 +577,8 @@ class ProcessController:
             new_z = new_coordinates['z']
 
             if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': new_z}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,self.chamber, new_x, new_y, new_z,
-                                                         jogspeed)
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
+                                                         self.chamber, new_x, new_y, new_z, jogspeed)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
