@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, QFrame
+from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, QFrame, QComboBox, QStackedWidget
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
 
@@ -11,17 +11,33 @@ class UI_auto_measurement_window(QWidget):
     aut_height_lineEdit: QLineEdit = None
 
     #   fit_coordinate_systems_field
-    button_move_to_zero: QPushButton = None     # coordinate at which AUT and Probe antenna ae aligned
+    button_move_to_zero: QPushButton = None     # coordinate at which AUT and Probe antenna are aligned
     button_set_new_zero: QPushButton = None
 
     #   measurement_mesh_config_field
-    mesh_x_length_lineEdit: QLineEdit = None
-    mesh_x_num_of_steps_lineEdit: QLineEdit = None
-    mesh_y_length_lineEdit: QLineEdit = None
-    mesh_y_num_of_steps_lineEdit: QLineEdit = None
-    mesh_z_start_lineEdit: QLineEdit = None
-    mesh_z_stop_lineEdit: QLineEdit = None
-    mesh_z_num_of_steps_lineEdit: QLineEdit = None
+    stacked_mesh_config_widget: QStackedWidget = None
+    #   > cubic mesh [1]
+    mesh_cubic_x_length_lineEdit: QLineEdit = None
+    mesh_cubic_x_num_of_steps_lineEdit: QLineEdit = None
+    mesh_cubic_y_length_lineEdit: QLineEdit = None
+    mesh_cubic_y_num_of_steps_lineEdit: QLineEdit = None
+    mesh_cubic_z_start_lineEdit: QLineEdit = None
+    mesh_cubic_z_stop_lineEdit: QLineEdit = None
+    mesh_cubic_z_num_of_steps_lineEdit: QLineEdit = None
+    #   > cylindrical mesh [2]
+    mesh_cylindrical_radius_lineEdit: QLineEdit = None
+    mesh_cylindrical_radius_num_of_steps: QLineEdit = None
+    mesh_cylindrical_degree_num_of_steps: QLineEdit = None
+    mesh_cylindrical_z_start_lineEdit: QLineEdit = None
+    mesh_cylindrical_z_stop_lineEdit: QLineEdit = None
+    mesh_cylindrical_z_num_of_steps_lineEdit: QLineEdit = None
+
+    #   > more to come... [3]
+
+    #   vna_measurement_config_field
+    vna_freq_start_lineEdit: QLineEdit = None
+    vna_freq_stop_lineEdit: QLineEdit = None
+    vna_freq_num_steps_lineEdit: QLineEdit = None
 
     def __init__(self):
         super().__init__()
@@ -31,8 +47,10 @@ class UI_auto_measurement_window(QWidget):
         first_column = QVBoxLayout()
         probe_antenna_inputs_frame_widget = self.__init_antenna_info_inputs_widget()
         measurement_mesh_config_widget = self.__init_measurement_mesh_config_widget()
+        vna_measurement_config_widget = self.__init_vna_measurement_config_widget()
         first_column.addWidget(probe_antenna_inputs_frame_widget)
         first_column.addWidget(measurement_mesh_config_widget)
+        first_column.addWidget(vna_measurement_config_widget)
 
         second_column = QVBoxLayout()
         # ...
@@ -51,7 +69,7 @@ class UI_auto_measurement_window(QWidget):
         antenna_info_inputs_frame.setLayout(frame_layout)
 
         main_label = QLabel("1. Antenna Info")
-        main_label.setStyleSheet("text-decoration: underline; font-size: 16px;")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
         frame_layout.addWidget(main_label,0,0,1,3,Qt.AlignmentFlag.AlignCenter)
 
         probe_antenna_inputs_title_label = QLabel("Probe Antenna")
@@ -74,7 +92,8 @@ class UI_auto_measurement_window(QWidget):
         aut_height_label = QLabel("Antenna Height:")
         self.aut_height_lineEdit = QLineEdit('060.00')
         self.aut_height_lineEdit.setInputMask('000.00')
-        self.aut_height_lineEdit.setToolTip("Put in the height of the AUT from the base plate (print bed) in [mm].")
+        self.aut_height_lineEdit.setToolTip("Put in the height of the AUT from the base plate (print bed) to "
+                                            "its highest point in [mm].")
         aut_height_label_unit = QLabel(" [mm]")
         frame_layout.addWidget(aut_height_label,4,0,1,1,Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(self.aut_height_lineEdit,4,1,1,1,Qt.AlignmentFlag.AlignCenter)
@@ -86,13 +105,72 @@ class UI_auto_measurement_window(QWidget):
         measurement_mesh_config_frame = QFrame()
         measurement_mesh_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         measurement_mesh_config_frame.setContentsMargins(5, 5, 5, 5)
-        measurement_mesh_config_frame.setFixedSize(300, 150)
-        frame_layout = QGridLayout()
+        measurement_mesh_config_frame.setMaximumWidth(300)
+        frame_layout = QVBoxLayout()
         measurement_mesh_config_frame.setLayout(frame_layout)
 
-        main_label = QLabel("2. Measurement Mesh Configuration")
-        main_label.setStyleSheet("text-decoration: underline; font-size: 16px;")
-        frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+        main_label = QLabel("2. Mesh Configuration")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        frame_layout.addWidget(main_label, Qt.AlignmentFlag.AlignCenter)
+
+        #   Setup stacked widget to support different meshes
+        self.stacked_mesh_config_widget = QStackedWidget()
+        #   cubic mesh [1]
+        cubic_mesh_config_widget = QWidget()
+        cubic_mesh_config_widget_layout = QGridLayout()
+        cubic_mesh_config_widget.setLayout(cubic_mesh_config_widget_layout)
+
+        cubic_mark = QLabel("cubic")
+        cubic_mesh_config_widget_layout.addWidget(cubic_mark)
+
+
+        #   cylindrical mesh [2]
+        cylindrical_mesh_config_widget = QWidget()
+        cylindrical_mesh_config_widget_layout = QGridLayout()
+        cylindrical_mesh_config_widget.setLayout(cylindrical_mesh_config_widget_layout)
+
+        cylindrical_mark = QLabel("cylindrical")
+        cylindrical_mesh_config_widget_layout.addWidget(cylindrical_mark)
+
+        #   more to come...
+        more_to_come_widget = QLabel("more to come...")
+
+        #   Assemble stacked Widget (watch out for order!)
+        self.stacked_mesh_config_widget.addWidget(cubic_mesh_config_widget)     # [1]
+        self.stacked_mesh_config_widget.addWidget(cylindrical_mesh_config_widget)   # [2]
+        self.stacked_mesh_config_widget.addWidget(more_to_come_widget)  # [3] end!
+
+        #   create & add Dropdown to select a mesh-option
+        mesh_selection_dropdown = QComboBox()
+        mesh_selection_dropdown.addItems([
+            'cubic mesh',
+            'cylindrical mesh',
+            'more to come...'
+        ])
+        mesh_selection_dropdown.currentIndexChanged.connect(self.__switch_mesh_config)
+        mesh_selection_dropdown.setCurrentIndex(0)  # select cubic by default
+
+        #   Add dropdown and stacked widget to measurement_mesh_config_frame
+        frame_layout.addWidget(mesh_selection_dropdown)
+        frame_layout.addWidget(self.stacked_mesh_config_widget)
 
         return measurement_mesh_config_frame
+
+    def __switch_mesh_config(self, index):
+        self.stacked_mesh_config_widget.setCurrentIndex(index)
+
+    def __init_vna_measurement_config_widget(self):
+        vna_measurement_config_frame = QFrame()
+        vna_measurement_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
+        vna_measurement_config_frame.setContentsMargins(5, 5, 5, 5)
+        vna_measurement_config_frame.setFixedSize(300, 150)
+        frame_layout = QGridLayout()
+        vna_measurement_config_frame.setLayout(frame_layout)
+
+        main_label = QLabel("3. VNA Configuration")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+
+        return vna_measurement_config_frame
+
 
