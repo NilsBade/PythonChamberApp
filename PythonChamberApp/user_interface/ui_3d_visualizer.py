@@ -63,3 +63,17 @@ class VisualizerPyqtGraph:
         ])
         chamber_workspace_plot.setData(pos=vertices_chamber_border, color=(1, 0, 0, 1), width=2.0)
         return chamber_workspace_plot
+
+    @staticmethod
+    def generate_mesh_scatter_plot(x_vec: np.array, y_vec: np.array, z_vec: np.array):
+        new_scatter_mesh = gl.GLScatterPlotItem()
+        color = (0.5,1,0,1)
+        size = 3
+        point_list = []
+        for z in z_vec:
+            for y in y_vec:
+                for x in x_vec:
+                    point_list.append([x, y, z])
+        data = np.array(point_list)
+        new_scatter_mesh.setData(pos=data, color=color, size=size)
+        return new_scatter_mesh

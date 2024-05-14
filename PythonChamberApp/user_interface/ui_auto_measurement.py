@@ -306,10 +306,28 @@ class UI_auto_measurement_window(QWidget):
                                                                             self.chamber_z_max_coor,
                                                                             self.chamber_z_head_bed_offset)
         view_widget.addItem(self.graphic_bed_object)
+
         #   Workspace Chamber
-        chamber_lineplot = Visualizer.generate_chamber_workspace(self.chamber_x_max_coor, self.chamber_y_max_coor,
-                                                                 self.chamber_z_max_coor, self.chamber_z_head_bed_offset)
-        view_widget.addItem(chamber_lineplot)
+        chamber_workspace = Visualizer.generate_chamber_workspace(self.chamber_x_max_coor, self.chamber_y_max_coor,
+                                                                  self.chamber_z_max_coor, self.chamber_z_head_bed_offset)
+        view_widget.addItem(chamber_workspace)
+
+        #   COS at 0,0,0
+        cos = gl.GLAxisItem()
+        cos.setSize(x=50, y=50, z=50)
+        view_widget.addItem(cos)
+
+        #   meas-scatter-plot
+        x_vec = np.linspace(-100.0, 100.0, num=20)
+        y_vec = np.linspace(-100.0, 100.0, num=20)
+        z_vec = np.linspace(-600.0, -100.0, num=20)
+
+        mesh = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
+        view_widget.addItem(mesh)
+
+        # set view point roughly
+        view_widget.pan(self.chamber_x_max_coor / 2, self.chamber_y_max_coor / 2, -self.chamber_z_max_coor / 3)
+        view_widget.setCameraPosition(distance=1200)
 
         return view_widget
 
