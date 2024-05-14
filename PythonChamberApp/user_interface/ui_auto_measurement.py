@@ -18,6 +18,7 @@ class UI_auto_measurement_window(QWidget):
     #   antenna_info_inputs_field
     probe_antenna_length_lineEdit: QLineEdit = None
     aut_height_lineEdit: QLineEdit = None
+    auto_measurement_jogSpeed_lineEdit: QLineEdit = None
     #   > fit_coordinate_systems_interface
     button_move_to_zero: QPushButton = None     # coordinate at which AUT and Probe antenna are aligned
     button_set_new_zero: QPushButton = None
@@ -29,11 +30,14 @@ class UI_auto_measurement_window(QWidget):
     stacked_mesh_config_widget: QStackedWidget = None
     #   > cubic mesh [1]
     mesh_cubic_x_length_lineEdit: QLineEdit = None
+    mesh_cubic_x_max_length_label: QLabel = None
     mesh_cubic_x_num_of_steps_lineEdit: QLineEdit = None
     mesh_cubic_y_length_lineEdit: QLineEdit = None
+    mesh_cubic_y_max_length_label: QLabel = None
     mesh_cubic_y_num_of_steps_lineEdit: QLineEdit = None
     mesh_cubic_z_start_lineEdit: QLineEdit = None
     mesh_cubic_z_stop_lineEdit: QLineEdit = None
+    mesh_cubic_z_max_distance_label: QLabel = None
     mesh_cubic_z_num_of_steps_lineEdit: QLineEdit = None
     #   > cylindrical mesh [2]
     mesh_cylindrical_radius_lineEdit: QLineEdit = None
@@ -49,6 +53,9 @@ class UI_auto_measurement_window(QWidget):
     vna_freq_stop_lineEdit: QLineEdit = None
     vna_freq_num_steps_lineEdit: QLineEdit = None
 
+    #   measurement_data_config_field
+
+
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
         self.chamber_x_max_coor = chamber_x_max_coor
@@ -56,8 +63,8 @@ class UI_auto_measurement_window(QWidget):
         self.chamber_z_max_coor = chamber_z_max_coor
         self.chamber_z_head_bed_offset = chamber_z_head_bed_offset
 
-        self.label_show_current_position = QLabel("Not initialized")
-        self.label_show_current_zero = QLabel("Not initialized")
+        self.label_show_current_position = QLabel("Current Position >> Not initialized")
+        self.label_show_current_zero = QLabel("Current Zero >> Not initialized")
 
         main_layout = QHBoxLayout()
 
@@ -127,12 +134,24 @@ class UI_auto_measurement_window(QWidget):
         align_antennas_title_label = QLabel("Antenna Alignment")
         align_antennas_title_label.setStyleSheet("text-decoration: underline; font-size: 14px;")
         frame_layout.addWidget(align_antennas_title_label,5,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        auto_measurement_jogSpeed_label = QLabel("Jogspeed AutoMeas:")
+        auto_measurement_jogSpeed_label_unit = QLabel(" [mm/s]")
         self.button_move_to_zero = QPushButton("Go to Zero")
+        self.button_move_to_zero.setToolTip("Moves probe antenna to stored 'Zero Position'.\nFrom here adjust position "
+                                            "via chamber control tab to get to real 'Zero Position'. "
+                                            "Then store position as new Zero.")
         self.button_set_new_zero = QPushButton("Set current as Zero")
-        frame_layout.addWidget(self.button_move_to_zero,6,0,1,1)
-        frame_layout.addWidget(self.button_set_new_zero,6,1,1,2)
-        frame_layout.addWidget(self.label_show_current_position,7,0,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.label_show_current_zero,8,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        self.button_set_new_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center of AUT\n"
+                                            "and the end of the probe antenna is virtually touching the top of the AUT\n"
+                                            "considering Z-direction.")
+        self.auto_measurement_jogSpeed_lineEdit = QLineEdit("10")
+        frame_layout.addWidget(auto_measurement_jogSpeed_label,6,0,1,1)
+        frame_layout.addWidget(self.auto_measurement_jogSpeed_lineEdit,6,1,1,1)
+        frame_layout.addWidget(auto_measurement_jogSpeed_label_unit,6,2,1,1)
+        frame_layout.addWidget(self.button_move_to_zero,7,0,1,1)
+        frame_layout.addWidget(self.button_set_new_zero,7,1,1,2)
+        frame_layout.addWidget(self.label_show_current_position,8,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.label_show_current_zero,9,0,1,3,Qt.AlignmentFlag.AlignLeft)
 
         return antenna_info_inputs_frame
 
@@ -155,9 +174,51 @@ class UI_auto_measurement_window(QWidget):
         cubic_mesh_config_widget_layout = QGridLayout()
         cubic_mesh_config_widget.setLayout(cubic_mesh_config_widget_layout)
 
-        cubic_mark = QLabel("cubic")
-        cubic_mesh_config_widget_layout.addWidget(cubic_mark)
+        cubic_x_length_label = QLabel("Length in X:")
+        self.mesh_cubic_x_length_lineEdit = QLineEdit("100")
+        self.mesh_cubic_x_length_lineEdit.setToolTip("Measurement Volume length in X in [mm].\nSymmetric around X-center of AUT.")
+        self.mesh_cubic_x_max_length_label = QLabel(str("< max " + str(self.chamber_x_max_coor) + " mm"))
+        cubic_x_num_of_steps_label = QLabel("Num of Steps:")
+        self.mesh_cubic_x_num_of_steps_lineEdit = QLineEdit("10")
 
+        cubic_y_length_label = QLabel("Length in Y:")
+        self.mesh_cubic_y_length_lineEdit = QLineEdit("100")
+        self.mesh_cubic_y_length_lineEdit.setToolTip("Measurement Volume length in Y in [mm].\nSymmetric around Y-center of AUT.")
+        self.mesh_cubic_y_max_length_label = QLabel(str("< max " + str(self.chamber_y_max_coor) + " mm"))
+        cubic_y_num_of_steps_label = QLabel("Num of Steps:")
+        self.mesh_cubic_y_num_of_steps_lineEdit = QLineEdit("10")
+
+        cubic_z_start_label = QLabel("Start distance Z:")
+        cubic_z_start_label_hint = QLabel("> 0 mm")
+        cubic_z_stop_label = QLabel("Stop distance Z:")
+        cubic_z_num_of_steps_label = QLabel("Num of Steps:")
+        self.mesh_cubic_z_start_lineEdit = QLineEdit("200")
+        self.mesh_cubic_z_start_lineEdit.setToolTip("Start-distance from AUT for measurement volume in [mm].")
+        self.mesh_cubic_z_stop_lineEdit = QLineEdit("700")
+        self.mesh_cubic_z_stop_lineEdit.setToolTip("Maximum distance from AUT for measurement volume in [mm]")
+        self.mesh_cubic_z_max_distance_label = QLabel(str("< max " + str(self.chamber_z_max_coor - float(self.probe_antenna_length_lineEdit.text())) + " mm"))
+        self.mesh_cubic_z_num_of_steps_lineEdit = QLineEdit("50")
+        #   X inputs
+        cubic_mesh_config_widget_layout.addWidget(cubic_x_length_label,0,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_length_lineEdit,0,1,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_max_length_label,0,2,1,1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_x_num_of_steps_label,1,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_num_of_steps_lineEdit,1,1,1,1)
+        #   Y inputs
+        cubic_mesh_config_widget_layout.addWidget(cubic_y_length_label,2,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_length_lineEdit,2,1,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_max_length_label,2,2,1,1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_y_num_of_steps_label,3,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_num_of_steps_lineEdit,3,1,1,1)
+        #   Z inputs
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label,4,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_start_lineEdit,4,1,1,1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label_hint,4,2,1,1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_stop_label,5,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_stop_lineEdit,5,1,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_max_distance_label,5,2,1,1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_num_of_steps_label,6,0,1,1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_num_of_steps_lineEdit,6,1,1,1)
 
         #   cylindrical mesh [2]
         cylindrical_mesh_config_widget = QWidget()
@@ -188,6 +249,10 @@ class UI_auto_measurement_window(QWidget):
         #   Add dropdown and stacked widget to measurement_mesh_config_frame
         frame_layout.addWidget(mesh_selection_dropdown)
         frame_layout.addWidget(self.stacked_mesh_config_widget)
+
+        #   Connect Signals & Slots to update maximum input labels
+        self.probe_antenna_length_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
+        self.aut_height_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
 
         return measurement_mesh_config_frame
 
@@ -231,7 +296,8 @@ class UI_auto_measurement_window(QWidget):
 
     def update_current_zero_pos(self, new_x: float, new_y: float, new_z: float):
         """
-        Updates display and buffer of current zero position
+        Updates display and buffer of current zero position.
+        Initiates update of all max-input-labels in mesh_configurations_widgets.
         """
         self.current_zero_x = new_x
         self.current_zero_y = new_y
@@ -239,5 +305,32 @@ class UI_auto_measurement_window(QWidget):
 
         new_zero_pos_label = "Current Zero >> X:" + str(new_x) + " Y:" + str(new_y) + " Z:" + str(new_z)
         self.label_show_current_zero.setText(new_zero_pos_label)
+
+        self.update_mesh_max_input_labels()
+
+    def update_mesh_max_input_labels(self):
+        """
+        Updates the Max-Value-labels in the mesh configuration widgets.
+        For every mesh config that is added, this function must be adapted to calculate the resulting max inputs
+        and update each widget!
+
+        Draws information from class properties everytime the zero_pos is set or antenna info is updated.
+        """
+        # Update Cubic mesh max inputs
+        min_x_distance2border = self.current_zero_x
+        if self.current_zero_x > self.chamber_x_max_coor/2:
+            min_x_distance2border = self.chamber_x_max_coor - self.current_zero_x
+        min_y_distance2border = self.current_zero_y
+        if self.current_zero_y > self.chamber_y_max_coor/2:
+            min_y_distance2border = self.chamber_y_max_coor - self.current_zero_y
+        min_z_distance2border = self.chamber_z_max_coor - float(self.probe_antenna_length_lineEdit.text()) - float(self.aut_height_lineEdit.text())
+
+        self.mesh_cubic_x_max_length_label.setText("< max " + str(2*min_x_distance2border) + " mm")
+        self.mesh_cubic_y_max_length_label.setText("< max " + str(2*min_y_distance2border) + " mm")
+        self.mesh_cubic_z_max_distance_label.setText("< max " + str(min_z_distance2border) + " mm")
+
+        # Update cylindrical mesh max inputs
+
+        # more to come...
 
 

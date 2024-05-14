@@ -92,10 +92,14 @@ class ProcessController:
         # setup AutoMeasurement
         self.zero_pos_x = self.__x_max_coor/2
         self.zero_pos_y = self.__y_max_coor/2
-        self.zero_pos_z = 50
+        self.zero_pos_z = 150
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
         # connect all Slots & Signals Auto measurement window
+        self.gui_mainWindow.ui_auto_measurement_window.button_move_to_zero.pressed.connect(
+            self.auto_measurement_goZero_button_handler)
+        self.gui_mainWindow.ui_auto_measurement_window.button_set_new_zero.pressed.connect(
+            self.auto_measurement_setZero_button_handler)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -594,6 +598,7 @@ class ProcessController:
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
         return
+
     def chamber_control_jog_to_abs_coor_routine(self, chamber: ChamberNetworkCommands, x_coor: float, y_coor: float,
                                                 z_coor: float, jogspeed: float, update_callback, progress_callback,
                                                 position_update_callback):
@@ -638,6 +643,8 @@ class ProcessController:
                                                "Chamber is in operation")
             return
 
+        self.gui_mainWindow.disable_chamber_control_window()
+        self.gui_mainWindow.disable_vna_control_window()
 
         if self.auto_measurement_process is None:
             self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=(1.0, 2.0, 3.0),
@@ -660,3 +667,60 @@ class ProcessController:
     def auto_measurement_finished_handler(self):
         self.auto_measurement_process = None
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
+        self.gui_mainWindow.enable_chamber_control_window()
+        self.gui_mainWindow.enable_vna_control_window()
+
+    def auto_measurement_goZero_button_handler(self):
+        """
+        Jogs chamber to currently set "zero position".
+        Enables to check if position is accurate by visual inspection of the real chamber.
+
+        "Zero Position" means the probe antenna is located exactly above the AUT's center in XY and both antennas are
+        virtually touching >> End of ProbeAntenna has same height as top End of AUT
+        """
+        if self.ui_chamber_control_process is None and self.auto_measurement_process is None:
+            jogspeed = float(self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_jogSpeed_lineEdit.text())
+            new_x = self.zero_pos_x
+            new_y = self.zero_pos_y
+            new_z = self.zero_pos_z
+
+            if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': new_z}):
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
+                                                         self.chamber, new_x, new_y, new_z, jogspeed)
+
+                self.ui_chamber_control_process.signals.update.connect(
+                    self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+                self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+
+                self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+                self.threadpool.start(self.ui_chamber_control_process)
+        else:
+            self.gui_mainWindow.prompt_warning(
+                "Another chamber control request or auto measurement process is currently running!\nPlease wait until it is finished.",
+                "Too many Requests")
+        return
+
+    def auto_measurement_setZero_button_handler(self):
+        """
+        Overrides the saved "zero position" with the current position of the chamber.
+
+        "Zero Position" means the probe antenna is located exactly above the AUT's center in XY and both antennas
+        are virtually touching >> End of ProbeAntenna has same height as top End of AUT
+
+        This position is used to match the coordinate systems of the AUT and the Probe antenna before starting the
+        auto measurement process.
+        """
+        self.zero_pos_x = self.__x_live
+        self.zero_pos_y = self.__y_live
+        self.zero_pos_z = self.__z_live
+
+        self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
+                                                                               self.zero_pos_z)
+        console_msg = "Updated zero position to X:" + str(self.zero_pos_x) + " Y:" + str(self.zero_pos_y) + " Z:" + str(self.zero_pos_z)
+        self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
+        self.gui_mainWindow.update_status_bar(console_msg)
+
+        return
