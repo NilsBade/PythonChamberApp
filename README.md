@@ -110,6 +110,10 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install requests
     ```
+   **numpy**
+    ```sh
+    python -m pip install numpy
+    ```
     > [!NOTE]
     > If you plan to develop new features for the app, also install **pytest** to support unit test functionality
     >   ```sh
