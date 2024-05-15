@@ -77,3 +77,18 @@ class VisualizerPyqtGraph:
         data = np.array(point_list)
         new_scatter_mesh.setData(pos=data, color=color, size=size)
         return new_scatter_mesh
+
+    @staticmethod
+    def generate_point_list(x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...]):
+        """
+        :param x_vec: vector of x coordinates
+        :param y_vec: vectors of y coordinates
+        :param z_vec: vectors of z coordinates
+        :return: list of points as 3d vectors e.g. list: [ [x1, y1, z1],[x2, y1, z1],... ]
+        """
+        point_list = []
+        for z in z_vec:
+            for y in y_vec:
+                for x in x_vec:
+                    point_list.append([x, y, z])
+        return point_list
