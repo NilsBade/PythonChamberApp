@@ -93,7 +93,7 @@ class ProcessController:
         # setup AutoMeasurement
         self.zero_pos_x = self.__x_max_coor/2
         self.zero_pos_y = self.__y_max_coor/2
-        self.zero_pos_z = 150
+        self.zero_pos_z = None
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
         # connect all Slots & Signals Auto measurement window
@@ -675,21 +675,31 @@ class ProcessController:
 
     def auto_measurement_goZero_button_handler(self):
         """
-        Jogs chamber to currently set "zero position".
+        Jogs chamber to currently set "zero position" with z-offset of +10mm to avoid collision.
         Enables to check if position is accurate by visual inspection of the real chamber.
 
         "Zero Position" means the probe antenna is located exactly above the AUT's center in XY and both antennas are
         virtually touching >> End of ProbeAntenna has same height as top End of AUT
         """
+        if self.zero_pos_z is None or self.zero_pos_x is None or self.zero_pos_y is None:
+            self.gui_mainWindow.prompt_info("Zero Position not completely defined!\nPlease set all Coordinates of Zero "
+                                            "Position first.\n\nWhat is 'Zero Position'?\nZero Position means the probe "
+                                            "antenna is located exactly above the AUT's center in XY and both antennas "
+                                            "are virtually touching >> End of ProbeAntenna has same height as top End "
+                                            "of AUT","Zero Position unknown")
+            return
+
         if self.ui_chamber_control_process is None and self.auto_measurement_process is None:
             jogspeed = float(self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_jogSpeed_lineEdit.text())
             new_x = self.zero_pos_x
             new_y = self.zero_pos_y
             new_z = self.zero_pos_z
 
-            if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': new_z}):
+            safe_z_move = new_z + 10    # 10mm offset to avoid collision of antennas
+
+            if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': safe_z_move}):
                 self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
-                                                         self.chamber, new_x, new_y, new_z, jogspeed)
+                                                         self.chamber, new_x, new_y, safe_z_move, jogspeed)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
@@ -735,7 +745,7 @@ class ProcessController:
         """
         # ToDo: Klären wir ich den chamber bed offset definiere und wie groß!
         self.zero_pos_z = (self.gui_mainWindow.ui_auto_measurement_window.get_probe_antenna_length() +
-                           self.gui_mainWindow.ui_auto_measurement_window.get_aut_height() + self.__z_head_bed_offset)
+                           self.gui_mainWindow.ui_auto_measurement_window.get_aut_height()-self.__z_head_bed_offset)
 
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)

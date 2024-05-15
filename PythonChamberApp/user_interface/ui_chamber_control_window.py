@@ -242,7 +242,6 @@ class UI_chamber_control_window(QWidget):
         chamber_max_x = self.position_graph_x_max_coor
         chamber_max_y = self.position_graph_y_max_coor
         chamber_max_z = self.position_graph_z_max_coor
-        chamber_min_z = self.position_graph_z_head_bed_offset
 
         # Create GLMeshItem and add it to chamber position widget
         self.position_graph_bed_object = Visualizer.generate_chamber_print_bed_obj(self.position_graph_x_max_coor,
@@ -260,7 +259,7 @@ class UI_chamber_control_window(QWidget):
 
         # Draw COS axis at 0,0,0
         cos = gl.GLAxisItem()
-        cos.setSize(x=50, y=50, z=50)
+        cos.setSize(x=75, y=75, z=75)
         chamber_position_widget.addItem(cos)
 
         # Label Front side of work-volume
@@ -273,7 +272,7 @@ class UI_chamber_control_window(QWidget):
 
         # create spot to display head position
         self.position_graph_head_object = gl.GLScatterPlotItem()
-        self.position_graph_head_object.setData(pos=(0, 0, 0), size=10)
+        self.position_graph_head_object.setData(pos=(0, 0, self.position_graph_z_head_bed_offset), size=10)
         chamber_position_widget.addItem(self.position_graph_head_object)
 
         return chamber_position_widget

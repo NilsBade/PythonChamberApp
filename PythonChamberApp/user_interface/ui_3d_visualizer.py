@@ -16,10 +16,10 @@ class VisualizerPyqtGraph:
         """
         # create movable *print bed*
         vertices = np.array([
-            [chamber_max_x, chamber_max_y, -chamber_z_head_bed_offset],
-            [0, chamber_max_y, -chamber_z_head_bed_offset],
-            [0, 0, -chamber_z_head_bed_offset],
-            [chamber_max_x, 0, -chamber_z_head_bed_offset]
+            [chamber_max_x, chamber_max_y, 0],
+            [0, chamber_max_y, 0],
+            [0, 0, 0],
+            [chamber_max_x, 0, 0]
         ])
         # Define vertex indices to form triangles
         faces = np.array([
@@ -39,30 +39,109 @@ class VisualizerPyqtGraph:
         chambers workspace in a opengl.GLViewWidget.
         """
         chamber_workspace_plot = gl.GLLinePlotItem()
-        z_end_of_workspace = chamber_max_z + chamber_z_head_bed_offset
         vertices_chamber_border = np.array([
-            # Draw upper rectangle and vertical lines to bottom at each corner
-            [0, 0, 0], [0, 0, -z_end_of_workspace], [0, 0, 0],  # draw one vertical line and back ...
-            [chamber_max_x, 0, 0], [chamber_max_x, 0, -z_end_of_workspace], [chamber_max_x, 0, 0],
-            [chamber_max_x, chamber_max_y, 0], [chamber_max_x, chamber_max_y, -z_end_of_workspace],
+            # Draw upper rectangle and vertical lines to bottom at each corner -> Z-level equal to end of probeHead
+            [0, 0, chamber_z_head_bed_offset], [0, 0, -chamber_max_z], [0, 0, chamber_z_head_bed_offset],  # draw one vertical line and back ...
+            [chamber_max_x, 0, chamber_z_head_bed_offset], [chamber_max_x, 0, -chamber_max_z], [chamber_max_x, 0, chamber_z_head_bed_offset],
+            [chamber_max_x, chamber_max_y, chamber_z_head_bed_offset], [chamber_max_x, chamber_max_y, -chamber_max_z],
+            [chamber_max_x, chamber_max_y, chamber_z_head_bed_offset],
+            [0, chamber_max_y, chamber_z_head_bed_offset], [0, chamber_max_y, -chamber_max_z], [0, chamber_max_y, chamber_z_head_bed_offset],
+            [0, 0, chamber_z_head_bed_offset],  # Close the square by connecting back to the first vertex
+            # Draw middle rectangle - bed zero coordinate
+            [0, 0, 0],
+            [chamber_max_x, 0, 0],
             [chamber_max_x, chamber_max_y, 0],
-            [0, chamber_max_y, 0], [0, chamber_max_y, -z_end_of_workspace], [0, chamber_max_y, 0],
-            [0, 0, 0],  # Close the square by connecting back to the first vertex
-            # Draw middle rectangle from z_head_bed_offset
-            [0, 0, -chamber_z_head_bed_offset],
-            [chamber_max_x, 0, -chamber_z_head_bed_offset],
-            [chamber_max_x, chamber_max_y, -chamber_z_head_bed_offset],
-            [0, chamber_max_y, -chamber_z_head_bed_offset],
-            [0, 0, -chamber_z_head_bed_offset],
+            [0, chamber_max_y, 0],
+            [0, 0, 0],
             # Draw the lowest rectangle from total workspace z_distance
-            [0, 0, -z_end_of_workspace],
-            [chamber_max_x, 0, -z_end_of_workspace],
-            [chamber_max_x, chamber_max_y, -z_end_of_workspace],
-            [0, chamber_max_y, -z_end_of_workspace],
-            [0, 0, -z_end_of_workspace]
+            [0, 0, -chamber_max_z],
+            [chamber_max_x, 0, -chamber_max_z],
+            [chamber_max_x, chamber_max_y, -chamber_max_z],
+            [0, chamber_max_y, -chamber_max_z],
+            [0, 0, -chamber_max_z]
         ])
         chamber_workspace_plot.setData(pos=vertices_chamber_border, color=(1, 0, 0, 1), width=2.0)
         return chamber_workspace_plot
+
+
+    @staticmethod
+    def generate_antenna_object(antenna_height: float, antenna_width: float, point_up: bool):
+        """
+        Given an antenna height, this function returns a 3D visualization of an probing antenna for display
+
+
+        :param antenna_height: Height of antenna dummy in [mm]
+        :param antenna_width: Base-length of antenna dummy in [mm]
+        :param point_up: True > Antenna points +z direction, False > Antenna points -z direction
+        :return: opengl.GLLinePlotItem
+        """
+        vertices = VisualizerPyqtGraph.generate_antenna_object_vertices(antenna_height, antenna_width, point_up)
+        antenna_plot = gl.GLLinePlotItem(pos=vertices, color=(0, 1.0, 1.0, 0.3), width=4.0)
+        return antenna_plot
+
+    @staticmethod
+    def generate_antenna_object_vertices(antenna_height: float, antenna_width: float, point_up: bool):
+
+        # create cubic antenna dummy
+        w = antenna_width / 2
+        look_direction = antenna_height
+
+        if point_up is False:  # invert direction when look down
+            look_direction *= -1
+
+        points = np.array([
+            [-w, -w, 0], [-w, -w, look_direction], [-w, -w, 0],
+            [w, -w, 0], [w, -w, look_direction], [w, -w, 0],
+            [w, w, 0], [w, w, look_direction], [w, w, 0],
+            [-w, w, 0], [-w, w, look_direction], [-w, w, 0],
+            [-w, -w, 0],
+            [-w, -w, look_direction],[w, -w, look_direction],[w, w, look_direction],[-w, w, look_direction],
+            [-w, -w, look_direction],
+        ])
+        return points
+
+    @staticmethod
+    def generate_antenna_object_old(antenna_height: float, antenna_width: float, point_up: bool):
+        """
+        Given an antenna height, this function returns a 3D visualization of an probing antenna for display
+
+
+        :param antenna_height: Height of antenna dummy in [mm]
+        :param antenna_width: Base-length of antenna dummy in [mm]
+        :param point_up: True > Antenna points +z direction, False > Antenna points -z direction
+        :return: opengl.GLMeshItem
+        """
+        # create cubic antenna dummy
+        w = antenna_width/2
+        look_direction = antenna_height
+
+        if point_up is False:   # invert direction when look down
+            look_direction *= -1
+
+        vertices = np.array([
+            [-w, -w, 0],
+            [w, -w, 0],
+            [w, w, 0],
+            [-w, w, 0],
+            [-w, -w, look_direction],
+            [w, -w, look_direction],
+            [w, w, look_direction],
+            [-w, w, look_direction],
+        ])
+        # Define vertex indices to form triangles
+        faces = np.array([
+            [0, 1, 2], [0, 2, 3],
+            [0, 5, 1], [0, 4, 5],
+            [1, 2, 6], [1, 5, 6],
+            [2, 3, 6], [3, 6, 7],
+            [0, 4, 3], [3, 4, 7],
+            [4, 5, 7], [5, 6, 7]
+        ])
+        # Create mesh data for probe
+        md = gl.MeshData(vertexes=vertices, faces=faces)
+        # Create GLMeshItem and return it
+        probe_object = gl.GLMeshItem(meshdata=md, smooth=False, color=(0.1, 0.1, 0.1, 1.0))
+        return probe_object
 
     @staticmethod
     def generate_mesh_scatter_plot(x_vec: np.array, y_vec: np.array, z_vec: np.array):
