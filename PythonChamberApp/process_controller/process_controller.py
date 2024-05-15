@@ -99,8 +99,10 @@ class ProcessController:
         # connect all Slots & Signals Auto measurement window
         self.gui_mainWindow.ui_auto_measurement_window.button_move_to_zero.pressed.connect(
             self.auto_measurement_goZero_button_handler)
-        self.gui_mainWindow.ui_auto_measurement_window.button_set_new_zero.pressed.connect(
+        self.gui_mainWindow.ui_auto_measurement_window.button_set_current_as_zero.pressed.connect(
             self.auto_measurement_setZero_button_handler)
+        self.gui_mainWindow.ui_auto_measurement_window.button_set_z_zero_from_antennas.pressed.connect(
+            self.auto_measurement_set_z_zero_from_antenna_dimensions_button_handler)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -725,3 +727,18 @@ class ProcessController:
         self.gui_mainWindow.update_status_bar(console_msg)
 
         return
+
+    def auto_measurement_set_z_zero_from_antenna_dimensions_button_handler(self):
+        """
+        Reads antenna info from auto measurement window and updates the Z coordinate of the current Zero position
+        according to given antenna heights
+        """
+        # ToDo: Klären wir ich den chamber bed offset definiere und wie groß!
+        self.zero_pos_z = (self.gui_mainWindow.ui_auto_measurement_window.get_probe_antenna_length() +
+                           self.gui_mainWindow.ui_auto_measurement_window.get_aut_height() + self.__z_head_bed_offset)
+
+        self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
+                                                                               self.zero_pos_z)
+        console_msg = "Updated zero coordinate Z: " + str(self.zero_pos_z)
+        self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
+        self.gui_mainWindow.update_status_bar(console_msg)

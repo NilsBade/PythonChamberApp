@@ -23,8 +23,9 @@ class UI_auto_measurement_window(QWidget):
     aut_height_lineEdit: QLineEdit = None
     auto_measurement_jogSpeed_lineEdit: QLineEdit = None
     #   > fit_coordinate_systems_interface
+    button_set_z_zero_from_antennas: QPushButton = None
     button_move_to_zero: QPushButton = None     # coordinate at which AUT and Probe antenna are aligned
-    button_set_new_zero: QPushButton = None
+    button_set_current_as_zero: QPushButton = None
     label_show_current_position: QLabel = None
     label_show_current_zero: QLabel = None
 
@@ -62,7 +63,7 @@ class UI_auto_measurement_window(QWidget):
     auto_measurement_start_button: QPushButton = None
 
     #   graph visualization of mesh
-    auto_measurement_visualization_mesh: np.array = None
+    auto_measurement_displayed_mesh: gl.GLScatterPlotItem = None
 
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
@@ -90,6 +91,8 @@ class UI_auto_measurement_window(QWidget):
         second_column.addWidget(vna_measurement_config_widget)
         second_column.addWidget(measurement_data_config_widget)
         second_column.addWidget(self.auto_measurement_start_button, alignment=Qt.AlignmentFlag.AlignBottom)
+
+        self.auto_measurement_start_button.pressed.connect(self.update_mesh_display) # toDo: connect entfernen! nur für debug am button
         # ...
 
         third_column = QVBoxLayout()
@@ -139,29 +142,32 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(aut_height_label,4,0,1,1,Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(self.aut_height_lineEdit,4,1,1,1,Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(aut_height_label_unit,4,2,1,1,Qt.AlignmentFlag.AlignLeft)
+        
+        self.button_set_z_zero_from_antennas = QPushButton(" Set Zero Z-Coor from antenna-dimensions ")
+        frame_layout.addWidget(self.button_set_z_zero_from_antennas,5,0,1,3,Qt.AlignmentFlag.AlignCenter)
 
         #   Align Antennas
         align_antennas_title_label = QLabel("Antenna Alignment")
         align_antennas_title_label.setStyleSheet("text-decoration: underline; font-size: 14px;")
-        frame_layout.addWidget(align_antennas_title_label,5,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(align_antennas_title_label,6,0,1,3,Qt.AlignmentFlag.AlignLeft)
         auto_measurement_jogSpeed_label = QLabel("Jogspeed AutoMeas:")
         auto_measurement_jogSpeed_label_unit = QLabel(" [mm/s]")
         self.button_move_to_zero = QPushButton("Go to Zero")
         self.button_move_to_zero.setToolTip("Moves probe antenna to stored 'Zero Position'.\nFrom here adjust position "
                                             "via chamber control tab to get to real 'Zero Position'. "
                                             "Then store position as new Zero.")
-        self.button_set_new_zero = QPushButton("Set current as Zero")
-        self.button_set_new_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center of AUT\n"
+        self.button_set_current_as_zero = QPushButton("Set current as Zero")
+        self.button_set_current_as_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center of AUT\n"
                                             "and the end of the probe antenna is virtually touching the top of the AUT\n"
                                             "considering Z-direction.")
         self.auto_measurement_jogSpeed_lineEdit = QLineEdit("10")
-        frame_layout.addWidget(auto_measurement_jogSpeed_label,6,0,1,1)
-        frame_layout.addWidget(self.auto_measurement_jogSpeed_lineEdit,6,1,1,1)
-        frame_layout.addWidget(auto_measurement_jogSpeed_label_unit,6,2,1,1)
-        frame_layout.addWidget(self.button_move_to_zero,7,0,1,1)
-        frame_layout.addWidget(self.button_set_new_zero,7,1,1,2)
-        frame_layout.addWidget(self.label_show_current_position,8,0,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.label_show_current_zero,9,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(auto_measurement_jogSpeed_label,7,0,1,1)
+        frame_layout.addWidget(self.auto_measurement_jogSpeed_lineEdit,7,1,1,1)
+        frame_layout.addWidget(auto_measurement_jogSpeed_label_unit,7,2,1,1)
+        frame_layout.addWidget(self.button_move_to_zero,8,0,1,1)
+        frame_layout.addWidget(self.button_set_current_as_zero,8,1,1,2)
+        frame_layout.addWidget(self.label_show_current_position,9,0,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.label_show_current_zero,10,0,1,3,Qt.AlignmentFlag.AlignLeft)
 
         return antenna_info_inputs_frame
 
@@ -318,12 +324,12 @@ class UI_auto_measurement_window(QWidget):
         view_widget.addItem(cos)
 
         #   meas-scatter-plot
-        x_vec = np.linspace(-100.0, 100.0, num=20)
-        y_vec = np.linspace(-100.0, 100.0, num=20)
+        x_vec = np.linspace(0, 500.0, num=20)
+        y_vec = np.linspace(0, 500.0, num=20)
         z_vec = np.linspace(-600.0, -100.0, num=20)
 
-        mesh = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
-        view_widget.addItem(mesh)
+        self.auto_measurement_displayed_mesh = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
+        view_widget.addItem(self.auto_measurement_displayed_mesh)
 
         # set view point roughly
         view_widget.pan(self.chamber_x_max_coor / 2, self.chamber_y_max_coor / 2, -self.chamber_z_max_coor / 3)
@@ -378,4 +384,91 @@ class UI_auto_measurement_window(QWidget):
 
         # more to come...
 
+    def update_mesh_display(self):
+        """
+        Callback that updates displayed mesh in graph-visualization dependent on configuration
+        """
+        mesh_info = self.get_mesh_cubic_data()
+
+        # flip z orientation for graph
+        new_z_coor = []
+        for nz in mesh_info['z_vec']:
+            new_z_coor.append(-nz)
+
+        # set new scatter data
+        new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'], tuple(new_z_coor))
+        self.auto_measurement_displayed_mesh.setData(pos=new_data)
+
+        # set bed to lowest position for mesh
+        lowest_z_mesh = new_z_coor[-1]
+        pos_z_bed = lowest_z_mesh - float(self.aut_height_lineEdit.text())
+        pos_z_bed += self.chamber_z_head_bed_offset    # correction for translation operation
+        self.graphic_bed_object.resetTransform()
+        self.graphic_bed_object.translate(dx=0, dy=0, dz=pos_z_bed)
+
+    def get_mesh_cubic_data(self):
+        """
+        This function returns a dictionary that provides additional info and x,y,z vectors of
+        the configured cubic measurement mesh as follows:
+            {
+            'tot_num_of_points' : int
+            'num_steps_x' : int
+            'num_steps_y' : int
+            'num_steps_z' : int
+            'x_vec' : tuple(float,...) , vector that stores all x coordinates in growing order
+            'y_vec' : tuple(float,...) , vector that stores all y coordinates in growing order
+            'z_vec' : tuple(float,...) , vector that stores all z coordinates in growing order
+            }
+
+        *Coordinates are already transferred to chamber coordinate system based on set zero!*
+        """
+        info_dict = {}
+        #   get inputs
+        x_length = float(self.mesh_cubic_x_length_lineEdit.text())
+        x_num_steps = int(self.mesh_cubic_x_num_of_steps_lineEdit.text())
+        y_length = float(self.mesh_cubic_y_length_lineEdit.text())
+        y_num_steps = int(self.mesh_cubic_y_num_of_steps_lineEdit.text())
+        z_start = float(self.mesh_cubic_z_start_lineEdit.text())
+        z_stop = float(self.mesh_cubic_z_stop_lineEdit.text())
+        z_num_steps = int(self.mesh_cubic_z_num_of_steps_lineEdit.text())
+
+        #   get current zero
+        x_offset = self.current_zero_x
+        y_offset = self.current_zero_y
+        z_offset = self.current_zero_z
+
+        #   calculate coordinate vectors
+        x_linspace = np.linspace(-x_length/2, x_length/2, x_num_steps)
+        y_linspace = np.linspace(-y_length/2, y_length/2, y_num_steps)
+        z_linspace = np.linspace(z_start, z_stop, z_num_steps)
+
+        x_vec = []
+        for i in x_linspace:
+            x_vec.append(i + x_offset)
+        y_vec = []
+        for i in y_linspace:
+            y_vec.append(i + y_offset)
+        z_vec = []
+        for i in z_linspace:
+            z_vec.append(i + z_offset)
+
+        #   fill info dict
+        info_dict['tot_num_of_points'] = x_num_steps * y_num_steps * z_num_steps
+        info_dict['num_steps_x'] = x_num_steps
+        info_dict['num_steps_y'] = y_num_steps
+        info_dict['num_steps_z'] = z_num_steps
+        info_dict['x_vec'] = tuple(x_vec)
+        info_dict['y_vec'] = tuple(y_vec)
+        info_dict['z_vec'] = tuple(z_vec)
+
+        return info_dict
+
+    def get_probe_antenna_length(self):
+        return float(self.probe_antenna_length_lineEdit.text())
+
+    def get_aut_height(self):
+        return float(self.aut_height_lineEdit.text())
+
+    def get_auto_measurement_jogspeed(self):
+        return float(self.auto_measurement_jogSpeed_lineEdit.text())
 
