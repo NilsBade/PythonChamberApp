@@ -63,7 +63,12 @@ class UI_auto_measurement_window(QWidget):
     auto_measurement_start_button: QPushButton = None
 
     #   graph visualization of mesh
-    auto_measurement_displayed_mesh: gl.GLScatterPlotItem = None
+    graphic_bed_obj: gl.GLMeshItem = None
+    graphic_measurement_mesh_obj: gl.GLScatterPlotItem = None
+    graphic_probe_antenna_obj: gl.GLLinePlotItem = None
+    __probe_antenna_obj_width: float = 20.0
+    graphic_aut_obj: gl.GLLinePlotItem = None
+    __aut_obj_width: float = 60.0
 
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
@@ -91,12 +96,18 @@ class UI_auto_measurement_window(QWidget):
         second_column.addWidget(vna_measurement_config_widget)
         second_column.addWidget(measurement_data_config_widget)
         second_column.addWidget(self.auto_measurement_start_button, alignment=Qt.AlignmentFlag.AlignBottom)
-
-        self.auto_measurement_start_button.pressed.connect(self.update_mesh_display) # toDo: connect entfernen! nur für debug am button
         # ...
 
         third_column = QVBoxLayout()
         view_widget = self.__init_3d_graphic()
+        update_graph_button = QPushButton("Update Mesh Visualisation")
+        update_graph_button.pressed.connect(self.update_mesh_display)
+        button_holder = QWidget()
+        button_holder.setFixedHeight(60)
+        button_holder_layout = QHBoxLayout()
+        button_holder.setLayout(button_holder_layout)
+        button_holder_layout.addWidget(update_graph_button)
+        third_column.addWidget(button_holder)
         third_column.addWidget(view_widget)
 
         main_layout.addLayout(first_column, stretch=0)
@@ -120,7 +131,7 @@ class UI_auto_measurement_window(QWidget):
         probe_antenna_inputs_title_label.setStyleSheet("text-decoration: underline; font-size: 14px;")
         frame_layout.addWidget(probe_antenna_inputs_title_label,1,0,1,3,Qt.AlignmentFlag.AlignLeft)
         probe_antenna_length_label = QLabel("Antenna Length:")
-        self.probe_antenna_length_lineEdit = QLineEdit('000.00')
+        self.probe_antenna_length_lineEdit = QLineEdit('050.00')
         self.probe_antenna_length_lineEdit.setInputMask('000.00')
         self.probe_antenna_length_lineEdit.setToolTip("Put in the length in Z-direction from the bottom of the "
                                                       "ProbeHead to the end of the chosen Probe Antenna in [mm]")
@@ -134,7 +145,7 @@ class UI_auto_measurement_window(QWidget):
         aut_inputs_title_label.setStyleSheet("text-decoration: underline; font-size: 14px;")
         frame_layout.addWidget(aut_inputs_title_label,3,0,1,3,Qt.AlignmentFlag.AlignLeft)
         aut_height_label = QLabel("Antenna Height:")
-        self.aut_height_lineEdit = QLineEdit('060.00')
+        self.aut_height_lineEdit = QLineEdit('050.00')
         self.aut_height_lineEdit.setInputMask('000.00')
         self.aut_height_lineEdit.setToolTip("Put in the height of the AUT from the base plate (print bed) to "
                                             "its highest point in [mm].")
@@ -143,7 +154,10 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(self.aut_height_lineEdit,4,1,1,1,Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(aut_height_label_unit,4,2,1,1,Qt.AlignmentFlag.AlignLeft)
         
-        self.button_set_z_zero_from_antennas = QPushButton(" Set Zero Z-Coor from antenna-dimensions ")
+        self.button_set_z_zero_from_antennas = QPushButton("Set Zero Z-Coor from antenna-dimensions")
+        self.button_set_z_zero_from_antennas.setToolTip("Calculates theoretical Zero position by sum of both antenna\n"
+                                                        "heights while considering the coordinate offset due to "
+                                                        "z-homing-sensor")
         frame_layout.addWidget(self.button_set_z_zero_from_antennas,5,0,1,3,Qt.AlignmentFlag.AlignCenter)
 
         #   Align Antennas
@@ -152,14 +166,14 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(align_antennas_title_label,6,0,1,3,Qt.AlignmentFlag.AlignLeft)
         auto_measurement_jogSpeed_label = QLabel("Jogspeed AutoMeas:")
         auto_measurement_jogSpeed_label_unit = QLabel(" [mm/s]")
-        self.button_move_to_zero = QPushButton("Go to Zero")
-        self.button_move_to_zero.setToolTip("Moves probe antenna to stored 'Zero Position'.\nFrom here adjust position "
-                                            "via chamber control tab to get to real 'Zero Position'. "
-                                            "Then store position as new Zero.")
+        self.button_move_to_zero = QPushButton("Go over Zero")
+        self.button_move_to_zero.setToolTip("Moves probe antenna to stored 'Zero Position' with +10mm Z-Offset."
+                                            "\nFrom here adjust position via chamber control tab to get to real "
+                                            "'Zero Position'. Then store position as new Zero.")
         self.button_set_current_as_zero = QPushButton("Set current as Zero")
-        self.button_set_current_as_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center of AUT\n"
-                                            "and the end of the probe antenna is virtually touching the top of the AUT\n"
-                                            "considering Z-direction.")
+        self.button_set_current_as_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center "
+                                                   "of AUT\nand the end of the probe antenna is virtually touching the "
+                                                   "top of the AUT\nconsidering Z-direction.")
         self.auto_measurement_jogSpeed_lineEdit = QLineEdit("10")
         frame_layout.addWidget(auto_measurement_jogSpeed_label,7,0,1,1)
         frame_layout.addWidget(self.auto_measurement_jogSpeed_lineEdit,7,1,1,1)
@@ -306,11 +320,18 @@ class UI_auto_measurement_window(QWidget):
     def __init_3d_graphic(self):
         view_widget = gl.GLViewWidget()
         view_widget.setBackgroundColor("d")
+
+        #   start graphic properties
+        start_position_x = self.chamber_x_max_coor/2
+        start_position_y = self.chamber_y_max_coor/2
+        start_position_z = 150.0
+
         #   Print bed
         self.graphic_bed_object = Visualizer.generate_chamber_print_bed_obj(self.chamber_x_max_coor,
                                                                             self.chamber_y_max_coor,
                                                                             self.chamber_z_max_coor,
                                                                             self.chamber_z_head_bed_offset)
+        self.graphic_bed_object.translate(dx=0,dy=0,dz=-start_position_z)
         view_widget.addItem(self.graphic_bed_object)
 
         #   Workspace Chamber
@@ -318,18 +339,27 @@ class UI_auto_measurement_window(QWidget):
                                                                   self.chamber_z_max_coor, self.chamber_z_head_bed_offset)
         view_widget.addItem(chamber_workspace)
 
+        #   Probe antenna Dummy
+        self.graphic_probe_antenna_obj = Visualizer.generate_antenna_object(self.get_probe_antenna_length(), self.__probe_antenna_obj_width,False)
+        self.graphic_probe_antenna_obj.translate(dx=start_position_x, dy=start_position_y, dz=self.chamber_z_head_bed_offset)
+        view_widget.addItem(self.graphic_probe_antenna_obj)
+
+        #   AUT Dummy
+        self.graphic_aut_obj = Visualizer.generate_antenna_object(self.get_aut_height(), self.__aut_obj_width,True)
+        self.graphic_aut_obj.translate(dx=start_position_x, dy=start_position_y, dz=-start_position_z)
+        view_widget.addItem(self.graphic_aut_obj)
+
         #   COS at 0,0,0
         cos = gl.GLAxisItem()
         cos.setSize(x=50, y=50, z=50)
         view_widget.addItem(cos)
 
         #   meas-scatter-plot
-        x_vec = np.linspace(0, 500.0, num=20)
-        y_vec = np.linspace(0, 500.0, num=20)
-        z_vec = np.linspace(-600.0, -100.0, num=20)
-
-        self.auto_measurement_displayed_mesh = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
-        view_widget.addItem(self.auto_measurement_displayed_mesh)
+        x_vec = np.array([250])
+        y_vec = np.array([250])
+        z_vec = np.array([-100])
+        self.graphic_measurement_mesh_obj = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
+        view_widget.addItem(self.graphic_measurement_mesh_obj)
 
         # set view point roughly
         view_widget.pan(self.chamber_x_max_coor / 2, self.chamber_y_max_coor / 2, -self.chamber_z_max_coor / 3)
@@ -374,7 +404,8 @@ class UI_auto_measurement_window(QWidget):
         min_y_distance2border = self.current_zero_y
         if self.current_zero_y > self.chamber_y_max_coor/2:
             min_y_distance2border = self.chamber_y_max_coor - self.current_zero_y
-        min_z_distance2border = self.chamber_z_max_coor - float(self.probe_antenna_length_lineEdit.text()) - float(self.aut_height_lineEdit.text())
+        min_z_distance2border = (self.chamber_z_max_coor - self.get_probe_antenna_length() -
+                                 self.get_aut_height() + self.chamber_z_head_bed_offset)
 
         self.mesh_cubic_x_max_length_label.setText("< max " + str(2*min_x_distance2border) + " mm")
         self.mesh_cubic_y_max_length_label.setText("< max " + str(2*min_y_distance2border) + " mm")
@@ -397,14 +428,24 @@ class UI_auto_measurement_window(QWidget):
 
         # set new scatter data
         new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'], tuple(new_z_coor))
-        self.auto_measurement_displayed_mesh.setData(pos=new_data)
+        self.graphic_measurement_mesh_obj.setData(pos=new_data)
 
         # set bed to lowest position for mesh
         lowest_z_mesh = new_z_coor[-1]
-        pos_z_bed = lowest_z_mesh - float(self.aut_height_lineEdit.text())
-        pos_z_bed += self.chamber_z_head_bed_offset    # correction for translation operation
+        pos_z_bed = lowest_z_mesh - self.get_aut_height()
         self.graphic_bed_object.resetTransform()
         self.graphic_bed_object.translate(dx=0, dy=0, dz=pos_z_bed)
+
+        probe_obj_vertices = Visualizer.generate_antenna_object_vertices(self.get_probe_antenna_length(), self.__probe_antenna_obj_width, False)
+        self.graphic_probe_antenna_obj.setData(pos=probe_obj_vertices)
+        self.graphic_probe_antenna_obj.resetTransform()
+        self.graphic_probe_antenna_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y,dz=self.chamber_z_head_bed_offset)
+
+        aut_obj_vertices = Visualizer.generate_antenna_object_vertices(self.get_aut_height(), self.__aut_obj_width, True)
+        self.graphic_aut_obj.setData(pos=aut_obj_vertices)
+        self.graphic_aut_obj.resetTransform()
+        self.graphic_aut_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y, dz=pos_z_bed)
+
 
     def get_mesh_cubic_data(self):
         """
