@@ -1,138 +1,31 @@
-import sys
-from idlelib import statusbar
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
+import numpy as np
 
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox, QFrame, QStatusBar
+# Create a plot widget
+win = pg.GraphicsLayoutWidget(show=True)
+plot = win.addPlot(title="Rectangle Example")
 
-class ConnectionWidget(QWidget):
-    def __init__(self, title):
-        super().__init__()
+# Define the rectangle's vertices
+vertices = [
+    (0, 0),  # Bottom-left corner
+    (5, 0),  # Bottom-right corner
+    (5, 3),  # Top-right corner
+    (0, 3)   # Top-left corner
+]
 
-        # Layout
-        layout = QVBoxLayout()
+# Create a GraphItem for the rectangle
+rect_item = pg.GraphItem()
+rect_item.setData(pos=vertices, adj=np.array([[0, 1], [1, 2], [2, 3], [3, 0]]), pen='r', brush=(255, 0, 0, 100))
 
-        # Title
-        title_label = QLabel(title)
-        title_label.setStyleSheet("font-weight: bold; text-decoration: underline;")
-        layout.addWidget(title_label)
+# Add the rectangle GraphItem to the plot
+plot.addItem(rect_item)
 
-        # IP Address
-        ip_label = QLabel("IP Address:")
-        self.ip_line_edit = QLineEdit()
-        layout.addWidget(ip_label)
-        layout.addWidget(self.ip_line_edit)
+# Example: Add some data to the plot
+x = [1, 2, 3, 4, 5]
+y = [1, 3, 2, 4, 5]
+plot.plot(x, y, pen='b')  # Plotting some data
 
-        # API Key
-        api_key_label = QLabel("API Key:")
-        self.api_key_line_edit = QLineEdit()
-        layout.addWidget(api_key_label)
-        layout.addWidget(self.api_key_line_edit)
-
-        # Connect button
-        self.connect_button = QPushButton("Connect")
-        self.connect_button.setStyleSheet("border: 1px solid black;")
-        layout.addWidget(self.connect_button)
-
-        # Status label
-        self.status_label = QLabel("Status: Not Connected")
-        layout.addWidget(self.status_label)
-
-        # Connect button clicked event
-        self.connect_button.clicked.connect(self.connect)
-
-        self.setLayout(layout)
-
-        # Set border style for the entire widget
-        self.setStyleSheet("border: none;")
-
-    def connect(self):
-        ip_address = self.ip_line_edit.text()
-        api_key = self.api_key_line_edit.text()
-
-        # Check if IP address and API key are not empty
-        if not ip_address or not api_key:
-            QMessageBox.warning(self, "Warning", "IP address and API key cannot be empty!")
-            return
-
-        # Add your connection logic here
-        # For demonstration purposes, just print the IP address and API key
-        print("Connecting to:", ip_address)
-        print("API Key:", api_key)
-
-        # Assume connection is successful for demonstration
-        self.status_label.setText("Status: Connected")
-
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("UI GPT V1")
-        self.setGeometry(100, 100, 800, 400)  # Set window dimensions
-
-        # Main Layout
-        main_layout = QVBoxLayout()
-
-        # Center Widget
-        center_layout = QHBoxLayout()
-        center_widget = QWidget()
-        center_widget.setLayout(center_layout)
-        center_widget.setStyleSheet("border: none;")
-
-        # Left Group
-        left_group_layout = QVBoxLayout()
-        left_group_widget = QWidget()
-        left_group_widget.setStyleSheet("border: 2px solid black; border-radius: 5px;")
-        left_group_widget.setLayout(left_group_layout)
-
-        # Upper Left Group
-        upper_group_layout = QVBoxLayout() #nötig für einzelnen Rahmen
-        upper_group_widget = QWidget()
-        upper_group_widget.setLayout(upper_group_layout) #nötig für einzelnen Rahmen
-        chamber_connection_widget = ConnectionWidget("Chamber Connection")
-        upper_group_layout.addWidget(chamber_connection_widget)
-        left_group_layout.addWidget(upper_group_widget)
-
-        # Separator
-        left_group_layout.addSpacing(20)
-
-        # Lower Left Group
-        lower_group_layout = QVBoxLayout() #nötig für einzelnen Rahmen
-        lower_group_widget = QWidget()
-        lower_group_widget.setLayout(lower_group_layout) #nötig für einzelnen Rahmen
-        network_analyzer_connection_widget = ConnectionWidget("Network Analyzer Connection")
-        lower_group_layout.addWidget(network_analyzer_connection_widget)
-        left_group_layout.addWidget(lower_group_widget)
-
-        # Add left group widget to center layout
-        center_layout.addWidget(left_group_widget)
-
-        # Right Group
-        right_group_widget = QLabel("Third Widget")
-        right_group_widget.setStyleSheet("border: 2px solid black; border-radius: 5px;")
-
-        #right_group_layout = QVBoxLayout(right_group_widget)
-        #right_group_layout.addWidget(QLabel("Third Widget"))
-
-        # Add right group widget to center layout
-        center_layout.addWidget(right_group_widget, 2)   # Set the stretch factor to 2
-
-        # Add center widget to main layout
-        main_layout.addWidget(center_widget)
-
-        # Status Bar
-        self.main_status_bar = QStatusBar()
-        self.main_status_bar.showMessage("Hier steht der Programmstatus (Platzhalter) - Ready")
-        self.main_status_bar.setFixedHeight(20)
-        main_layout.addWidget(self.main_status_bar)
-
-        self.setLayout(main_layout)
-
-    def update_main_status(self, status_string):
-        self.main_status_bar.showMessage(status_string)
-        return True
-
-
+# Start Qt event loop
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_window = MainWindow()
-    main_window.show()
-    main_window.update_main_status("Hier ist der neue status!")
-    sys.exit(app.exec())
+    QtGui.QApplication.instance().exec_()

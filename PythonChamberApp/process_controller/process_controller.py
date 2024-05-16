@@ -263,7 +263,7 @@ class ProcessController:
     def chamber_connect_finished_handler(self, new_chamber: ChamberNetworkCommands):
         self.chamber = new_chamber
         self.gui_mainWindow.enable_chamber_control_window()
-        self.gui_mainWindow.enable_auto_measurement_window()    # ToDo enable automeasurement tab (or parts of functionality) only after vna and chamber are both connected
+        self.gui_mainWindow.enable_auto_measurement_window()
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
@@ -304,6 +304,7 @@ class ProcessController:
         """
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+            self.gui_mainWindow.ui_auto_measurement_window.enable_chamber_move_interaction()
             self.gui_mainWindow.prompt_info(
                 "Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.",
                 "Check chamber state manually")
@@ -726,6 +727,10 @@ class ProcessController:
         This position is used to match the coordinate systems of the AUT and the Probe antenna before starting the
         auto measurement process.
         """
+        if self.__x_live is None or self.__y_live is None or self.__z_live is None:
+            self.gui_mainWindow.prompt_warning("Position currently unknown!", "Invalid Live Position")
+            return
+
         self.zero_pos_x = self.__x_live
         self.zero_pos_y = self.__y_live
         self.zero_pos_z = self.__z_live
