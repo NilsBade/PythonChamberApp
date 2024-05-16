@@ -244,14 +244,14 @@ class UI_chamber_control_window(QWidget):
         chamber_max_z = self.position_graph_z_max_coor
 
         # Create GLMeshItem and add it to chamber position widget
-        self.position_graph_bed_object = Visualizer.generate_chamber_print_bed_obj(self.position_graph_x_max_coor,
+        self.position_graph_bed_object = Visualizer.generate_3d_chamber_print_bed_obj(self.position_graph_x_max_coor,
                                                                                    self.position_graph_y_max_coor,
                                                                                    self.position_graph_z_max_coor,
                                                                                    self.position_graph_z_head_bed_offset)
         chamber_position_widget.addItem(self.position_graph_bed_object)
 
         # Draw Red Chamber border and add it to chamber position widget
-        self.chamber_workspace_plot = Visualizer.generate_chamber_workspace(self.position_graph_x_max_coor,
+        self.chamber_workspace_plot = Visualizer.generate_3d_chamber_workspace(self.position_graph_x_max_coor,
                                                                             self.position_graph_y_max_coor,
                                                                             self.position_graph_z_max_coor,
                                                                             self.position_graph_z_head_bed_offset)

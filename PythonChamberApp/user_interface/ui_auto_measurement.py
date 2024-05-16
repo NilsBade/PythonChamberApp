@@ -327,7 +327,7 @@ class UI_auto_measurement_window(QWidget):
         start_position_z = 150.0
 
         #   Print bed
-        self.graphic_bed_object = Visualizer.generate_chamber_print_bed_obj(self.chamber_x_max_coor,
+        self.graphic_bed_object = Visualizer.generate_3d_chamber_print_bed_obj(self.chamber_x_max_coor,
                                                                             self.chamber_y_max_coor,
                                                                             self.chamber_z_max_coor,
                                                                             self.chamber_z_head_bed_offset)
@@ -335,17 +335,17 @@ class UI_auto_measurement_window(QWidget):
         view_widget.addItem(self.graphic_bed_object)
 
         #   Workspace Chamber
-        chamber_workspace = Visualizer.generate_chamber_workspace(self.chamber_x_max_coor, self.chamber_y_max_coor,
+        chamber_workspace = Visualizer.generate_3d_chamber_workspace(self.chamber_x_max_coor, self.chamber_y_max_coor,
                                                                   self.chamber_z_max_coor, self.chamber_z_head_bed_offset)
         view_widget.addItem(chamber_workspace)
 
         #   Probe antenna Dummy
-        self.graphic_probe_antenna_obj = Visualizer.generate_antenna_object(self.get_probe_antenna_length(), self.__probe_antenna_obj_width,False)
+        self.graphic_probe_antenna_obj = Visualizer.generate_3d_antenna_object(self.get_probe_antenna_length(), self.__probe_antenna_obj_width,False)
         self.graphic_probe_antenna_obj.translate(dx=start_position_x, dy=start_position_y, dz=self.chamber_z_head_bed_offset)
         view_widget.addItem(self.graphic_probe_antenna_obj)
 
         #   AUT Dummy
-        self.graphic_aut_obj = Visualizer.generate_antenna_object(self.get_aut_height(), self.__aut_obj_width,True)
+        self.graphic_aut_obj = Visualizer.generate_3d_antenna_object(self.get_aut_height(), self.__aut_obj_width,True)
         self.graphic_aut_obj.translate(dx=start_position_x, dy=start_position_y, dz=-start_position_z)
         view_widget.addItem(self.graphic_aut_obj)
 
@@ -358,7 +358,7 @@ class UI_auto_measurement_window(QWidget):
         x_vec = np.array([250])
         y_vec = np.array([250])
         z_vec = np.array([-100])
-        self.graphic_measurement_mesh_obj = Visualizer.generate_mesh_scatter_plot(x_vec, y_vec, z_vec)
+        self.graphic_measurement_mesh_obj = Visualizer.generate_3d_mesh_scatter_plot(x_vec, y_vec, z_vec)
         view_widget.addItem(self.graphic_measurement_mesh_obj)
 
         # set view point roughly
@@ -422,46 +422,51 @@ class UI_auto_measurement_window(QWidget):
         mesh_info = self.get_mesh_cubic_data()
 
         # flip z orientation for graph
-        new_z_coor = []
+        new_z_coor_chamber_movement = []
         for nz in mesh_info['z_vec']:
-            new_z_coor.append(-nz)
+            new_z_coor_chamber_movement.append(-nz)
+
+        real_z_measurement_mesh = []
+        for nz in new_z_coor_chamber_movement:
+            real_z_measurement_mesh.append(nz + self.get_aut_height())
 
         # set new scatter data
-        new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'], tuple(new_z_coor))
+        new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'], tuple(real_z_measurement_mesh))
         self.graphic_measurement_mesh_obj.setData(pos=new_data)
 
         # set bed to lowest position for mesh
-        lowest_z_mesh = new_z_coor[-1]
-        pos_z_bed = lowest_z_mesh - self.get_aut_height()
+        lowest_z_mesh = new_z_coor_chamber_movement[-1]
         self.graphic_bed_object.resetTransform()
-        self.graphic_bed_object.translate(dx=0, dy=0, dz=pos_z_bed)
+        self.graphic_bed_object.translate(dx=0, dy=0, dz=lowest_z_mesh)
 
-        probe_obj_vertices = Visualizer.generate_antenna_object_vertices(self.get_probe_antenna_length(), self.__probe_antenna_obj_width, False)
+        probe_obj_vertices = Visualizer.generate_3d_antenna_object_vertices(self.get_probe_antenna_length(), self.__probe_antenna_obj_width, False)
         self.graphic_probe_antenna_obj.setData(pos=probe_obj_vertices)
         self.graphic_probe_antenna_obj.resetTransform()
         self.graphic_probe_antenna_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y,dz=self.chamber_z_head_bed_offset)
 
-        aut_obj_vertices = Visualizer.generate_antenna_object_vertices(self.get_aut_height(), self.__aut_obj_width, True)
+        aut_obj_vertices = Visualizer.generate_3d_antenna_object_vertices(self.get_aut_height(), self.__aut_obj_width, True)
         self.graphic_aut_obj.setData(pos=aut_obj_vertices)
         self.graphic_aut_obj.resetTransform()
-        self.graphic_aut_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y, dz=pos_z_bed)
+        self.graphic_aut_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y, dz=lowest_z_mesh)
 
 
     def get_mesh_cubic_data(self):
         """
-        This function returns a dictionary that provides additional info and x,y,z vectors of
-        the configured cubic measurement mesh as follows:
+        This function returns a dictionary that provides additional info about the measurement mesh.
+        The x,y,z vectors describe the necessary points to move to by the chamber, to do the measurement.
+        dict:
             {
             'tot_num_of_points' : int
             'num_steps_x' : int
             'num_steps_y' : int
             'num_steps_z' : int
-            'x_vec' : tuple(float,...) , vector that stores all x coordinates in growing order
-            'y_vec' : tuple(float,...) , vector that stores all y coordinates in growing order
-            'z_vec' : tuple(float,...) , vector that stores all z coordinates in growing order
+            'x_vec' : tuple(float,...) , vector that stores all x coordinates for chamber movement in growing order
+            'y_vec' : tuple(float,...) , vector that stores all y coordinates for chamber movement in growing order
+            'z_vec' : tuple(float,...) , vector that stores all z coordinates for chamber movement in growing order
             }
 
-        *Coordinates are already transferred to chamber coordinate system based on set zero!*
+        *Coordinates are already transferred to chamber-movement coordinate system based on set zero!*
+        *When used for display measurement-mesh in graph, compensate the AUT-antenna-height of zero-position in [Z]!*
         """
         info_dict = {}
         #   get inputs
