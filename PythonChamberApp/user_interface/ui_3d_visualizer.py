@@ -8,7 +8,7 @@ class VisualizerPyqtGraph:
     """
 
     @staticmethod
-    def generate_chamber_print_bed_obj(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
+    def generate_3d_chamber_print_bed_obj(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
         """
         Given the workspace dimensions this method generates a mesh object to display a print bed with initial z-position at 'chamber_position_z_head_bed_offset'.
 
@@ -33,7 +33,7 @@ class VisualizerPyqtGraph:
         return bed_object
 
     @staticmethod
-    def generate_chamber_workspace(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
+    def generate_3d_chamber_workspace(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float):
         """
         Given the Workspace dimensions, this method returns an opengl.GLLinePlotItem, that can be used to display the
         chambers workspace in a opengl.GLViewWidget.
@@ -65,7 +65,7 @@ class VisualizerPyqtGraph:
 
 
     @staticmethod
-    def generate_antenna_object(antenna_height: float, antenna_width: float, point_up: bool):
+    def generate_3d_antenna_object(antenna_height: float, antenna_width: float, point_up: bool):
         """
         Given an antenna height, this function returns a 3D visualization of an probing antenna for display
 
@@ -75,12 +75,12 @@ class VisualizerPyqtGraph:
         :param point_up: True > Antenna points +z direction, False > Antenna points -z direction
         :return: opengl.GLLinePlotItem
         """
-        vertices = VisualizerPyqtGraph.generate_antenna_object_vertices(antenna_height, antenna_width, point_up)
+        vertices = VisualizerPyqtGraph.generate_3d_antenna_object_vertices(antenna_height, antenna_width, point_up)
         antenna_plot = gl.GLLinePlotItem(pos=vertices, color=(0, 1.0, 1.0, 0.3), width=4.0)
         return antenna_plot
 
     @staticmethod
-    def generate_antenna_object_vertices(antenna_height: float, antenna_width: float, point_up: bool):
+    def generate_3d_antenna_object_vertices(antenna_height: float, antenna_width: float, point_up: bool):
 
         # create cubic antenna dummy
         w = antenna_width / 2
@@ -144,7 +144,7 @@ class VisualizerPyqtGraph:
         return probe_object
 
     @staticmethod
-    def generate_mesh_scatter_plot(x_vec: np.array, y_vec: np.array, z_vec: np.array):
+    def generate_3d_mesh_scatter_plot(x_vec: np.array, y_vec: np.array, z_vec: np.array):
         new_scatter_mesh = gl.GLScatterPlotItem()
         color = (0.5,1,0,1)
         size = 3
