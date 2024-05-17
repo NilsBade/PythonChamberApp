@@ -157,9 +157,14 @@ class VisualizerPyqtGraph:
         new_scatter_mesh.setData(pos=data, color=color, size=size)
         return new_scatter_mesh
 
+
+
     @staticmethod
     def generate_point_list(x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...]):
         """
+        This function generates, given the outside vectors in x,y,z, a point list for a cubic mesh with all possible
+        points
+
         :param x_vec: vector of x coordinates
         :param y_vec: vectors of y coordinates
         :param z_vec: vectors of z coordinates
@@ -171,3 +176,41 @@ class VisualizerPyqtGraph:
                 for x in x_vec:
                     point_list.append([x, y, z])
         return point_list
+
+    @staticmethod
+    def generate_outline_point_list(x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...]):
+        """
+        This function generates an alternative reduced point list when a mesh should be displayed that is too dense /
+        would consume too much memory
+
+        :param x_vec: vector of x coordinates
+        :param y_vec: vectors of y coordinates
+        :param z_vec: vectors of z coordinates
+        :return: list of points as 3d vectors that shows the outline of the describes volume
+        """
+        point_list = []
+        new_x_vec = np.linspace(x_vec[0], x_vec[-1], 30)
+        new_y_vec = np.linspace(y_vec[0], y_vec[-1], 30)
+        new_z_vec = np.linspace(z_vec[0], z_vec[-1], 30)
+
+        for x in new_x_vec:
+            point_list.append([x, new_y_vec[0], new_z_vec[0]])
+            point_list.append([x, new_y_vec[-1], new_z_vec[0]])
+            point_list.append([x, new_y_vec[-1], new_z_vec[-1]])
+            point_list.append([x, new_y_vec[0], new_z_vec[-1]])
+
+        for y in new_y_vec:
+            point_list.append([new_x_vec[0], y, new_z_vec[0]])
+            point_list.append([new_x_vec[-1], y, new_z_vec[0]])
+            point_list.append([new_x_vec[-1], y, new_z_vec[-1]])
+            point_list.append([new_x_vec[0], y, new_z_vec[-1]])
+
+        for z in new_z_vec:
+            point_list.append([new_x_vec[0], new_y_vec[0], z])
+            point_list.append([new_x_vec[-1], new_y_vec[0], z])
+            point_list.append([new_x_vec[-1], new_y_vec[-1], z])
+            point_list.append([new_x_vec[0], new_y_vec[-1], z])
+
+        return point_list
+
+

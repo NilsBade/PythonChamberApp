@@ -110,16 +110,18 @@ class UI_auto_measurement_window(QWidget):
         # ...
 
         third_column = QVBoxLayout()
+        auto_measurement_progress_widget = self.__init_auto_measurement_progress_widget()
+        auto_measurement_progress_widget.setFixedHeight(200)    # ToDo height no effect if widget empty?! find reason why layout does noch work
         view_widget = self.__init_3d_graphic()
-        update_graph_button = QPushButton("Update Mesh Visualisation")  # ToDo get rid of Update mesh pushbutton because updates will always run ones modified! Instead add a Progress-window that shows the state of the running automeasurement in a seperate frame!
-        update_graph_button.pressed.connect(self.update_mesh_display)
-        button_holder = QWidget()
-        button_holder.setFixedHeight(60)
-        button_holder_layout = QHBoxLayout()
-        button_holder.setLayout(button_holder_layout)
-        button_holder_layout.addWidget(update_graph_button)
-        third_column.addWidget(button_holder)
+        self.view_widget_status_label = QLabel("Mesh-display initialized! Display updates once 'Zero Position' defined...")
+        view_widget_status_label_holder = QWidget()
+        view_widget_status_label_holder.setFixedHeight(50)
+        view_widget_status_label_holder_layout = QHBoxLayout()
+        view_widget_status_label_holder.setLayout(view_widget_status_label_holder_layout)
+        view_widget_status_label_holder_layout.addWidget(self.view_widget_status_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        third_column.addWidget(auto_measurement_progress_widget, alignment=Qt.AlignmentFlag.AlignTop)
         third_column.addWidget(view_widget)
+        third_column.addWidget(view_widget_status_label_holder)
 
         fourth_column = QVBoxLayout()
         self.plot_2d_layout_widget = self.__init_2d_plots()
@@ -178,6 +180,8 @@ class UI_auto_measurement_window(QWidget):
         self.button_set_z_zero_from_antennas.setToolTip("Calculates theoretical Zero position by sum of both antenna\n"
                                                         "heights while considering the coordinate offset due to "
                                                         "z-homing-sensor")
+        self.button_set_z_zero_from_antennas.pressed.connect(self.__update_2d_plots)
+        self.button_set_z_zero_from_antennas.pressed.connect(self.update_mesh_display)
         frame_layout.addWidget(self.button_set_z_zero_from_antennas, 5, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
 
         #   Align Antennas
@@ -454,7 +458,7 @@ class UI_auto_measurement_window(QWidget):
         self.plot_2d_xy.getViewBox().setAspectLocked(lock=True, ratio=1)
         self.plot_2d_xy.addItem(xy_workspace_plot)
 
-        # biuld yz plot
+        # build yz plot
         self.plot_2d_yz = pg.PlotItem()
         graph_layout_widget.addItem(self.plot_2d_yz, 1, 0)
         self.plot_2d_yz.setTitle('YZ-SideView on Mesh', color='k')
@@ -482,6 +486,10 @@ class UI_auto_measurement_window(QWidget):
         #   default values
         self.__update_2d_plots()
         return graph_layout_widget
+
+    def __init_auto_measurement_progress_widget(self):
+        # ToDo implement progress frame widget for updates by auto measurement
+        return QWidget()
 
     def __update_2d_plots(self):
         """
@@ -572,23 +580,29 @@ class UI_auto_measurement_window(QWidget):
             return
 
         mesh_info = self.get_mesh_cubic_data()
+        new_z_coor_chamber_movement = []
+        real_z_measurement_mesh = []
 
         # flip z orientation for graph
-        new_z_coor_chamber_movement = []
         for nz in mesh_info['z_vec']:
             new_z_coor_chamber_movement.append(-nz)
-
-        real_z_measurement_mesh = []
         for nz in new_z_coor_chamber_movement:
             real_z_measurement_mesh.append(nz + self.get_aut_height())
 
-        # set new scatter data
-        new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'],
-                                                  tuple(real_z_measurement_mesh))
+        if mesh_info['tot_num_of_points'] < (51*51*51):
+            # standard routine to display all points
+            new_data = Visualizer.generate_point_list(mesh_info['x_vec'], mesh_info['y_vec'],
+                                                      tuple(real_z_measurement_mesh))
+        else:   # routine if too many points to display
+            new_data = Visualizer.generate_outline_point_list(mesh_info['x_vec'], mesh_info['y_vec'],
+                                                              tuple(real_z_measurement_mesh))
+
         self.graphic_measurement_mesh_obj.setData(pos=new_data)
 
+
+
         # set bed to lowest position for mesh
-        lowest_z_mesh = new_z_coor_chamber_movement[-1]
+        lowest_z_mesh = -1*mesh_info['z_vec'][-1]
         self.graphic_bed_object.resetTransform()
         self.graphic_bed_object.translate(dx=0, dy=0, dz=lowest_z_mesh)
 
