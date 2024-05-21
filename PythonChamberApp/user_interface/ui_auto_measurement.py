@@ -59,11 +59,13 @@ class UI_auto_measurement_window(QWidget):
     vna_freq_num_steps_lineEdit: QLineEdit = None
 
     #   measurement_data_config_field
+    filename_lineEdit: QLineEdit = None
 
     #   start auto measurement button
     auto_measurement_start_button: QPushButton = None
 
     #   auto measurement progress frame
+    auto_measurement_stop_button = QPushButton = None
     meas_progress_points_in_layer: QLabel = None   # Number of points to measure in current layer
     meas_progress_current_point_in_layer: QLabel = None
     meas_progress_in_layer_progressBar: QProgressBar = None
@@ -367,7 +369,16 @@ class UI_auto_measurement_window(QWidget):
 
         main_label = QLabel("4. Data Management")
         main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        self.filename_lineEdit = QLineEdit("new_measurement")
+        self.filename_lineEdit.setMinimumWidth(200)
+        filename_label = QLabel("Filename:")
+        filename_info_label = QLabel("* Measurement Files are stored in \n'[GIT]PythonChamberApp/results/...'")
+        filename_info_label.setStyleSheet("font: italic")
+
         frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(filename_label,1,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.filename_lineEdit,1,1,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(filename_info_label,2,0,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
 
         return measurement_data_config_frame
 
@@ -403,6 +414,7 @@ class UI_auto_measurement_window(QWidget):
         self.meas_progress_total_point_current = QLabel("0")
         self.meas_progress_total_point_progressBar = QProgressBar()
         self.meas_progress_status_label = QLabel("Not started...")
+        self.auto_measurement_stop_button = QPushButton("Stop Measurement")
 
         backslash1 = QLabel("/")
         backslash2 = QLabel("/")
@@ -423,7 +435,8 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(self.meas_progress_total_point_max_count,3,3,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(self.meas_progress_total_point_progressBar,3,4,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
 
-        frame_layout.addWidget(self.meas_progress_status_label,4,1,1,5, alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.meas_progress_status_label,4,1,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.auto_measurement_stop_button,4,4,1,2,alignment=Qt.AlignmentFlag.AlignCenter)
 
         return frame_widget
 
@@ -805,6 +818,9 @@ class UI_auto_measurement_window(QWidget):
 
     def get_auto_measurement_jogspeed(self):
         return float(self.auto_measurement_jogSpeed_lineEdit.text())
+
+    def get_new_filename(self):
+        return self.filename_lineEdit.text()
 
     def disable_chamber_move_interaction(self):
         """
