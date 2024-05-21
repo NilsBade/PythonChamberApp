@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, \
-    QFrame, QComboBox, QStackedWidget
+    QFrame, QComboBox, QStackedWidget, QProgressBar
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
 from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
@@ -63,6 +63,18 @@ class UI_auto_measurement_window(QWidget):
     #   start auto measurement button
     auto_measurement_start_button: QPushButton = None
 
+    #   auto measurement progress frame
+    meas_progress_points_in_layer: QLabel = None   # Number of points to measure in current layer
+    meas_progress_current_point_in_layer: QLabel = None
+    meas_progress_in_layer_progressBar: QProgressBar = None
+    meas_progress_layer_max_count: QLabel = None
+    meas_progress_layer_current: QLabel = None
+    meas_progress_layer_progressBar: QProgressBar = None
+    meas_progress_total_point_max_count: QLabel = None
+    meas_progress_total_point_current: QLabel = None
+    meas_progress_total_point_progressBar: QProgressBar = None
+    meas_progress_status_label: QLabel = None
+
     #   3d graph visualization of mesh
     graphic_bed_obj: gl.GLMeshItem = None
     graphic_measurement_mesh_obj: gl.GLScatterPlotItem = None
@@ -111,16 +123,16 @@ class UI_auto_measurement_window(QWidget):
 
         third_column = QVBoxLayout()
         auto_measurement_progress_widget = self.__init_auto_measurement_progress_widget()
-        auto_measurement_progress_widget.setFixedHeight(200)    # ToDo height no effect if widget empty?! find reason why layout does noch work
+        auto_measurement_progress_widget.setFixedHeight(150)
         view_widget = self.__init_3d_graphic()
         self.view_widget_status_label = QLabel("Mesh-display initialized! Display updates once 'Zero Position' defined...")
         view_widget_status_label_holder = QWidget()
-        view_widget_status_label_holder.setFixedHeight(50)
+        view_widget_status_label_holder.setFixedHeight(30)
         view_widget_status_label_holder_layout = QHBoxLayout()
         view_widget_status_label_holder.setLayout(view_widget_status_label_holder_layout)
         view_widget_status_label_holder_layout.addWidget(self.view_widget_status_label, alignment=Qt.AlignmentFlag.AlignLeft)
         third_column.addWidget(auto_measurement_progress_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        third_column.addWidget(view_widget)
+        third_column.addWidget(view_widget, stretch=1)
         third_column.addWidget(view_widget_status_label_holder)
 
         fourth_column = QVBoxLayout()
@@ -135,7 +147,7 @@ class UI_auto_measurement_window(QWidget):
         self.setLayout(main_layout)
 
         # Disable functionality that needs homed chamber
-        self.disable_chamber_move_interaction()
+        #self.disable_chamber_move_interaction()     #ToDo disable all chamber movements in the beginning when debugging finished
 
     def __init_antenna_info_inputs_widget(self):
         antenna_info_inputs_frame = QFrame()
@@ -359,9 +371,66 @@ class UI_auto_measurement_window(QWidget):
 
         return measurement_data_config_frame
 
+    def __init_auto_measurement_progress_widget(self):
+        frame_widget = QFrame()
+        frame_widget.setFrameShape(QFrame.Shape.Box)  # Set the frame shape
+        frame_widget.setFrameShadow(QFrame.Shadow.Raised)  # Set the frame shadow
+        frame_widget.setLineWidth(2)  # Set the width of the frame line
+        frame_widget.setStyleSheet("background-color: lightGray;")  # Set frame background color
+        frame_widget.setContentsMargins(5, 5, 5, 5)
+
+        frame_layout = QGridLayout()
+        frame_widget.setLayout(frame_layout)
+        title = QLabel("Auto Measurement Progress")
+        title.setStyleSheet("text-decoration: underline; font-size: 16px;")
+        frame_layout.addWidget(title, 0,0,1,6, alignment=Qt.AlignmentFlag.AlignCenter)
+        curr_point_in_layer_label = QLabel("Current Point in Layer:")
+        curr_layer_label = QLabel("Current Layer:")
+        curr_point_total_label = QLabel("Total Progress Point-wise:")
+        curr_status_label = QLabel("Status:")
+        frame_layout.addWidget(curr_point_in_layer_label,1,0,1,1, alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(curr_layer_label,2,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(curr_point_total_label,3,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(curr_status_label,4,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.meas_progress_points_in_layer = QLabel("0")
+        self.meas_progress_current_point_in_layer = QLabel("0")
+        self.meas_progress_in_layer_progressBar = QProgressBar()
+        self.meas_progress_layer_max_count = QLabel("0")
+        self.meas_progress_layer_current = QLabel("0")
+        self.meas_progress_layer_progressBar = QProgressBar()
+        self.meas_progress_total_point_max_count = QLabel("0")
+        self.meas_progress_total_point_current = QLabel("0")
+        self.meas_progress_total_point_progressBar = QProgressBar()
+        self.meas_progress_status_label = QLabel("Not started...")
+
+        backslash1 = QLabel("/")
+        backslash2 = QLabel("/")
+        backslash3 = QLabel("/")
+
+        frame_layout.addWidget(self.meas_progress_current_point_in_layer, 1,1,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(backslash1,1,2,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_points_in_layer,1,3,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_in_layer_progressBar,1,4,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
+
+        frame_layout.addWidget(self.meas_progress_layer_current,2,1,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(backslash2,2,2,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_layer_max_count,2,3,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_layer_progressBar,2,4,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
+
+        frame_layout.addWidget(self.meas_progress_total_point_current,3,1,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(backslash3,3,2,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_total_point_max_count,3,3,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.meas_progress_total_point_progressBar,3,4,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
+
+        frame_layout.addWidget(self.meas_progress_status_label,4,1,1,5, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        return frame_widget
+
     def __init_3d_graphic(self):
         view_widget = gl.GLViewWidget()
         view_widget.setBackgroundColor("d")
+
 
         #   start graphic properties
         start_position_x = self.chamber_x_max_coor / 2
@@ -487,9 +556,7 @@ class UI_auto_measurement_window(QWidget):
         self.__update_2d_plots()
         return graph_layout_widget
 
-    def __init_auto_measurement_progress_widget(self):
-        # ToDo implement progress frame widget for updates by auto measurement
-        return QWidget()
+
 
     def __update_2d_plots(self):
         """
@@ -618,6 +685,58 @@ class UI_auto_measurement_window(QWidget):
         self.graphic_aut_obj.setData(pos=aut_obj_vertices)
         self.graphic_aut_obj.resetTransform()
         self.graphic_aut_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y, dz=lowest_z_mesh)
+
+    def update_auto_measurement_progress_state(self, state_info: dict):
+        """
+        Function receives state info dictionary and updates the gui display accordingly.
+        expected state_info keywords are following:
+         state_info: dict = {
+            'total_points_in_measurement': int,
+
+            'total_current_point_number': int,
+
+            'num_of_layers_in_measurement': int,
+
+            'current_layer_number': int,
+
+            'num_of_points_in_current_layer': int,
+
+            'current_point_number_in_layer': int,
+
+            'status_flag': string (optional)
+          }
+
+        :param state_info: dictionary
+        """
+        num_of_points_in_current_layer = state_info['num_of_points_in_current_layer']
+        current_point_number_in_layer = state_info['current_point_number_in_layer']
+        num_of_layers_in_measurement = state_info['num_of_layers_in_measurement']
+        current_layer_number = state_info['current_layer_number']
+        total_points_in_measurement = state_info['total_points_in_measurement']
+        total_current_point_number = state_info['total_current_point_number']
+
+        self.meas_progress_points_in_layer.setText(str(num_of_points_in_current_layer))
+        self.meas_progress_current_point_in_layer.setText(str(current_point_number_in_layer))
+        self.meas_progress_in_layer_progressBar.setMinimum(0)
+        self.meas_progress_in_layer_progressBar.setMaximum(num_of_points_in_current_layer)
+        self.meas_progress_in_layer_progressBar.setValue(current_point_number_in_layer)
+
+        self.meas_progress_layer_max_count.setText(str(num_of_layers_in_measurement))
+        self.meas_progress_layer_current.setText(str(current_layer_number))
+        self.meas_progress_layer_progressBar.setMinimum(0)
+        self.meas_progress_layer_progressBar.setMaximum(num_of_layers_in_measurement)
+        self.meas_progress_layer_progressBar.setValue(current_layer_number)
+
+        self.meas_progress_total_point_max_count.setText(str(total_points_in_measurement))
+        self.meas_progress_total_point_current.setText(str(total_current_point_number))
+        self.meas_progress_total_point_progressBar.setMinimum(0)
+        self.meas_progress_total_point_progressBar.setMaximum(total_points_in_measurement)
+        self.meas_progress_total_point_progressBar.setValue(total_current_point_number)
+
+        if 'status_flag' in state_info:
+            self.meas_progress_status_label.setText(state_info['status_flag'])
+
+
 
     def get_mesh_cubic_data(self):
         """
