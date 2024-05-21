@@ -2,10 +2,11 @@
 This is the core control-unit that stores all relevant data to reach network devices and
 operates as interface between GUI and Network commands.
 """
+import os.path
 
 from PythonChamberApp.chamber_net_interface import ChamberNetworkCommands
 import PythonChamberApp.user_interface as ui_pkg
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
 from PythonChamberApp.process_controller.multithread_worker import Worker
@@ -105,6 +106,8 @@ class ProcessController:
             self.auto_measurement_set_z_zero_from_antenna_dimensions_button_handler)
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.pressed.connect(
             self.auto_measurement_start_handler)
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_stop_button.pressed.connect(
+            self.auto_measurement_terminate_thread_handler)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -640,22 +643,44 @@ class ProcessController:
         """
         Checks if chamber is not in operation and present.
         Check if vna is available and operating (how?)
+        Checks if filename is available without override, otherwise prompt warning.
 
         Gets config data from auto measurement window, creates auto measurement thread and starts operation
         """
+        #   Check that no measurement is currently running
         if self.ui_chamber_control_process is not None:
             self.gui_mainWindow.prompt_warning("Please wait until process from chamber control menu is "
                                                "finished before starting the measurement.",
                                                "Chamber is in operation")
             return
 
+        #   Setup results directory
+        meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
+        path_workdirectory = os.getcwd()
+        if not os.path.exists(os.path.join(path_workdirectory + '/results')):
+            os.makedirs(os.path.join(path_workdirectory + '/results'))
+        path_results_folder = os.path.join(os.getcwd() + '/results')
+
+        #   Check if filename is valid, avoid override
+        new_file_path_substring = "/" + self.gui_mainWindow.ui_auto_measurement_window.get_new_filename() + ".txt"
+        new_file_path = os.path.join(path_results_folder + new_file_path_substring)
+        if os.path.isfile(new_file_path):
+            self.gui_mainWindow.prompt_warning("A measurement file with the given name is already stored. \n"
+                                               "Overrride is not permitted. Please change the desired file name.",
+                                               "Duplicate Filename")
+            return
+
+        #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
         self.gui_mainWindow.disable_vna_control_window()
 
+        mesh_info = self.gui_mainWindow.ui_auto_measurement_window.get_mesh_cubic_data()
+        jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
+
         if self.auto_measurement_process is None:
-            self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=(1.0, 2.0, 3.0),
-                                                            y_vec=(1.0, 2.0, 3.0), z_vec=(1.0, 2.0, 3.0),
-                                                            mov_speed=10.0)
+            self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=mesh_info['x_vec'],
+                                                            y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec'],
+                                                            mov_speed=jog_speed, file_location=new_file_path)
 
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
@@ -761,3 +786,26 @@ class ProcessController:
         console_msg = "Updated zero coordinate Z: " + str(self.zero_pos_z)
         self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
         self.gui_mainWindow.update_status_bar(console_msg)
+
+    def auto_measurement_terminate_thread_handler(self):
+        """
+        Issues a QThred::terminate() on the auto measurement thread that is stored in the process controller
+        """
+        if self.auto_measurement_process is not None:
+            if self.__accept_stop_meas_dialog():
+                self.auto_measurement_process.stop()
+
+    def __accept_stop_meas_dialog(self):
+        dlg = QMessageBox(self.gui_mainWindow)
+        dlg.setWindowTitle("Terminate Auto Measurement")
+        dlg.setText("Do you really want to stop the measurement process?\n"
+                    "Once stopped it can not be resumed again!\n\n"
+                    "Data collected so far will be in desired file-location.")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setIcon(QMessageBox.Icon.Question)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
