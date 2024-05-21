@@ -103,6 +103,8 @@ class ProcessController:
             self.auto_measurement_setZero_button_handler)
         self.gui_mainWindow.ui_auto_measurement_window.button_set_z_zero_from_antennas.pressed.connect(
             self.auto_measurement_set_z_zero_from_antenna_dimensions_button_handler)
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.pressed.connect(
+            self.auto_measurement_start_handler)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -658,6 +660,8 @@ class ProcessController:
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
             self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+            self.auto_measurement_process.signals.progress.connect(self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
 
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
             self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
