@@ -120,6 +120,8 @@ class AutoMeasurement(QRunnable):
                     if self._is_running is False:
                         self.signals.error.emit({'error_code': 0, 'error_msg': "Thread was interrupted by process controller"})
                         self.signals.update.emit("Auto Measurement was interrupted")
+                        progress_dict['status_flag'] = "Measurement stopped"
+                        self.signals.progress.emit(progress_dict)
                         self.measurement_file.close()
                         return
 
@@ -146,6 +148,8 @@ class AutoMeasurement(QRunnable):
             point_in_layer_count = 0
 
         self.signals.update.emit("AutoMeasurement is completed!")
+        progress_dict['status_flag'] = "Measurement finished"
+        self.signals.progress.emit(progress_dict)
         self.measurement_file.close()
         self.signals.result.emit()
         self.signals.finished.emit()
