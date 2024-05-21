@@ -194,7 +194,7 @@ class UI_auto_measurement_window(QWidget):
         self.button_set_z_zero_from_antennas.setToolTip("Calculates theoretical Zero position by sum of both antenna\n"
                                                         "heights while considering the coordinate offset due to "
                                                         "z-homing-sensor")
-        self.button_set_z_zero_from_antennas.pressed.connect(self.__update_2d_plots)
+        self.button_set_z_zero_from_antennas.pressed.connect(self.update_2d_plots)
         self.button_set_z_zero_from_antennas.pressed.connect(self.update_mesh_display)
         frame_layout.addWidget(self.button_set_z_zero_from_antennas, 5, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
 
@@ -325,13 +325,13 @@ class UI_auto_measurement_window(QWidget):
         self.probe_antenna_length_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
         self.aut_height_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
         #   Connect Signals & Slots to update 2d plots when mesh input changed
-        self.mesh_cubic_x_length_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_x_num_of_steps_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_y_length_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_y_num_of_steps_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_z_start_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_z_stop_lineEdit.editingFinished.connect(self.__update_2d_plots)
-        self.mesh_cubic_z_num_of_steps_lineEdit.editingFinished.connect(self.__update_2d_plots)
+        self.mesh_cubic_x_length_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_x_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_y_length_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_y_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_z_start_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_z_stop_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_cubic_z_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
         self.mesh_cubic_x_length_lineEdit.editingFinished.connect(self.update_mesh_display)
         self.mesh_cubic_x_num_of_steps_lineEdit.editingFinished.connect(self.update_mesh_display)
         self.mesh_cubic_y_length_lineEdit.editingFinished.connect(self.update_mesh_display)
@@ -566,12 +566,12 @@ class UI_auto_measurement_window(QWidget):
         self.plot_2d_yz.addItem(self.plot_yz_mesh_points)
 
         #   default values
-        self.__update_2d_plots()
+        self.update_2d_plots()
         return graph_layout_widget
 
 
 
-    def __update_2d_plots(self):
+    def update_2d_plots(self):
         """
         Updates mesh points according to given mesh inputs
         > So far only cubic supported

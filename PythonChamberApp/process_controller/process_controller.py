@@ -787,6 +787,9 @@ class ProcessController:
         self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
         self.gui_mainWindow.update_status_bar(console_msg)
 
+        self.gui_mainWindow.ui_auto_measurement_window.update_mesh_display()
+        self.gui_mainWindow.ui_auto_measurement_window.update_2d_plots()
+
     def auto_measurement_terminate_thread_handler(self):
         """
         Issues a QThred::terminate() on the auto measurement thread that is stored in the process controller
