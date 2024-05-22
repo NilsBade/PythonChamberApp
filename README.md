@@ -126,8 +126,8 @@ To run the PythonChamberApp the following steps are necessary:
     > Installing pytest, make sure that it is installed **in the same virtual environment** the whole app is running in.
     > Otherwise pytest will not be able to find the modules imported by the unit-tests but throw a "ModuleNotFoundError".
   
-6. Install the National Instruments Visa Package. This implements the VISA backend for the [PyVisa Package](https://pyvisa.readthedocs.io/en/latest/index.html), used by the PythonChamberApp.
-The Package is available on [ni website](https://www.ni.com/de/support/downloads/drivers/download.ni-visa.html#521671). The PythonChamberApp V1.0 was developed based on Version 2024 Q1. 
+6. Install something beautiful as backend for the [PyVisa Package](https://pyvisa.readthedocs.io/en/latest/index.html), used by the PythonChamberApp.
+How to find out what could be a good solution as backend? - no idea :)
 
 7. Execute the 'runner.py' script in './PythonChamberApp/PythonChamberApp/runner.py' (in your virtual environment).
 
