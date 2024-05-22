@@ -8,7 +8,7 @@
 #
 ################################################################################
 
-import visa
+import pyvisa as visa
 
 
 # Change VISA_ADDRESS to a SOCKET address, e.g. 'TCPIP::169.254.104.59::5025::SOCKET'
