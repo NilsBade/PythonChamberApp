@@ -319,12 +319,15 @@ class ProcessController:
                                          position_update_callback):
         """
         This routine can be given to a worker to request all-axis-homing in separate thread
+        Afterward move the head to a known position and give the updated position
         """
         update_callback.emit("Request to home all axis")
         response = chamber.chamber_home_with_flag(axis='xyz')
         if response['status_code'] == 204:
             update_callback.emit("Manual chamber control enabled")
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
+            chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=75.0)
+            position_update_callback.emit({'abs_x': 258.0, 'abs_y': 0.0, 'abs_z': 100.0})
             progress_callback.emit(response)
         else:
             update_callback.emit(
