@@ -135,7 +135,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         x_code = ' X' + str(round(x, 2))
         y_code = ' Y' + str(round(y, 2))
         z_code = ' Z' + str(round(z, 2))
-        speed_code = ' S' + str(round(speed, 2))
+        speed_code = ' F' + str(round(speed, 2))
 
         # assemble custom GCode...
         g_code_list = [self.gcode_set_flag]
