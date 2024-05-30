@@ -139,13 +139,14 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
 
         # assemble custom GCode...
         g_code_list = [self.gcode_set_flag]
+        g_code_list.append('M105')  # requests Tool 0 Temp info. Necessary in first server request.
         if abs_coordinate:
             g_code_list.append("G90")  # set absolute coordinates
         else:
             g_code_list.append("G91")  # set relative coordinates
         g_code_list.append('G1' + x_code + y_code + z_code + speed_code)
         g_code_list.append(self.gcode_reset_flag)
-        g_code_list.append('M105')  # requests Tool 0 Temp info. Necessary in first server request.
+        g_code_list.append("G90")   # always set global coordinates in the end to prevent malfunction when octoprint used in webbrowser at the same time
 
         # send g-code-cmd-request via http
         payload = {
