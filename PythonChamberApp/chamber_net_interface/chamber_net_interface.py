@@ -28,6 +28,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
 
     gcode_set_flag = 'M104 T0 S1'  # used to mark when (jog) cmd started
     gcode_reset_flag = 'M104 T0 S0'  # used to mark when (jog) cmd completed
+    gcode_wait_for_moves_to_finish = 'M400'
     __debug_gcode_sleep_5s = 'G4 P5000'
 
     def __init__(self, ip_address: str = None, api_key: str = None):
@@ -95,27 +96,6 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_connection_endpoint, headers=self.header_tjson, json=payload)
         return {'status_code': response.status_code, 'content': response.content}
 
-    def __chamber_jog(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 100.0,
-                      abs_coordinate: bool = False):
-        """
-        Receives x,y,z parameters, desired speed and coordinate-context and requests chamber movement via http-request.
-        :param x: x-direction distance or coordinate [mm]
-        :param y: y-direction distance or coordinate [mm]
-        :param z: z-direction distance or coordinate [mm]
-        :param speed: speed for movement in [mm/min]
-        :param abs_coordinate: boolean flag if total coordinates should be used
-        :return: dict {'status code' : str, 'content' : str} of server response
-        """
-        payload = {
-            "command": "jog",
-            "x": x,
-            "y": y,
-            "z": z,
-            "absolute": abs_coordinate,
-            "speed": speed
-        }
-        response = requests.post(url=self.api_printhead_endpoint, headers=self.header_tjson, json=payload)
-        return {'status_code': response.status_code, 'content': response.content}
 
     def __chamber_jog_with_flag(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 100.0,
                                 abs_coordinate: bool = False):
@@ -145,6 +125,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         else:
             g_code_list.append("G91")  # set relative coordinates
         g_code_list.append('G1' + x_code + y_code + z_code + speed_code)
+        g_code_list.append(self.gcode_wait_for_moves_to_finish)
         g_code_list.append(self.gcode_reset_flag)
         g_code_list.append("G90")   # always set global coordinates in the end to prevent malfunction when octoprint used in webbrowser at the same time
 
@@ -182,42 +163,6 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         """
         response = self.__chamber_jog_with_flag(x=x, y=y, z=z, speed=(speed * 60), abs_coordinate=False)
         return response
-
-    def chamber_home(self, axis: str = ''):
-        """
-        Receives axis to home as string. Independent of upper or lower case.
-        printer.cfg [safe_z_home] should make sure that head is in right position when probing for z-axis.
-
-        :param axis: arbitrary string containing x/X, y/Y, z/Z. e.g. axis = 'xyz' or 'xy' or 'Zyx' ...
-        :return: dict {'status code' : str, 'content' : str} of server response
-        """
-        # initialize flags if letter found
-        flag_x = False
-        flag_y = False
-        flag_z = False
-
-        # check for letters in string
-        for i in axis:
-            if i == 'x' or i == 'X':
-                flag_x = True
-            if i == 'y' or i == 'Y':
-                flag_y = True
-            if i == 'z' or i == 'Z':
-                flag_z = True
-
-        # set up request list
-        list = []
-        if flag_x: list.append('x')
-        if flag_y: list.append('y')
-        if flag_z: list.append('z')
-
-        # formulate and send request
-        payload = {
-            "command": "home",
-            "axes": list
-        }
-        response = requests.post(self.api_printhead_endpoint, headers=self.header_tjson, json=payload)
-        return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_home_with_flag(self,axis: str = ''):
         """
@@ -274,16 +219,25 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_system_cmd_endpoint + '/core/restart', headers=self.header_api)
         return {'status_code': response.status_code, 'content': response.content}
 
-    def chamber_level_bed(self):
+    def chamber_z_tilt_with_flag(self):
         """
         Sends Klipper command for Z-Tilt compensation. Probes three points defined in printer.cfg and adjusts the
         position of each z-stepper accordingly.
         :return: dict {'status code' : str, 'content' : str} of server response
         """
-        gcode_cmd = {
-            "command": "Z_TILT_ADJUST"
+        g_code_list = [self.gcode_set_flag]
+        g_code_list.append("Z_tilt_adjust") # Custom GCode command of klipper
+        g_code_list.append(self.gcode_wait_for_moves_to_finish)
+        g_code_list.append(self.gcode_reset_flag)
+
+        # send g-code-cmd-request via http
+        payload = {
+            "commands": g_code_list
         }
-        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=gcode_cmd)
+        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
+
+        while self.chamber_isflagset():
+            time.sleep(0.5)
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_isflagset(self):

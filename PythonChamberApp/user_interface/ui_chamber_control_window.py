@@ -16,6 +16,7 @@ class UI_chamber_control_window(QWidget):
     control_buttons_widget: QWidget = None      # sums up all control buttons and goTo functionality. Can be disabled before first time homed.
     # control_buttons_widget - Button Menu
     home_all_axis_button: QPushButton = None
+    z_tilt_adjust_button: QPushButton = None
     button_move_x_inc: QPushButton = None
     button_move_x_dec: QPushButton = None
     button_move_y_inc: QPushButton = None
@@ -79,6 +80,13 @@ class UI_chamber_control_window(QWidget):
         self.home_all_axis_button.setFixedSize(200,30)
         main_layout.addWidget(self.home_all_axis_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        self.z_tilt_adjust_button = QPushButton()
+        self.z_tilt_adjust_button.setText("Z-Tilt-Adjustment")
+        self.z_tilt_adjust_button.setFixedSize(200,30)
+        self.z_tilt_adjust_button.setEnabled(False)
+        main_layout.addWidget(self.z_tilt_adjust_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+
         self.control_buttons_widget = QWidget()     # Summed up widget to enable/disable all together
         buttons_layout = QGridLayout()
         self.control_buttons_widget.setLayout(buttons_layout)
@@ -125,8 +133,8 @@ class UI_chamber_control_window(QWidget):
         self.button_move_stepsize_input_line.setInputMask('000.00')  # input as float with two decimals
         self.button_move_stepsize_input_line.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        self.button_move_jogspeed_input_line = QLineEdit('05.0')
-        self.button_move_jogspeed_input_line.setInputMask('00.0')  # input as float with two decimals
+        self.button_move_jogspeed_input_line = QLineEdit('050.0')
+        self.button_move_jogspeed_input_line.setInputMask('000.0')  # input as float with two decimals
         self.button_move_jogspeed_input_line.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         # control section headers
@@ -192,7 +200,7 @@ class UI_chamber_control_window(QWidget):
         buttons_layout.addLayout(xyz_go_abs_layout, 7, 0, 1, 5)
 
         main_layout.addWidget(self.control_buttons_widget)
-        self.control_buttons_widget.setEnabled(False)
+        #self.control_buttons_widget.setEnabled(False)
 
         # setup console chamber control
         self.chamber_control_console = QTextEdit()
