@@ -72,6 +72,8 @@ class ProcessController:
         # connect all Slots & Signals Chamber control window
         self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.pressed.connect(
             self.chamber_control_home_all_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.pressed.connect(
+            self.chamber_control_z_tilt_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.button_move_home_xy.pressed.connect(
             self.chamber_control_home_xy_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.button_move_home_z.pressed.connect(
@@ -284,6 +286,10 @@ class ProcessController:
 
     def chamber_control_home_all_button_handler(self):
         if self.ui_chamber_control_process is None:
+            # disable all chamber buttons until routine finished
+            self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(False)
+            self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(False)
+
             self.ui_chamber_control_process = Worker(self.chamber_control_home_all_routine, self.chamber)
 
             self.ui_chamber_control_process.signals.update.connect(
@@ -309,6 +315,7 @@ class ProcessController:
         """
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+            self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(True)
             self.gui_mainWindow.ui_auto_measurement_window.enable_chamber_move_interaction()
             self.gui_mainWindow.prompt_info(
                 "Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.",
@@ -324,10 +331,11 @@ class ProcessController:
         update_callback.emit("Request to home all axis")
         response = chamber.chamber_home_with_flag(axis='xyz')
         if response['status_code'] == 204:
-            update_callback.emit("Manual chamber control enabled")
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
-            chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=75.0)
+            update_callback.emit("Requests Movement to Front")
+            chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=50.0)
             position_update_callback.emit({'abs_x': 258.0, 'abs_y': 0.0, 'abs_z': 100.0})
+            update_callback.emit("Manual chamber control enabled")
             progress_callback.emit(response)
         else:
             update_callback.emit(
@@ -636,6 +644,41 @@ class ProcessController:
                 jogspeed) + "[mm/s]")
         response = chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=jogspeed)
         position_update_callback.emit({'abs_x': x_coor, 'abs_y': y_coor, 'abs_z': z_coor})
+
+        return
+
+    def chamber_control_z_tilt_button_handler(self):
+        if self.ui_chamber_control_process is None:
+            self.ui_chamber_control_process = Worker(self.chamber_control_z_tilt_routine,
+                                                     self.chamber)
+
+            self.ui_chamber_control_process.signals.update.connect(
+                self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+            self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+            self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+
+            self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
+
+            self.threadpool.start(self.ui_chamber_control_process)
+
+            self.gui_mainWindow.prompt_info("For details about tilt adjustment process look into octoprint's terminal tab on the webbrowser interface.", "Tilt adjustment started...")
+        else:
+            self.gui_mainWindow.prompt_warning(
+                "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
+                "Too many Requests")
+        return
+
+    def chamber_control_z_tilt_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
+                                                position_update_callback):
+        """
+        This routine requests Z-Tilt_Adjustment from Klipper in a seperate thread and sends updates to GUI
+        """
+        update_callback.emit("Request Z-Tilt-Adjustment...")
+        chamber.chamber_z_tilt_with_flag()
+        update_callback.emit("Adjustment completed. Moving to front...")
+        chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=75.0)
+        position_update_callback.emit({'abs_x': 258.0, 'abs_y': 0.0, 'abs_z': 100.0})
 
         return
 
