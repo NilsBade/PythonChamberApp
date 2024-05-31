@@ -212,7 +212,7 @@ class UI_auto_measurement_window(QWidget):
         self.button_set_current_as_zero.setToolTip("Set 'Zero Position' when probe antenna is located above XY center "
                                                    "of AUT\nand the end of the probe antenna is virtually touching the "
                                                    "top of the AUT\nconsidering Z-direction.")
-        self.auto_measurement_jogSpeed_lineEdit = QLineEdit("10")
+        self.auto_measurement_jogSpeed_lineEdit = QLineEdit("200")
         frame_layout.addWidget(auto_measurement_jogSpeed_label, 7, 0, 1, 1)
         frame_layout.addWidget(self.auto_measurement_jogSpeed_lineEdit, 7, 1, 1, 1)
         frame_layout.addWidget(auto_measurement_jogSpeed_label_unit, 7, 2, 1, 1)

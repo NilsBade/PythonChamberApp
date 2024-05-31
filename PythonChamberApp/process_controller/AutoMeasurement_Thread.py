@@ -14,7 +14,7 @@ class AutoMeasurementSignals(QObject):
     Supported signals are:
 
     finished
-        >> ? - ´´To be implemented´´
+        >> dict {'file_location': str}
 
     error
         >> dict {'error_code': int, 'error_msg': str}
@@ -35,7 +35,7 @@ class AutoMeasurementSignals(QObject):
         >> string with update message -> can be used for console output or similar
 
     '''
-    finished = pyqtSignal()
+    finished = pyqtSignal(dict)
     error = pyqtSignal(dict)
     result = pyqtSignal()
     progress = pyqtSignal(dict)
@@ -126,7 +126,7 @@ class AutoMeasurement(QRunnable):
                         return
 
                     self.signals.update.emit('Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
-                    # self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed)
+                    self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed)
                     self.signals.update.emit("Movement done!")
 
                     # Routine to do vna measurement and store data somewhere put here...
@@ -152,7 +152,7 @@ class AutoMeasurement(QRunnable):
         self.signals.progress.emit(progress_dict)
         self.measurement_file.close()
         self.signals.result.emit()
-        self.signals.finished.emit()
+        self.signals.finished.emit({'file_location': self.measurement_file.name})
         return
 
     def stop(self):
