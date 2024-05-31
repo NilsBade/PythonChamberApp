@@ -286,6 +286,10 @@ class ProcessController:
 
     def chamber_control_home_all_button_handler(self):
         if self.ui_chamber_control_process is None:
+            # Assure that Z-sensor is mounted
+            if self.__accept_home_dialog() is False:
+                return
+
             # disable all chamber buttons until routine finished
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(False)
             self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(False)
@@ -342,6 +346,25 @@ class ProcessController:
                 "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
                     'content'])
         return
+
+    def __accept_home_dialog(self):
+        """
+        Function prompts a dialog asking for a mounted BL Touch sensor to the chamber.
+        Homing is started only when sensor-mounting confirmed!
+        """
+        dlg = QMessageBox(self.gui_mainWindow)
+        dlg.setWindowTitle("Start Homing - Z-sensor mounting")
+        dlg.setText("Do you really want to start homing?\n"
+                    "To Home Z-axis the BL-Touch sensor MUST be mounted to the Probehead!\n"
+                    "Click ok once the sensor is mounted and wired correctly.")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setIcon(QMessageBox.Icon.Question)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
 
     def chamber_control_home_xy_button_handler(self):
         if self.ui_chamber_control_process is None:
@@ -743,8 +766,9 @@ class ProcessController:
                                                "More than one Measurement Process")
         return
 
-    def auto_measurement_finished_handler(self):
+    def auto_measurement_finished_handler(self, finished_info: dict):
         self.auto_measurement_process = None
+        self.gui_mainWindow.prompt_info(info_msg="Auto Measurement process completed.\nData was saved to " + finished_info['file_location'],window_title="Auto Measurement Completed")
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_vna_control_window()
@@ -845,6 +869,10 @@ class ProcessController:
                 self.auto_measurement_process.stop()
 
     def __accept_stop_meas_dialog(self):
+        """
+        prompts a dialog window asking for automeasurement process termination.
+        :return: True >> ok clicked, False >> cancel clicked
+        """
         dlg = QMessageBox(self.gui_mainWindow)
         dlg.setWindowTitle("Terminate Auto Measurement")
         dlg.setText("Do you really want to stop the measurement process?\n"
