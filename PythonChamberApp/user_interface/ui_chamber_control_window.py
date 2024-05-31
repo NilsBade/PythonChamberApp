@@ -267,16 +267,18 @@ class UI_chamber_control_window(QWidget):
 
         # Draw COS axis at 0,0,0
         cos = gl.GLAxisItem()
-        cos.setSize(x=75, y=75, z=75)
+        cos.setSize(x=-(self.position_graph_x_max_coor + 20), y=(self.position_graph_y_max_coor + 20), z=-(self.position_graph_z_max_coor + 20))
+        cos.translate(dx=self.position_graph_x_max_coor, dy=0, dz=0)
         chamber_position_widget.addItem(cos)
 
         # Label Front side of work-volume
-        frontlabel = gl.GLTextItem(pos=numpy.array([chamber_max_x + 5, (chamber_max_y/2)-50, 5]), text="FrontSide")
+        frontlabel = gl.GLTextItem(pos=numpy.array([chamber_max_x/2, -10, 5]), text="FrontSide")
         chamber_position_widget.addItem(frontlabel)
 
         # set view point roughly
-        chamber_position_widget.pan(chamber_max_x/2, chamber_max_y/2, -chamber_max_z/3)
-        chamber_position_widget.setCameraPosition(distance=1200)
+        chamber_position_widget.pan(chamber_max_x/2, chamber_max_y/2, -chamber_max_z/4)
+        #chamber_position_widget.orbit(azim=90, elev=0)
+        chamber_position_widget.setCameraPosition(distance=1500)
 
         # create spot to display head position
         self.position_graph_head_object = gl.GLScatterPlotItem()
@@ -332,7 +334,7 @@ class UI_chamber_control_window(QWidget):
         self.position_graph_bed_object.resetTransform()
         self.position_graph_bed_object.translate(dx=0, dy=0, dz=-z)
         self.position_graph_head_object.resetTransform()
-        self.position_graph_head_object.translate(dx=x, dy=y, dz=0)
+        self.position_graph_head_object.translate(dx=-x+self.position_graph_x_max_coor, dy=y, dz=0) # X Offset needed since COS visualized mirrord on x axis
         return
 
 
