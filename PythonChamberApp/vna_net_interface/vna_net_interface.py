@@ -1,5 +1,130 @@
 import pyvisa
 
+class E8361RemoteGPIB:
+    """
+    This object implements a pyvisa interface that communicates with the E8361A PNA of Agilent / Keysight.
+    Available visa commands are abstracted and summed up to a higher level to improve usability.
+    """
+    # private properties
+    resource_manager: pyvisa.ResourceManager = None
+    pna_device: pyvisa.Resource = None
+    running_measurements: list = None   # stores all configured measurements as dict with measurement infos
+
+    def __init__(self):
+        self.resource_manager = pyvisa.ResourceManager()
+        self.running_measurements = []
+
+    # private / internal
+
+
+    # public
+    def list_resources(self):
+        """
+        Returns tuple(str, ...) of available devices that fit '?*::INSTR' naming-scheme.
+        """
+        return tuple(self.resource_manager.list_resources())
+
+    def list_resources_all(self):
+        """
+        Returns tuple(str, ...) of available devices without any filter.
+        """
+        return tuple(self.resource_manager.list_resources('?*'))
+
+    def connect_pna(self, resource_name: str):
+        """
+        Opens the pyvisa resource with the given name.
+        Stores the opened resource in pna_device object property for use with functions.
+        configures terminations as '\n' and sets timeout to 5sec.
+
+        :return: open successful >> true, open failed >> false
+        """
+        try:
+            self.pna_device = self.resource_manager.open_resource(resource_name=resource_name)
+        except pyvisa.VisaIOError as ex:
+            print(f'VISA ERROR - Resources could not be opened!\nMSG: {ex}')
+            return False
+
+        self.pna_device.read_termination = '\n'
+        self.pna_device.write_termination = '\n'
+        self.pna_device.timeout = 5000
+        return True
+
+    def disconnect_pna(self):
+        if self.pna_device is not None:
+            self.pna_device.close()
+            self.pna_device = None
+        return
+
+    def pna_read_idn(self):
+        """
+        :return: str of pna-response. returns error message if error occurs.
+        """
+        if self.pna_device is None:
+            return str("No pna device stored in Remote Object!")
+
+        try:
+            self.pna_device.write('*IDN?')
+        except pyvisa.VisaIOError as ex:
+            return str(f'VISA ERROR - IDN Request failed!\nMSG: {ex}')
+
+        try:
+            idn_response = self.pna_device.read()
+        except pyvisa.VisaIOError as ex:
+            return str(f'VISA ERROR - IDN Read failed!\nMSG: {ex}')
+
+        return idn_response
+
+    def pna_preset(self):
+        """
+        Presets whole PNA system and deletes all standard measurements.
+        :return: successful >> True, Failed >> False
+        """
+        if self.pna_device is None:
+            return False
+
+        self.pna_device.write("SYSTem:PRESet")
+        self.pna_device.write("CALC1:PAR:DEL:ALL")
+        return True
+
+    def pna_add_measurement(self, meas_name: str, parameter: str):
+        """
+        Adds measurement with given 'meas_name' to internal list of active measurements.
+        Once added, configuration commands can be used in combination with 'meas_name' to configure the right measurement on pna.
+
+        :param meas_name: Unique name of measurement to find measurement later
+        :param parameter: Parameter that should be measured as string 'S11', 'S12', 'S21' or 'S22'
+        :return: int, Number of stored/active measurements // -1 if duplicate meas-name
+        """
+        # check for availability of meas-name
+        for meas in self.running_measurements:
+            if meas['meas_name'] == meas_name:
+                return -1
+
+        # add new measurement with next cnum
+        new_cnum = self.running_measurements.__len__()  # returns next available index since counting from zero
+        self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter})
+
+        self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{meas_name}',{parameter}")
+
+    def get_cnum_of_meas(self, meas_name: str):
+        """
+        Returns index of measurement in local running_measurements-list as int.
+        Returns -1 if given 'meas_name' not found.
+        """
+        idx = -1
+        counter = 0
+
+        for meas in self.running_measurements:
+            if meas['meas_name'] == meas_name:
+                idx = counter
+            counter += 1
+
+        return idx
+
+
+
+
+
 if __name__ == '__main__':
     manager = pyvisa.ResourceManager()
     print(manager)
