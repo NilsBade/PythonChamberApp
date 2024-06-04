@@ -83,7 +83,7 @@ class E8361RemoteGPIB:
             return False
 
         self.pna_device.write("SYSTem:PRESet")
-        self.pna_device.write("CALC1:PAR:DEL:ALL")
+        self.pna_device.write("CALC:PAR:DEL:ALL")
         return True
 
     def pna_add_measurement(self, meas_name: str, parameter: str):
@@ -101,10 +101,12 @@ class E8361RemoteGPIB:
                 return -1
 
         # add new measurement with next cnum
-        new_cnum = self.running_measurements.__len__()  # returns next available index since counting from zero
+        new_cnum = self.running_measurements.__len__() + 1  # returns next available index - PNA starts count at 1, thus '+1' offset
         self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter})
 
         self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{meas_name}',{parameter}")
+        self.pna_device.write(f"DISPlay:WINDow{new_cnum}:STATE ON")
+        self.pna_device.write(f"DISPlay:WINDow{new_cnum}:TRACe1:FEED '{meas_name}'")
 
     def get_idx_of_meas(self, meas_name: str):
         """
@@ -203,6 +205,113 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENS{meas_cnum}:SWE:POIN {num_of_points}")
         return True
 
+    def pna_set_output_power(self, meas_name: str, power_dbm: float):
+        """
+        Stores given power_dbm in measurement-dict in running_measurements-list as 'output_power'
+        and sends the dbm value to the PNA.
+
+        :param meas_name: unique name of measurement
+        :param power_dbm: RF output Power in [dBm]
+        :return: successful >> True, Failed >> False
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['ouput_power'] = power_dbm
+        self.pna_device.write(f"SOURce{meas_cnum}:POWer{1}:LEVel:IMMediate:AMPLitude {power_dbm}") # Not sure about Power-number but seems to work!
+        return True
+
+    def pna_is_busy(self):
+        """
+        Checks if PNA is busy doing some operation via GPIB.
+        :return: True >> PNA busy, False >> PNA waiting
+        """
+        busy_bool = bool(self.pna_device.query('*OPC?') != '+1')
+        return busy_bool
+
+    def pna_get_x_axis(self, meas_name: str) -> list:
+        """
+        Gets x axis values for given measurement name from PNA device
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.pna_device.write(f"CALC{cnum}:PAR:SEL '{meas_name}'")
+        response = self.pna_device.query(f"SENS{cnum}:X?")
+        x_axis_stim_points = [float(x) for x in response.split(',')]
+        return x_axis_stim_points
+
+    def pna_read_meas_data(self, meas_name: str) -> list[list[float]]:
+        """
+        Reads data according to given measurement name.
+        Reads measurement data as complex numbers, thus two numbers per frequency-stimulus-point.
+        Returns list as following...
+
+            [
+                [frequency0: float, real0: float, imag0: float],
+                [frequency1: float, real1: float, imag1: float],
+                ... ]
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+        # Get stimulus points in Hz
+        self.pna_device.write(f"CALC{meas_cnum}:PAR:SEL '{meas_name}'")
+        x_axis_string = self.pna_device.query(f"SENS{meas_cnum}:X?")
+        x_axis_stim_points = [float(x) for x in x_axis_string.split(',')]
+
+        data_string = self.pna_device.query(f'CALC{meas_cnum}:DATA? SDATA')
+        data_r_i_list = [float(x) for x in data_string.split(',')]
+
+        # Assemble data list from X axis and real imaginary measurement data
+        meas_data_list = []
+        counter = 0
+        for freq in x_axis_stim_points:
+            meas_data_list.append([freq, data_r_i_list[counter], data_r_i_list[counter+1]])
+            counter += 2
+
+        return meas_data_list
+
+    def setup_pna_add_measurement_detailed(self, meas_name: str, parameter: str, freq_start: float, freq_stop: float, if_bw: float, sweep_num_points: int, output_power: float):
+        """
+        Configures PNA measurement with all available configurations right away.
+        :param meas_name:           unique measurement name
+        :param parameter:           standard PNA Parameter 'S11', 'S12', 'S21' or 'S22'
+        :param freq_start:          start frequency for sweep in [Hz]
+        :param freq_stop:           stop frequency for sweep in [Hz]
+        :param if_bw:               IF Bandwidth in [Hz]
+        :param sweep_num_points:    Number of frequency points stimulated throughout sweep
+        :param output_power:        RF Output Power in [dBm]
+        :return: True >> success, False >> failed
+        """
+        self.pna_add_measurement(meas_name=meas_name, parameter=parameter)
+        self.pna_set_freq_start(meas_name=meas_name, freq_start=freq_start)
+        self.pna_set_freq_stop(meas_name=meas_name, freq_stop=freq_stop)
+        self.pna_set_IF_BW(meas_name=meas_name, if_bw=if_bw)
+        self.pna_set_sweep_num_of_points(meas_name=meas_name, num_of_points=sweep_num_points)
+        self.pna_set_output_power(meas_name=meas_name, power_dbm=output_power)
+        return True
+
+
+    def pna_write_custom_string(self, visa_str: str):
+        self.pna_device.write(visa_str)
+
+    def pna_read_custom_string(self, visa_str: str):
+        return self.pna_device.read(visa_str)
+
+    def pna_query_custom_string(self, visa_str: str):
+        return self.pna_device.query(visa_str)
 
 if __name__ == '__main__':
     manager = pyvisa.ResourceManager()
@@ -240,11 +349,13 @@ if __name__ == '__main__':
     chamber.write(f"SENSe{cnum}:FREQ:STOP {frequency_stop}")                                #
     chamber.write(f"SENSe{cnum}:BANDwidth:RESolution {IF_bw}")                              #
     chamber.write(f"SENSe{cnum}:SWEep:POINts {num_of_points}")                              #
-    chamber.write(f"SOURce{cnum}:POWer{pnum}:LEVel:IMMediate:AMPLitude {max_pow_dbm}")
+    chamber.write(f"SOURce{cnum}:POWer{pnum}:LEVel:IMMediate:AMPLitude {max_pow_dbm}")      #
 
     # Read from Measurement
     chamber.write(f"CALCulate{cnum}:PARameter:SELect '{messungs_name}'")
-    chamber.write(f"CALC{cnum}:DATA FDATA,Data(x)") # ToDo Reading measurement data does not work! find out how the syntax is meant
+    chamber.query(f"CALC{cnum}:DATA? SDATA") # First select the measurement you are interested in, then query data with '?' in visa string!
+    # Use 'SDATA' to get complex values and calculate amplitude and phase later by yourself.
+    # Otherwise, Amplitude and phase would have needed two separate measurements on the PNA with different cnums.
 
     # Zustand chamber abfragen ('+1' bedeutet chamber hat alle prozesse beendet)
     while chamber.query('*OPC?') != '+1':
@@ -273,3 +384,4 @@ if __name__ == '__main__':
     chamber.write("CALCulate2:MARKer:STATE ON")
 
     chamber.close()
+
