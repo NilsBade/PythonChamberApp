@@ -106,23 +106,102 @@ class E8361RemoteGPIB:
 
         self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{meas_name}',{parameter}")
 
-    def get_cnum_of_meas(self, meas_name: str):
+    def get_idx_of_meas(self, meas_name: str):
         """
         Returns index of measurement in local running_measurements-list as int.
         Returns -1 if given 'meas_name' not found.
         """
-        idx = -1
-        counter = 0
+        idx = 0
 
         for meas in self.running_measurements:
             if meas['meas_name'] == meas_name:
-                idx = counter
-            counter += 1
+                return idx
+            idx += 1
 
-        return idx
+        return -1
 
+    def pna_set_freq_start(self, meas_name: str, freq_start: float):
+        """
+        Stores given start frequency in measurement-dict in running_measurements-list as 'freq_start'
+        and sends start frequency to pna.
+        If measurement name not found or other error, returns False.
 
+        :param meas_name: unique name of measurement
+        :param freq_start: start frequency in Hz
+        :return: successful >> True, Failed >> False
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
 
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['freq_start'] = freq_start
+        self.pna_device.write(f"SENS{meas_cnum}:FREQ:STAR {freq_start}")
+        return True
+
+    def pna_set_freq_stop(self, meas_name: str, freq_stop: float):
+        """
+        Stores given stop frequency in measurement-dict in running_measurements-list as 'freq_stop'
+        and sends stop frequency to pna.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :param freq_stop: stop frequency in Hz
+        :return: successful >> True, Failed >> False
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['freq_stop'] = freq_stop
+        self.pna_device.write(f"SENS{meas_cnum}:FREQ:STOP {freq_stop}")
+        return True
+
+    def pna_set_IF_BW(self, meas_name: str, if_bw: float):
+        """
+        Stores given IF Bandwidth in measurement-dict in running_measurements-list as 'IF_BW'
+        and sends IF Bandwidth to pna.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :param if_bw: IF Bandwidth in Hz
+        :return: successful >> True, Failed >> False
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['IF_BW'] = if_bw
+        self.pna_device.write(f"SENSe{meas_cnum}:BAND:RES {if_bw}")
+        return True
+
+    def pna_set_sweep_num_of_points(self, meas_name: str, num_of_points: int):
+        """
+        Stores given num_of_points in measurement-dict in running_measurements-list as 'sweep_num_of_points'
+        and sends sweep number of points to pna.
+
+        :param meas_name: unique name of measurement
+        :param num_of_points: number of points to measure throughout frequency sweep
+        :return: successful >> True, Failed >> False
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['sweep_num_of_points'] = num_of_points
+        self.pna_device.write(f"SENS{meas_cnum}:SWE:POIN {num_of_points}")
+        return True
 
 
 if __name__ == '__main__':
@@ -153,14 +232,14 @@ if __name__ == '__main__':
     IF_bw = 1000
     max_pow_dbm = -3
 
-    creation_string = f"CALC{cnum}:PAR:DEF:EXT '{messungs_name}',{param}"
+    creation_string = f"CALC{cnum}:PAR:DEF:EXT '{messungs_name}',{param}"                   #
     chamber.write(creation_string)
     chamber.write("DISPlay:WINDow1:STATE ON")
     chamber.write(f"DISPlay:WINDow1:TRACe1:FEED '{messungs_name}'")
-    chamber.write(f"SENSe{cnum}:FREQuency:STAR {frequency_start}")
-    chamber.write(f"SENSe{cnum}:FREQ:STOP {frequency_stop}")
-    chamber.write(f"SENSe{cnum}:BANDwidth:RESolution {IF_bw}")
-    chamber.write(f"SENSe{cnum}:SWEep:POINts {num_of_points}")
+    chamber.write(f"SENSe{cnum}:FREQuency:STAR {frequency_start}")                          #
+    chamber.write(f"SENSe{cnum}:FREQ:STOP {frequency_stop}")                                #
+    chamber.write(f"SENSe{cnum}:BANDwidth:RESolution {IF_bw}")                              #
+    chamber.write(f"SENSe{cnum}:SWEep:POINts {num_of_points}")                              #
     chamber.write(f"SOURce{cnum}:POWer{pnum}:LEVel:IMMediate:AMPLitude {max_pow_dbm}")
 
     # Read from Measurement
