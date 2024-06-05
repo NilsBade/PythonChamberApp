@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
 from PythonChamberApp.process_controller.multithread_worker import Worker
+from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
 import numpy as np
 
 
@@ -24,10 +25,9 @@ class ProcessControllerSignals(QObject):
 
 
 class ProcessController:
-
     # Properties
     chamber: ChamberNetworkCommands = None
-    # vna: VNA_NetworkCommands = None
+    vna: E8361RemoteGPIB = E8361RemoteGPIB()
     gui_mainWindow: ui_pkg.MainWindow = None
     gui_app: QApplication = None
 
@@ -39,7 +39,7 @@ class ProcessController:
     __x_live: float = None
     __y_live: float = None
     __z_live: float = None
-    __x_max_coor: float = 510.0     # Measured with V1 BL Touch sensor mount, 30.05.2024
+    __x_max_coor: float = 510.0  # Measured with V1 BL Touch sensor mount, 30.05.2024
     __y_max_coor: float = 454.0
     __z_max_coor: float = 908.0
     __z_head_bed_offset = 49.0
@@ -66,8 +66,8 @@ class ProcessController:
             self.chamber_connect_button_handler_threaded)
 
         # Connect all Slots & Signals config_window - **VNA**
-        self.gui_mainWindow.ui_config_window.vna_connect_button.pressed.connect(self.auto_measurement_start_handler)
-        # ...nothing so far...
+        self.gui_mainWindow.ui_config_window.vna_list_ressources_button.pressed.connect(self.vna_list_ressources_button_handler)
+        self.gui_mainWindow.ui_config_window.vna_connect_button.pressed.connect(self.vna_connect_button_handler)
 
         # connect all Slots & Signals Chamber control window
         self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.pressed.connect(
@@ -94,8 +94,8 @@ class ProcessController:
             self.chamber_control_go_to_button_handler)
 
         # setup AutoMeasurement
-        self.zero_pos_x = self.__x_max_coor/2
-        self.zero_pos_y = self.__y_max_coor/2
+        self.zero_pos_x = self.__x_max_coor / 2
+        self.zero_pos_y = self.__y_max_coor / 2
         self.zero_pos_z = None
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
@@ -175,32 +175,38 @@ class ProcessController:
             new_x = pos_update_info['abs_x']
             if new_x < 0 or new_x > self.__x_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid absolute movement!\nRequest leads to X: " + str(new_x) + " but allowed range is [0, " + str(self.__x_max_coor) +"].\n"
+                warn_msg += "Invalid absolute movement!\nRequest leads to X: " + str(
+                    new_x) + " but allowed range is [0, " + str(self.__x_max_coor) + "].\n"
         if 'abs_y' in pos_update_info:
             new_y = pos_update_info['abs_y']
             if new_y < 0 or new_y > self.__y_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid absolute movement!\nRequest leads to Y: " + str(new_y) + " but allowed range is [0, " + str(self.__y_max_coor) +"].\n"
+                warn_msg += "Invalid absolute movement!\nRequest leads to Y: " + str(
+                    new_y) + " but allowed range is [0, " + str(self.__y_max_coor) + "].\n"
         if 'abs_z' in pos_update_info:
             new_z = pos_update_info['abs_z']
             if new_z < 0 or new_z > self.__z_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid absolute movement!\nRequest leads to Z: " + str(new_z) + " but allowed range is [0, " + str(self.__z_max_coor) +"].\n"
+                warn_msg += "Invalid absolute movement!\nRequest leads to Z: " + str(
+                    new_z) + " but allowed range is [0, " + str(self.__z_max_coor) + "].\n"
         if 'rel_x' in pos_update_info:
             new_x = self.__x_live + pos_update_info['rel_x']
             if new_x < 0 or new_x > self.__x_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid relative movement!\nRequest leads to X: " + str(new_x) + " but allowed range is [0, " + str(self.__x_max_coor) +"].\n"
+                warn_msg += "Invalid relative movement!\nRequest leads to X: " + str(
+                    new_x) + " but allowed range is [0, " + str(self.__x_max_coor) + "].\n"
         if 'rel_y' in pos_update_info:
             new_y = self.__y_live + pos_update_info['rel_y']
             if new_y < 0 or new_y > self.__y_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid relative movement!\nRequest leads to Y: " + str(new_y) + " but allowed range is [0, " + str(self.__y_max_coor) + "].\n"
+                warn_msg += "Invalid relative movement!\nRequest leads to Y: " + str(
+                    new_y) + " but allowed range is [0, " + str(self.__y_max_coor) + "].\n"
         if 'rel_z' in pos_update_info:
             new_z = self.__z_live + pos_update_info['rel_z']
             if new_z < 0 or new_z > self.__z_max_coor:
                 invalid_flag = True
-                warn_msg += "Invalid relative movement!\nRequest leads to Z: " + str(new_z) + " but allowed range is [0, " + str(self.__z_max_coor) + "].\n"
+                warn_msg += "Invalid relative movement!\nRequest leads to Z: " + str(
+                    new_z) + " but allowed range is [0, " + str(self.__z_max_coor) + "].\n"
 
         if invalid_flag:
             self.gui_mainWindow.prompt_warning(warn_msg=warn_msg, window_title="Invalid movement requested")
@@ -208,10 +214,7 @@ class ProcessController:
         else:
             return True
 
-
-
-
-    # **UI_config_window Callbacks**
+    # **UI_config_window Callbacks** ################################################
     def chamber_connect_button_handler_threaded(self):
         """
         Reads ip and api-key from user interface.
@@ -276,7 +279,35 @@ class ProcessController:
             "Printer object was generated and saved to app. Chamber control enabled.")
         return
 
-    # **UI_chamber_control_window Callbacks**
+    def vna_list_ressources_button_handler(self):
+        """
+        Detects all available instruments of pyvisa RessourceManager object and prints them to console
+        of config window.
+        """
+        ressource_string = self.vna.list_resources()
+        self.gui_mainWindow.ui_config_window.append_message2console(f"Available Ressources detected: {ressource_string}")
+        return
+
+    def vna_connect_button_handler(self):
+        """
+        Reads input visa address from ui config window and starts vna_connect_routine.
+        """
+        visa_address = self.gui_mainWindow.ui_config_window.get_vna_visa_address()
+        if visa_address == "":
+            self.gui_mainWindow.ui_config_window.append_message2console("Please input a visa address first. Available addresses are printed to console when clicking on 'List available resources' on the left.")
+            return
+        #ToDo start the connect routine and connect signals to update console
+
+    def vna_connect_routine(self, visa_address: str, update_callback, progress_callback, position_update_callback):
+        """
+        Sends '*IDN?' query to given visa_address-device and pushes the answer or error to update_callback.
+        """
+        #ToDo implement routine that send '*IDN?* query to given device, send updates via update_callback-signal and handles timeouts etc. by printing error to console(?). Eventually adapt vna interface library to be able to catch exceptions.
+
+    #def vna_connect_finished_handler(self):
+
+
+    # **UI_chamber_control_window Callbacks** ################################################
     def chamber_control_thread_finished_handler(self):
         if self.ui_chamber_control_process is None:
             raise Exception("chamber control finished handler was called but no thread was running!")
@@ -442,14 +473,16 @@ class ProcessController:
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_x': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'x',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -466,14 +499,16 @@ class ProcessController:
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_x': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'x',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'x',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -490,14 +525,16 @@ class ProcessController:
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_y': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'y',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -514,14 +551,16 @@ class ProcessController:
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_y': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'y',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'y',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -538,14 +577,16 @@ class ProcessController:
             stepsize = self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_z': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'z',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -562,14 +603,16 @@ class ProcessController:
             stepsize = -1 * self.gui_mainWindow.ui_chamber_control_window.get_button_move_stepsize()
 
             if self.check_movement_valid({'rel_z': stepsize}):
-                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber, 'z',
+                self.ui_chamber_control_process = Worker(self.chamber_control_jog_one_axis_rel_routine, self.chamber,
+                                                         'z',
                                                          jogspeed, stepsize)
 
                 self.ui_chamber_control_process.signals.update.connect(
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -631,7 +674,8 @@ class ProcessController:
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -685,7 +729,9 @@ class ProcessController:
 
             self.threadpool.start(self.ui_chamber_control_process)
 
-            self.gui_mainWindow.prompt_info("For details about tilt adjustment process look into octoprint's terminal tab on the webbrowser interface.", "Tilt adjustment started...")
+            self.gui_mainWindow.prompt_info(
+                "For details about tilt adjustment process look into octoprint's terminal tab on the webbrowser interface.",
+                "Tilt adjustment started...")
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -693,7 +739,7 @@ class ProcessController:
         return
 
     def chamber_control_z_tilt_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
-                                                position_update_callback):
+                                       position_update_callback):
         """
         This routine requests Z-Tilt_Adjustment from Klipper in a seperate thread and sends updates to GUI
         """
@@ -705,9 +751,9 @@ class ProcessController:
 
         return
 
-    # **UI_vna_control_window Callbacks**
+    # **UI_vna_control_window Callbacks** ################################################
 
-    # **UI_auto_measurement_window Callbacks**
+    # **UI_auto_measurement_window Callbacks** ################################################
     def auto_measurement_start_handler(self):
         """
         Checks if chamber is not in operation and present.
@@ -755,7 +801,8 @@ class ProcessController:
                 self.gui_mainWindow.ui_config_window.append_message2console)
             self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.auto_measurement_process.signals.progress.connect(self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
+            self.auto_measurement_process.signals.progress.connect(
+                self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
 
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
             self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
@@ -768,7 +815,9 @@ class ProcessController:
 
     def auto_measurement_finished_handler(self, finished_info: dict):
         self.auto_measurement_process = None
-        self.gui_mainWindow.prompt_info(info_msg="Auto Measurement process completed.\nData was saved to " + finished_info['file_location'],window_title="Auto Measurement Completed")
+        self.gui_mainWindow.prompt_info(
+            info_msg="Auto Measurement process completed.\nData was saved to " + finished_info['file_location'],
+            window_title="Auto Measurement Completed")
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_vna_control_window()
@@ -786,7 +835,7 @@ class ProcessController:
                                             "Position first.\n\nWhat is 'Zero Position'?\nZero Position means the probe "
                                             "antenna is located exactly above the AUT's center in XY and both antennas "
                                             "are virtually touching >> End of ProbeAntenna has same height as top End "
-                                            "of AUT","Zero Position unknown")
+                                            "of AUT", "Zero Position unknown")
             return
 
         if self.ui_chamber_control_process is None and self.auto_measurement_process is None:
@@ -795,7 +844,7 @@ class ProcessController:
             new_y = self.zero_pos_y
             new_z = self.zero_pos_z
 
-            safe_z_move = new_z + 10    # 10mm offset to avoid collision of antennas
+            safe_z_move = new_z + 10  # 10mm offset to avoid collision of antennas
 
             if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': safe_z_move}):
                 self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
@@ -805,7 +854,8 @@ class ProcessController:
                     self.gui_mainWindow.ui_chamber_control_window.append_message2console)
                 self.ui_chamber_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-                self.ui_chamber_control_process.signals.position_update.connect(self.chamber_control_update_live_position)
+                self.ui_chamber_control_process.signals.position_update.connect(
+                    self.chamber_control_update_live_position)
 
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
@@ -836,7 +886,8 @@ class ProcessController:
 
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
-        console_msg = "Updated zero position to X:" + str(self.zero_pos_x) + " Y:" + str(self.zero_pos_y) + " Z:" + str(self.zero_pos_z)
+        console_msg = "Updated zero position to X:" + str(self.zero_pos_x) + " Y:" + str(self.zero_pos_y) + " Z:" + str(
+            self.zero_pos_z)
         self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
         self.gui_mainWindow.update_status_bar(console_msg)
 
@@ -848,7 +899,7 @@ class ProcessController:
         according to given antenna heights
         """
         self.zero_pos_z = (self.gui_mainWindow.ui_auto_measurement_window.get_probe_antenna_length() +
-                           self.gui_mainWindow.ui_auto_measurement_window.get_aut_height()-self.__z_head_bed_offset)
+                           self.gui_mainWindow.ui_auto_measurement_window.get_aut_height() - self.__z_head_bed_offset)
 
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
