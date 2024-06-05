@@ -1,4 +1,5 @@
 import pyvisa
+import time
 
 class E8361RemoteGPIB:
     """
@@ -84,6 +85,7 @@ class E8361RemoteGPIB:
 
         self.pna_device.write("SYSTem:PRESet")
         self.pna_device.write("CALC:PAR:DEL:ALL")
+        self.running_measurements = []
         return True
 
     def pna_add_measurement(self, meas_name: str, parameter: str):
@@ -102,7 +104,7 @@ class E8361RemoteGPIB:
 
         # add new measurement with next cnum
         new_cnum = self.running_measurements.__len__() + 1  # returns next available index - PNA starts count at 1, thus '+1' offset
-        self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter})
+        self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter, 'avg_num': 1, 'trigger': 'continuous'})
 
         self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{meas_name}',{parameter}")
         self.pna_device.write(f"DISPlay:WINDow{new_cnum}:STATE ON")
@@ -283,7 +285,126 @@ class E8361RemoteGPIB:
 
         return meas_data_list
 
-    def setup_pna_add_measurement_detailed(self, meas_name: str, parameter: str, freq_start: float, freq_stop: float, if_bw: float, sweep_num_points: int, output_power: float):
+    def pna_set_trigger_manual(self, meas_name: str):
+        """
+        Disables continuous pna-internal trigger for given measurement.
+        pna_trigger_measurement() can be used to trigger future measurements from software.
+
+        :return: True >> success, False >> failed
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+        self.running_measurements[meas_idx]['trigger'] = 'manual'
+        self.pna_device.write("INIT:CONT OFF")
+        return True
+
+    def pna_trigger_measurement(self, meas_name: str):
+        """
+        Triggers one measurement process of given meas_name on PNA.
+            >> Not sure if all configured measurements are triggered in reality.
+
+        :return: True >> success, False >> failed
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        # Clear average buffer if averaged measurement should be triggered
+        if self.running_measurements[meas_idx]['avg_num'] != 1:
+            self.pna_device.write(f"SENS{meas_cnum}:AVER:CLE")
+            while self.pna_device.query('*OPC?') != '+1':
+                time.sleep(0.3)
+
+        number_of_triggers = self.running_measurements[meas_idx]['avg_num']
+
+        # PNA E8361A bug: If there is more than one measurement configured, the PNA always misses one trigger when the
+        # first measurement is addressed. Therefor in this case we trigger one more time.
+        if meas_idx == 0 and self.running_measurements.__len__() > 1:
+            number_of_triggers += 1
+
+        for i in range(number_of_triggers):
+            print(f"Trigger {i}\n")
+            self.pna_device.write(f"INIT{meas_cnum}:IMM")
+            while self.pna_device.query('*OPC?') != '+1':   # busy wait for measurement to finish before next trigger
+                print("chamber ist beschäftigt!\n")
+                time.sleep(0.3)
+
+        return True
+
+    def pna_set_trigger_continuous(self, meas_name: str):
+        """
+        Enables continuous pna-internal trigger for given measurement.
+
+        :return: True >> success, False >> failed
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+        self.running_measurements[meas_idx]['trigger'] = 'continuous'
+
+        self.pna_device.write("INIT:CONT ON")
+        return True
+
+    def pna_set_average_number(self, meas_name: str, avg_number: int):
+        """
+        Enables average function for given measurement.
+        Stores number of averaged sweeps in local running-measurements-list measurement dict as ['avg_num']
+
+        If avg_number == 0, average function is disabled for given measurement.
+
+        :param meas_name:   unique measurement name
+        :param avg_number:  number of sweeps that should be averaged (1 - 65536)
+        :return: True >> success, False >> failed
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        if avg_number < 0:
+            avg_number *= -1
+
+        if avg_number == 0:
+            self.pna_disable_average(meas_name)
+            return True
+
+        self.running_measurements[meas_idx]['avg_num'] = avg_number
+        self.pna_device.write(f"SENS{meas_cnum}:AVER:STAT ON")
+        self.pna_device.write(f"SENS{meas_cnum}:AVER:MODE SWEEP")
+        self.pna_device.write(f"SENS{meas_cnum}:AVER:COUN {avg_number}")
+        return True
+
+    def pna_disable_average(self, meas_name: str):
+        """
+        Disables average function for given measurement.
+        :return: True >> success, False >> failed
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        self.running_measurements[meas_idx]['avg_num'] = 1
+        self.pna_device.write(f"SENS{meas_cnum}:AVER:STAT OFF")
+        return True
+
+    def pna_add_measurement_detailed(self, meas_name: str, parameter: str, freq_start: float, freq_stop: float,
+                                     if_bw: float, sweep_num_points: int, output_power: float, trigger_manual: bool,
+                                     average_number: int):
         """
         Configures PNA measurement with all available configurations right away.
         :param meas_name:           unique measurement name
@@ -293,6 +414,8 @@ class E8361RemoteGPIB:
         :param if_bw:               IF Bandwidth in [Hz]
         :param sweep_num_points:    Number of frequency points stimulated throughout sweep
         :param output_power:        RF Output Power in [dBm]
+        :param trigger_manual:      enables manual triggering if True. Otherwise, internal continuous trigger.
+        :param average_number:      number of sweeps that should be averaged for one measurement result
         :return: True >> success, False >> failed
         """
         self.pna_add_measurement(meas_name=meas_name, parameter=parameter)
@@ -301,6 +424,10 @@ class E8361RemoteGPIB:
         self.pna_set_IF_BW(meas_name=meas_name, if_bw=if_bw)
         self.pna_set_sweep_num_of_points(meas_name=meas_name, num_of_points=sweep_num_points)
         self.pna_set_output_power(meas_name=meas_name, power_dbm=output_power)
+        if trigger_manual:
+            self.pna_set_trigger_manual(meas_name=meas_name)
+        if average_number > 1:
+            self.pna_set_average_number(meas_name=meas_name, avg_number=average_number)
         return True
 
 
@@ -384,4 +511,13 @@ if __name__ == '__main__':
     chamber.write("CALCulate2:MARKer:STATE ON")
 
     chamber.close()
+
+
+    # sample code for terminal
+    from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB as pna
+    pna = pna()
+    pna.connect_pna("GPIB0::15::INSTR")
+    pna.pna_preset()
+    pna.pna_add_measurement_detailed("mess1", "S11", 10e9, 11e9, 1000, 201, -20, True, 10)
+    pna.pna_add_measurement_detailed("mess2", "S12", 12e9, 13e9, 500, 402, -30, True, 5)
 
