@@ -27,7 +27,7 @@ class ProcessControllerSignals(QObject):
 class ProcessController:
     # Properties
     chamber: ChamberNetworkCommands = None
-    vna: E8361RemoteGPIB = E8361RemoteGPIB()
+    vna: E8361RemoteGPIB = None
     gui_mainWindow: ui_pkg.MainWindow = None
     gui_app: QApplication = None
 
@@ -66,7 +66,7 @@ class ProcessController:
             self.chamber_connect_button_handler_threaded)
 
         # Connect all Slots & Signals config_window - **VNA**
-        self.gui_mainWindow.ui_config_window.vna_list_ressources_button.pressed.connect(self.vna_list_ressources_button_handler)
+        self.gui_mainWindow.ui_config_window.vna_list_ressources_button.pressed.connect(self.vna_list_resources_button_handler)
         self.gui_mainWindow.ui_config_window.vna_connect_button.pressed.connect(self.vna_connect_button_handler)
 
         # connect all Slots & Signals Chamber control window
@@ -234,12 +234,12 @@ class ProcessController:
         # reset chamber data and disable chamber control section when clicked 'connect'
         self.chamber: ChamberNetworkCommands = None
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
-        self.gui_mainWindow.tabs.setTabEnabled(1, False)  # disables first tab == Chamber Control
+        self.gui_mainWindow.disable_chamber_control_window()
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
         connect_thread.signals.update.connect(self.gui_mainWindow.update_status_bar)
-        connect_thread.signals.result.connect(self.chamber_connect_finished_handler)
+        connect_thread.signals.result.connect(self.chamber_connect_result_handler)
 
         self.threadpool.start(connect_thread)
 
@@ -270,7 +270,7 @@ class ProcessController:
             update_callback.emit("Jog request failed! No chamber saved.")
             raise Exception("Jog request failed")
 
-    def chamber_connect_finished_handler(self, new_chamber: ChamberNetworkCommands):
+    def chamber_connect_result_handler(self, new_chamber: ChamberNetworkCommands):
         self.chamber = new_chamber
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_auto_measurement_window()
@@ -279,13 +279,13 @@ class ProcessController:
             "Printer object was generated and saved to app. Chamber control enabled.")
         return
 
-    def vna_list_ressources_button_handler(self):
+    def vna_list_resources_button_handler(self):
         """
-        Detects all available instruments of pyvisa RessourceManager object and prints them to console
+        Detects all available instruments of pyvisa ResourceManager object and prints them to console
         of config window.
         """
-        ressource_string = self.vna.list_resources()
-        self.gui_mainWindow.ui_config_window.append_message2console(f"Available Ressources detected: {ressource_string}")
+        resource_string = E8361RemoteGPIB().list_resources()
+        self.gui_mainWindow.ui_config_window.append_message2console(f"Available Resources detected: {resource_string}")
         return
 
     def vna_connect_button_handler(self):
@@ -293,19 +293,62 @@ class ProcessController:
         Reads input visa address from ui config window and starts vna_connect_routine.
         """
         visa_address = self.gui_mainWindow.ui_config_window.get_vna_visa_address()
+        # print error if invalid visa address
         if visa_address == "":
             self.gui_mainWindow.ui_config_window.append_message2console("Please input a visa address first. Available addresses are printed to console when clicking on 'List available resources' on the left.")
             return
-        #ToDo start the connect routine and connect signals to update console
+
+        # reset vna property and tab
+        self.vna = None
+        self.gui_mainWindow.ui_config_window.set_vna_connected(False)
+        self.gui_mainWindow.disable_vna_control_window()
+
+        # start connect routine
+        connect_thread = Worker(self.vna_connect_routine, visa_address)
+        connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
+        connect_thread.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        connect_thread.signals.result.connect(self.vna_connect_result_handler)
+
+        self.threadpool.start(connect_thread)
 
     def vna_connect_routine(self, visa_address: str, update_callback, progress_callback, position_update_callback):
         """
         Sends '*IDN?' query to given visa_address-device and pushes the answer or error to update_callback.
         """
-        #ToDo implement routine that send '*IDN?* query to given device, send updates via update_callback-signal and handles timeouts etc. by printing error to console(?). Eventually adapt vna interface library to be able to catch exceptions.
+        update_callback.emit("Check if visa address is valid...")
+        new_vna = E8361RemoteGPIB()
+        available_resources = new_vna.list_resources()
+        if visa_address in available_resources:     # check if given address available
 
-    #def vna_connect_finished_handler(self):
+            if new_vna.connect_pna(visa_address) is False:
+                update_callback.emit("ERROR - Failed to open resource with pyvisa.")
+                return None
 
+            update_callback.emit(f"Opened resource {visa_address} with pyvisa.")
+            idn_response = new_vna.pna_read_idn()
+            # Some Instruments respond with ERROR, so separate reaction necessary
+            if 'ERROR' in idn_response:
+                update_callback.emit(f"Instrument response to IDN returned Error: {idn_response}")
+                return None
+
+            update_callback.emit(f"Instrument response to IDN: {idn_response}")
+            return new_vna
+        else:
+            update_callback.emit("ERROR - Given visa address matches no available resource.")
+            return None
+
+    def vna_connect_result_handler(self, new_vna: E8361RemoteGPIB):
+        """
+        Detects if IDN query failed by comparing 'new_vna' to None type.
+        If new_vna is not None-type, it is stored in process controller's vna property.
+        """
+        if new_vna is not None:
+            self.vna = new_vna
+            self.gui_mainWindow.enable_vna_control_window()
+            self.gui_mainWindow.ui_config_window.set_vna_connected(True)
+            self.gui_mainWindow.ui_config_window.append_message2console(
+                "VNA object was generated and saved to app. VNA control tab enabled.")
+        return
 
     # **UI_chamber_control_window Callbacks** ################################################
     def chamber_control_thread_finished_handler(self):
