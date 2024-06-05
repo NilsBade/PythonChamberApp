@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_auto_measurement_window, 'Auto Measurement')   # Tab 3
         self.tabs.setTabEnabled(0, True)
         self.tabs.setTabEnabled(1, False)
-        self.tabs.setTabEnabled(2, False)
+        self.tabs.setTabEnabled(2, True)
         self.tabs.setTabEnabled(3, False)
 
         self.setCentralWidget(self.tabs)
