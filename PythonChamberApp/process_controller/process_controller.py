@@ -847,7 +847,6 @@ class ProcessController:
         Reads antenna info from auto measurement window and updates the Z coordinate of the current Zero position
         according to given antenna heights
         """
-        # ToDo: Klären wir ich den chamber bed offset definiere und wie groß!
         self.zero_pos_z = (self.gui_mainWindow.ui_auto_measurement_window.get_probe_antenna_length() +
                            self.gui_mainWindow.ui_auto_measurement_window.get_aut_height()-self.__z_head_bed_offset)
 
