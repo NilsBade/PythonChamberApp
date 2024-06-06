@@ -1,3 +1,5 @@
+import importlib
+import os
 import pyvisa
 import time
 
@@ -11,8 +13,17 @@ class E8361RemoteGPIB:
     pna_device: pyvisa.Resource = None
     running_measurements: list = None   # stores all configured measurements as dict with measurement infos
 
-    def __init__(self):
-        self.resource_manager = pyvisa.ResourceManager()
+    def __init__(self, use_keysight: bool = False):
+        if use_keysight:
+            # Import and path adaptation on the fly not necessary since python 3.11 by default uses NI and keysight
+            # if stated explicitly by 'ktvisa32' >> Not sure if that is true... but NI and agilent hardware works fine
+            # dependent on ressource-manager library-path declaration!
+            #os.add_dll_directory('C:\\Program Files\\Keysight\\IO Libraries Suite\\bin')
+            #os.add_dll_directory('C:\\Program Files (x86)\\Keysight\\IO Libraries Suite\\bin')
+            #importlib.reload(pyvisa)
+            self.resource_manager = pyvisa.ResourceManager('ktvisa32')  # ToDo check and how the different adapters really work and when which library is used!
+        else:
+            self.resource_manager = pyvisa.ResourceManager() # default path seems to find NI visa lib. Adapter works 06.06.2024.
         self.running_measurements = []
 
     # private / internal

@@ -1,5 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QWidget, QLineEdit,QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit,QGridLayout
+from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, \
+    QCheckBox
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
 
@@ -16,6 +17,7 @@ class UI_config_window(QWidget):
     vna_visa_name_line_edit: QLineEdit = None
     vna_connection_status_label: QLabel = None
     vna_connect_button: QPushButton = None
+    vna_keysight_checkbox: QCheckBox = None
 
     config_console_textbox: QTextEdit = None
 
@@ -85,6 +87,7 @@ class UI_config_window(QWidget):
         self.vna_connect_button.setToolTip("Sends an '*IDN?' request to the device with the visa address given above.\nResponse should be checked and can be seen in Console.")
         self.vna_connection_status_label = QLabel("Status: Not Connected")
         self.vna_connection_status_label.setStyleSheet("color : red;")
+        self.vna_keysight_checkbox = QCheckBox("Use Keysight Hardware")
 
         vna_connect_layout.addWidget(title_label, 0,0,1,4, Qt.AlignmentFlag.AlignLeft)
         vna_connect_layout.addWidget(self.vna_list_ressources_button, 1,0,1,4, Qt.AlignmentFlag.AlignLeft)
@@ -92,6 +95,7 @@ class UI_config_window(QWidget):
         vna_connect_layout.addWidget(self.vna_visa_name_line_edit, 2,1,1,3)
         vna_connect_layout.addWidget(self.vna_connect_button,3,0,1,2)
         vna_connect_layout.addWidget(self.vna_connection_status_label,3,2,1,2,Qt.AlignmentFlag.AlignRight)
+        vna_connect_layout.addWidget(self.vna_keysight_checkbox,4,0,1,4,Qt.AlignmentFlag.AlignLeft)
         return vna_connect_widget
 
     def __init_console_field(self):
@@ -176,6 +180,14 @@ class UI_config_window(QWidget):
             self.vna_connection_status_label.setText("Status: Not Connected!")
             self.vna_connection_status_label.setStyleSheet("color: red")
         return
+
+    def get_use_keysight(self):
+        """
+        Function returns state of checkbox in config window.
+
+        :return: True >> Keysight Hardware used! use keysight visa lib. // False >> use NI visa lib
+        """
+        return self.vna_keysight_checkbox.isChecked()
 
     def dummy_function(self):
         print("Dummy_function activated!")

@@ -4,6 +4,7 @@ from PyQt6.QtCore import *  # QObject, pyqtSignal, pyqtSlot, QRunnable
 from PythonChamberApp.chamber_net_interface.chamber_net_interface import ChamberNetworkCommands
 from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
 import cmath
+import math
 from datetime import datetime
 
 
@@ -69,7 +70,7 @@ class AutoMeasurement(QRunnable):
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, file_location: str):
         super(AutoMeasurement, self).__init__()
 
-        #self.chamber = chamber # ToDo re-enable after testing
+        self.chamber = chamber
         self.vna = vna
         self.vna.pna_preset()
         self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
@@ -119,6 +120,17 @@ class AutoMeasurement(QRunnable):
     def run(self):
         self.signals.update.emit("Started the AutoMeasurementThread")
 
+        # assemble string that names all generated files.
+        file_locations_string = "\n< "
+        if self.measurement_file_S11 is not None:
+            file_locations_string += self.measurement_file_S11.name + ';\n'
+        if self.measurement_file_S12 is not None:
+            file_locations_string += self.measurement_file_S12.name + ';\n'
+        if self.measurement_file_S22 is not None:
+            file_locations_string += self.measurement_file_S22.name + ';\n'
+        file_locations_string += ">\n"
+
+        # calculate num of points and layers for progress monitoring
         num_of_points_per_layer = len(self.mesh_x_vector) * len(self.mesh_y_vector)
         num_of_layers = len(self.mesh_z_vector)
         total_num_of_points = num_of_points_per_layer * num_of_layers
@@ -154,11 +166,12 @@ class AutoMeasurement(QRunnable):
                             self.measurement_file_S12.close()
                         if self.measurement_file_S22 is not None:
                             self.measurement_file_S22.close()
+                        self.signals.finished.emit({'file_location': file_locations_string})
                         return
 
                     self.signals.update.emit(
                         'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
-                    #self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # toDo re-enable after testing
+                    self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed)
                     self.signals.update.emit("Movement done!")
 
                     # Routine to do vna measurement and store data somewhere put here...
@@ -177,7 +190,7 @@ class AutoMeasurement(QRunnable):
                                 pointer = complex(real=freq_point[1], imag=freq_point[2])
                                 # write measured data to file
                                 file.write(
-                                    f"{x_coor};{y_coor};{z_coor};{freq_point[0]};{pointer.__abs__()};{cmath.phase(pointer)}\n")
+                                    f"{x_coor};{y_coor};{z_coor};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
                             self.signals.update.emit(f"Written {possible_parameters[counter]} values to file.")
                         counter += 1
 
@@ -195,20 +208,14 @@ class AutoMeasurement(QRunnable):
         progress_dict['status_flag'] = "Measurement finished"
         self.signals.progress.emit(progress_dict)
         self.signals.result.emit()
-
-        # assemble string that names all generated files.
-        file_locations_string = "< "
+        self.signals.finished.emit({'file_location': file_locations_string})
+        # close all files
         if self.measurement_file_S11 is not None:
-            file_locations_string += self.measurement_file_S11.name + '; '
             self.measurement_file_S11.close()
         if self.measurement_file_S12 is not None:
-            file_locations_string += self.measurement_file_S12.name + '; '
             self.measurement_file_S12.close()
         if self.measurement_file_S22 is not None:
-            file_locations_string += self.measurement_file_S22.name + '; '
             self.measurement_file_S22.close()
-        file_locations_string += ">"
-        self.signals.finished.emit({'file_location': file_locations_string})
         return
 
     def stop(self):

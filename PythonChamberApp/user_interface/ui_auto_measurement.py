@@ -154,7 +154,7 @@ class UI_auto_measurement_window(QWidget):
         self.setLayout(main_layout)
 
         # Disable functionality that needs homed chamber
-        #self.disable_chamber_move_interaction()     #ToDo disable all chamber movements in the beginning when debugging finished
+        self.disable_chamber_move_interaction()
 
     def __init_antenna_info_inputs_widget(self):
         antenna_info_inputs_frame = QFrame()
