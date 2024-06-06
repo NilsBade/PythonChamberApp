@@ -432,13 +432,26 @@ class E8361RemoteGPIB:
 
 
     def pna_write_custom_string(self, visa_str: str):
-        self.pna_device.write(visa_str)
+        try:
+            self.pna_device.write(visa_str)
+        except pyvisa.VisaIOError as ex:
+            return str(f"ERROR - Error occurred while write.\nMSG: {ex}")
+
+        return None
 
     def pna_read_custom_string(self, visa_str: str):
-        return self.pna_device.read(visa_str)
+        try:
+            response = self.pna_device.read(visa_str)
+        except pyvisa.VisaIOError as ex:
+            return str(f"ERROR - Error occurred while read.\nMSG: {ex}")
+        return response
 
     def pna_query_custom_string(self, visa_str: str):
-        return self.pna_device.query(visa_str)
+        try:
+            response = self.pna_device.query(visa_str)
+        except pyvisa.VisaIOError as ex:
+            return str(f"ERROR - Error occurred while query.\nMSG: {ex}")
+        return response
 
 
     # sample code for terminal try'n error
