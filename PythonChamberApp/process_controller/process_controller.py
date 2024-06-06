@@ -34,6 +34,7 @@ class ProcessController:
     threadpool: QThreadPool = None
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
     ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
+    ui_vna_control_process: Worker = None   # Assure that only one GPIB command/request is sent to VNA at a time
 
     # Position logging & validity check
     __x_live: float = None
@@ -92,6 +93,11 @@ class ProcessController:
             self.chamber_control_z_dec_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_go_button.pressed.connect(
             self.chamber_control_go_to_button_handler)
+
+        # connect all Slots & Signals VNA control window
+        self.gui_mainWindow.ui_vna_control_window.visa_read_button.pressed.connect(self.vna_read_button_handler)
+        self.gui_mainWindow.ui_vna_control_window.visa_write_button.pressed.connect(self.vna_write_button_handler)
+        self.gui_mainWindow.ui_vna_control_window.visa_query_button.pressed.connect(self.vna_query_button_handler)
 
         # setup AutoMeasurement
         self.zero_pos_x = self.__x_max_coor / 2
@@ -795,6 +801,99 @@ class ProcessController:
         return
 
     # **UI_vna_control_window Callbacks** ################################################
+
+    def vna_write_button_handler(self):
+        """
+        Sends visa string written to VNA tab with write-command.
+        Prints send-update to VNA-tab console.
+        """
+        if self.ui_vna_control_process is not None:
+            self.gui_mainWindow.prompt_info("Another Request is still running.\n"
+                                            "Please wait for it to finish.", "Other request still running")
+            return
+
+        cust_cmd = self.gui_mainWindow.ui_vna_control_window.get_visa_string()
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'w', cust_cmd)
+        self.ui_vna_control_process.signals.update.connect(
+            self.gui_mainWindow.ui_vna_control_window.append_message2console)
+        self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        self.ui_vna_control_process.signals.finished.connect(self.vna_read_write_routine_finished_handler)
+
+        self.threadpool.start(self.ui_vna_control_process)
+        return
+
+    def vna_read_button_handler(self):
+        """
+        Reads from VNA and prints message to console.
+        """
+        if self.ui_vna_control_process is not None:
+            self.gui_mainWindow.prompt_info("Another Request is still running.\n"
+                                            "Please wait for it to finish.", "Other request still running")
+            return
+
+        read_string = ""
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'r', read_string)
+        self.ui_vna_control_process.signals.update.connect(
+            self.gui_mainWindow.ui_vna_control_window.append_message2console)
+        self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        self.ui_vna_control_process.signals.finished.connect(self.vna_read_write_routine_finished_handler)
+
+        self.threadpool.start(self.ui_vna_control_process)
+        return
+
+    def vna_query_button_handler(self):
+        """
+        Sends visa string written to VNA tab with query command.
+        Prints response to VNA-tab console.
+        """
+        if self.ui_vna_control_process is not None:
+            self.gui_mainWindow.prompt_info("Another Request is still running.\n"
+                                            "Please wait for it to finish.", "Other request still running")
+            return
+
+        cust_cmd = self.gui_mainWindow.ui_vna_control_window.get_visa_string()
+        self.gui_mainWindow.ui_vna_control_window.append_message2console(f"Query VNA: {cust_cmd}")
+
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'q', cust_cmd)
+        self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.ui_vna_control_window.append_message2console)
+        self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        self.ui_vna_control_process.signals.finished.connect(self.vna_read_write_routine_finished_handler)
+
+        self.threadpool.start(self.ui_vna_control_process)
+        return
+
+    def vna_read_write_routine(self, vna: E8361RemoteGPIB, cmd_char: str, visa_str: str, update_callback, progress_callback,
+                                       position_update_callback):
+        """
+        Routine that can be run in vna worker thread and differs query, read and write.
+        """
+        update_callback.emit("VNA GPIB-routine started...")
+        if cmd_char == 'r':
+            update_callback.emit("read selected")
+            response = vna.pna_read_custom_string("")
+        elif cmd_char == 'w':
+            update_callback.emit("write selected")
+            response = vna.pna_write_custom_string(visa_str=visa_str)
+        elif cmd_char == 'q':
+            update_callback.emit("query selected")
+            response = vna.pna_query_custom_string(visa_str=visa_str)
+        else:
+            response = 'ERROR - invalid selection of read, write or query!'
+
+        if response is None:
+            update_callback.emit("Done")
+        elif 'ERROR' in response:
+            update_callback.emit(response)
+        else:
+            update_callback.emit(f"Response: {response}")
+        return
+
+    def vna_read_write_routine_finished_handler(self):
+        """
+        Once vna read write routine is finished, the property is reset to None to enable a new request.
+        """
+        self.ui_vna_control_process = None
+        return
 
     # **UI_auto_measurement_window Callbacks** ################################################
     def auto_measurement_start_handler(self):
