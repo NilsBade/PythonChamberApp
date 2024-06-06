@@ -35,7 +35,7 @@ class E8361RemoteGPIB:
         """
         Opens the pyvisa resource with the given name.
         Stores the opened resource in pna_device object property for use with functions.
-        configures terminations as '\n' and sets timeout to 5sec.
+        configures terminations as '\n' and sets timeout to 2sec.
 
         :return: open successful >> true, open failed >> false
         """
@@ -47,7 +47,7 @@ class E8361RemoteGPIB:
 
         self.pna_device.read_termination = '\n'
         self.pna_device.write_termination = '\n'
-        self.pna_device.timeout = 5000
+        self.pna_device.timeout = 2000
         return True
 
     def disconnect_pna(self):
