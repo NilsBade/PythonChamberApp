@@ -88,13 +88,13 @@ class E8361RemoteGPIB:
         self.running_measurements = []
         return True
 
-    def pna_add_measurement(self, meas_name: str, parameter: str):
+    def pna_add_measurement(self, meas_name: str, parameter: list[str]):
         """
         Adds measurement with given 'meas_name' to internal list of active measurements.
         Once added, configuration commands can be used in combination with 'meas_name' to configure the right measurement on pna.
 
         :param meas_name: Unique name of measurement to find measurement later
-        :param parameter: Parameter that should be measured as string 'S11', 'S12', 'S21' or 'S22'
+        :param parameter: Parameter list of 'S11', 'S12' or 'S22' to be measured
         :return: int, Number of stored/active measurements // -1 if duplicate meas-name
         """
         # check for availability of meas-name
@@ -106,9 +106,13 @@ class E8361RemoteGPIB:
         new_cnum = self.running_measurements.__len__() + 1  # returns next available index - PNA starts count at 1, thus '+1' offset
         self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter, 'avg_num': 1, 'trigger': 'continuous'})
 
-        self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{meas_name}',{parameter}")
         self.pna_device.write(f"DISPlay:WINDow{new_cnum}:STATE ON")
-        self.pna_device.write(f"DISPlay:WINDow{new_cnum}:TRACe1:FEED '{meas_name}'")
+        tnum = 0
+        for param in parameter:
+            tnum +=1
+            new_meas_name = meas_name + '_' + param
+            self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{new_meas_name}',{param}")
+            self.pna_device.write(f"DISPlay:WINDow{new_cnum}:TRACe{tnum}:FEED '{new_meas_name}'")
 
     def get_idx_of_meas(self, meas_name: str):
         """
@@ -251,25 +255,39 @@ class E8361RemoteGPIB:
         x_axis_stim_points = [float(x) for x in response.split(',')]
         return x_axis_stim_points
 
-    def pna_read_meas_data(self, meas_name: str) -> list[list[float]]:
+    def pna_read_meas_data(self, meas_name: str, parameter: str) -> list[list[float]]:
         """
-        Reads data according to given measurement name.
+        Reads data according to given measurement name and parameter.
         Reads measurement data as complex numbers, thus two numbers per frequency-stimulus-point.
         Returns list as following...
-
             [
-                [frequency0: float, real0: float, imag0: float],
-                [frequency1: float, real1: float, imag1: float],
-                ... ]
+
+            [frequency0: float, real0: float, imag0: float],
+
+            [frequency1: float, real1: float, imag1: float],
+
+            ...
+
+            ]
+
+        *Returns False if meas_name is invalid or S-parameter not configured for given meas_name.
+
+        :param meas_name:   unique measurement identifier
+        :param parameter:   S-Parameter that should be read from measurement (S11, S12 or S22)
         """
         meas_idx = self.get_idx_of_meas(meas_name)
         if meas_idx == -1:
             print("Error - meas_name not found in running_measurements-list!")
             return False
 
+        if parameter not in self.running_measurements[meas_idx]['parameter']:
+            print("Error - S-Parameter is not configured in given measurement!")
+            return False
+
         meas_cnum = self.running_measurements[meas_idx]['cnum']
+        detailed_meas_name = meas_name + '_' + parameter
         # Get stimulus points in Hz
-        self.pna_device.write(f"CALC{meas_cnum}:PAR:SEL '{meas_name}'")
+        self.pna_device.write(f"CALC{meas_cnum}:PAR:SEL '{detailed_meas_name}'")
         x_axis_string = self.pna_device.query(f"SENS{meas_cnum}:X?")
         x_axis_stim_points = [float(x) for x in x_axis_string.split(',')]
 
@@ -285,20 +303,15 @@ class E8361RemoteGPIB:
 
         return meas_data_list
 
-    def pna_set_trigger_manual(self, meas_name: str):
+    def pna_set_trigger_manual(self):
         """
-        Disables continuous pna-internal trigger for given measurement.
+        Disables continuous pna-internal trigger for all measurements.
         pna_trigger_measurement() can be used to trigger future measurements from software.
 
         :return: True >> success, False >> failed
         """
-        meas_idx = self.get_idx_of_meas(meas_name)
-        if meas_idx == -1:
-            print("Error - meas_name not found in running_measurements-list!")
-            return False
-
-        meas_cnum = self.running_measurements[meas_idx]['cnum']
-        self.running_measurements[meas_idx]['trigger'] = 'manual'
+        for meas in self.running_measurements:
+            meas['trigger'] = 'manual'
         self.pna_device.write("INIT:CONT OFF")
         return True
 
@@ -338,19 +351,14 @@ class E8361RemoteGPIB:
 
         return True
 
-    def pna_set_trigger_continuous(self, meas_name: str):
+    def pna_set_trigger_continuous(self):
         """
-        Enables continuous pna-internal trigger for given measurement.
+        Enables continuous pna-internal trigger for all measurement.
 
         :return: True >> success, False >> failed
         """
-        meas_idx = self.get_idx_of_meas(meas_name)
-        if meas_idx == -1:
-            print("Error - meas_name not found in running_measurements-list!")
-            return False
-
-        meas_cnum = self.running_measurements[meas_idx]['cnum']
-        self.running_measurements[meas_idx]['trigger'] = 'continuous'
+        for meas in self.running_measurements:
+            meas['trigger'] = 'continuous'
 
         self.pna_device.write("INIT:CONT ON")
         return True
@@ -382,7 +390,7 @@ class E8361RemoteGPIB:
 
         self.running_measurements[meas_idx]['avg_num'] = avg_number
         self.pna_device.write(f"SENS{meas_cnum}:AVER:STAT ON")
-        self.pna_device.write(f"SENS{meas_cnum}:AVER:MODE SWEEP")
+        #self.pna_device.write(f"SENS{meas_cnum}:AVER:MODE SWEEP") # command unknown and not necessary
         self.pna_device.write(f"SENS{meas_cnum}:AVER:COUN {avg_number}")
         return True
 
@@ -402,7 +410,7 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENS{meas_cnum}:AVER:STAT OFF")
         return True
 
-    def pna_add_measurement_detailed(self, meas_name: str, parameter: str, freq_start: float, freq_stop: float,
+    def pna_add_measurement_detailed(self, meas_name: str, parameter: list[str], freq_start: float, freq_stop: float,
                                      if_bw: float, sweep_num_points: int, output_power: float, trigger_manual: bool,
                                      average_number: int):
         """
@@ -425,7 +433,7 @@ class E8361RemoteGPIB:
         self.pna_set_sweep_num_of_points(meas_name=meas_name, num_of_points=sweep_num_points)
         self.pna_set_output_power(meas_name=meas_name, power_dbm=output_power)
         if trigger_manual:
-            self.pna_set_trigger_manual(meas_name=meas_name)
+            self.pna_set_trigger_manual()
         if average_number > 1:
             self.pna_set_average_number(meas_name=meas_name, avg_number=average_number)
         return True

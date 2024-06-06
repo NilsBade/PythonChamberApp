@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         self.tabs.setTabEnabled(0, True)
         self.tabs.setTabEnabled(1, False)
         self.tabs.setTabEnabled(2, False)
-        self.tabs.setTabEnabled(3, False)
+        self.tabs.setTabEnabled(3, True)
 
         self.setCentralWidget(self.tabs)
         return
