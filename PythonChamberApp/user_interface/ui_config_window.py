@@ -25,6 +25,7 @@ class UI_config_window(QWidget):
         # build main widgets
         chamber_connect_widget = self.__init_chamber_connection_block()
         vna_connect_widget = self.__init_vna_connection_block()
+        vna_connect_widget.setMinimumWidth(270)     # prevent layout from "jumping" when connection status changes
         self.config_console_widget = self.__init_console_field()
 
         # setup overall layout
@@ -79,7 +80,7 @@ class UI_config_window(QWidget):
         title_label.setStyleSheet("font-weight: bold; text-decoration: underline;")
         self.vna_list_ressources_button = QPushButton("List available resources")
         visa_name_label = QLabel("Visa-address:")
-        self.vna_visa_name_line_edit = QLineEdit()
+        self.vna_visa_name_line_edit = QLineEdit("GPIB0::15::INSTR")
         self.vna_connect_button = QPushButton("Connect ? IDN")
         self.vna_connect_button.setToolTip("Sends an '*IDN?' request to the device with the visa address given above.\nResponse should be checked and can be seen in Console.")
         self.vna_connection_status_label = QLabel("Status: Not Connected")
