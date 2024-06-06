@@ -241,6 +241,7 @@ class ProcessController:
         self.chamber: ChamberNetworkCommands = None
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
         self.gui_mainWindow.disable_chamber_control_window()
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
@@ -283,14 +284,16 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
+        if self.vna is not None:
+            self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)
         return
 
     def vna_list_resources_button_handler(self):
         """
         Detects all available instruments of pyvisa ResourceManager object and prints them to console
-        of config window.
+        of config window. Differs which visa implementation is used according to checkbox in config window
         """
-        resource_string = E8361RemoteGPIB().list_resources()
+        resource_string = E8361RemoteGPIB(self.gui_mainWindow.ui_config_window.get_use_keysight()).list_resources()
         self.gui_mainWindow.ui_config_window.append_message2console(f"Available Resources detected: {resource_string}")
         return
 
@@ -308,21 +311,22 @@ class ProcessController:
         self.vna = None
         self.gui_mainWindow.ui_config_window.set_vna_connected(False)
         self.gui_mainWindow.disable_vna_control_window()
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)
 
         # start connect routine
-        connect_thread = Worker(self.vna_connect_routine, visa_address)
+        connect_thread = Worker(self.vna_connect_routine, visa_address, self.gui_mainWindow.ui_config_window.get_use_keysight())
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
         connect_thread.signals.update.connect(self.gui_mainWindow.update_status_bar)
         connect_thread.signals.result.connect(self.vna_connect_result_handler)
 
         self.threadpool.start(connect_thread)
 
-    def vna_connect_routine(self, visa_address: str, update_callback, progress_callback, position_update_callback):
+    def vna_connect_routine(self, visa_address: str, use_keysight_flag: bool, update_callback, progress_callback, position_update_callback):
         """
         Sends '*IDN?' query to given visa_address-device and pushes the answer or error to update_callback.
         """
         update_callback.emit("Check if visa address is valid...")
-        new_vna = E8361RemoteGPIB()
+        new_vna = E8361RemoteGPIB(use_keysight=use_keysight_flag)
         available_resources = new_vna.list_resources()
         if visa_address in available_resources:     # check if given address available
 
@@ -354,6 +358,8 @@ class ProcessController:
             self.gui_mainWindow.ui_config_window.set_vna_connected(True)
             self.gui_mainWindow.ui_config_window.append_message2console(
                 "VNA object was generated and saved to app. VNA control tab enabled.")
+            if self.chamber is not None:
+                self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)
         return
 
     # **UI_chamber_control_window Callbacks** ################################################
