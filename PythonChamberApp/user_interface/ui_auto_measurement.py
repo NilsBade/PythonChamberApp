@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, \
-    QFrame, QComboBox, QStackedWidget, QProgressBar
+    QFrame, QComboBox, QStackedWidget, QProgressBar, QCheckBox
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
 from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
@@ -54,9 +54,16 @@ class UI_auto_measurement_window(QWidget):
     #   > more to come... [3]
 
     #   vna_measurement_config_field
+    vna_S11_checkbox: QCheckBox = None
+    vna_S12_checkbox: QCheckBox = None  # AUT: Port2, Probe: Port1
+    vna_S22_checkbox: QCheckBox = None
     vna_freq_start_lineEdit: QLineEdit = None
     vna_freq_stop_lineEdit: QLineEdit = None
     vna_freq_num_steps_lineEdit: QLineEdit = None
+    vna_if_bandwidth_lineEdit: QLineEdit = None
+    vna_output_power_lineEdit: QLineEdit = None
+    vna_enable_average_checkbox: QCheckBox = None
+    vna_average_number_lineEdit: QLineEdit = None
 
     #   measurement_data_config_field
     filename_lineEdit: QLineEdit = None
@@ -108,19 +115,18 @@ class UI_auto_measurement_window(QWidget):
         main_layout = QHBoxLayout()
 
         #   first column - from left ...
-        first_column = QVBoxLayout()
+        configs_field = QGridLayout()
         probe_antenna_inputs_frame_widget = self.__init_antenna_info_inputs_widget()
         measurement_mesh_config_widget = self.__init_measurement_mesh_config_widget()
-        first_column.addWidget(probe_antenna_inputs_frame_widget)
-        first_column.addWidget(measurement_mesh_config_widget)
+        configs_field.addWidget(probe_antenna_inputs_frame_widget,0,0,1,1)
+        configs_field.addWidget(measurement_mesh_config_widget,1,0,2,1)
 
-        second_column = QVBoxLayout()
         vna_measurement_config_widget = self.__init_vna_measurement_config_widget()
         measurement_data_config_widget = self.__init_measurement_data_config_widget()
         self.auto_measurement_start_button = QPushButton("Start Auto Measurement Process")
-        second_column.addWidget(vna_measurement_config_widget)
-        second_column.addWidget(measurement_data_config_widget)
-        second_column.addWidget(self.auto_measurement_start_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        configs_field.addWidget(vna_measurement_config_widget,0,1,1,1, alignment=Qt.AlignmentFlag.AlignTop)
+        configs_field.addWidget(measurement_data_config_widget,1,1,1,1, alignment=Qt.AlignmentFlag.AlignTop)
+        configs_field.addWidget(self.auto_measurement_start_button,2,1,1,1, alignment=Qt.AlignmentFlag.AlignBottom)
         # ...
 
         third_column = QVBoxLayout()
@@ -142,8 +148,7 @@ class UI_auto_measurement_window(QWidget):
         self.plot_2d_layout_widget.setMinimumWidth(300)
         fourth_column.addWidget(self.plot_2d_layout_widget)
 
-        main_layout.addLayout(first_column, stretch=0)
-        main_layout.addLayout(second_column, stretch=0)
+        main_layout.addLayout(configs_field, stretch=0)
         main_layout.addLayout(third_column, stretch=1)
         main_layout.addLayout(fourth_column, stretch=1)
         self.setLayout(main_layout)
@@ -155,7 +160,7 @@ class UI_auto_measurement_window(QWidget):
         antenna_info_inputs_frame = QFrame()
         antenna_info_inputs_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         antenna_info_inputs_frame.setContentsMargins(5, 5, 5, 5)
-        antenna_info_inputs_frame.setMaximumWidth(300)
+        antenna_info_inputs_frame.setFixedWidth(300)
         frame_layout = QGridLayout()
         antenna_info_inputs_frame.setLayout(frame_layout)
 
@@ -227,7 +232,7 @@ class UI_auto_measurement_window(QWidget):
         measurement_mesh_config_frame = QFrame()
         measurement_mesh_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         measurement_mesh_config_frame.setContentsMargins(5, 5, 5, 5)
-        measurement_mesh_config_frame.setMaximumWidth(300)
+        measurement_mesh_config_frame.setFixedWidth(300)
         frame_layout = QVBoxLayout()
         measurement_mesh_config_frame.setLayout(frame_layout)
 
@@ -349,16 +354,78 @@ class UI_auto_measurement_window(QWidget):
         vna_measurement_config_frame = QFrame()
         vna_measurement_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         vna_measurement_config_frame.setContentsMargins(5, 5, 5, 5)
-        vna_measurement_config_frame.setFixedSize(300, 150)
+        vna_measurement_config_frame.setFixedWidth(300)
         frame_layout = QGridLayout()
+        frame_layout.setVerticalSpacing(12)
         vna_measurement_config_frame.setLayout(frame_layout)
+
 
         main_label = QLabel("3. VNA Configuration")
         main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
-        frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(main_label,0,0,1,6, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        self.vna_S11_checkbox = QCheckBox('S11')
+        self.vna_S12_checkbox = QCheckBox('S12')
+        self.vna_S12_checkbox.setChecked(True)
+        self.vna_S22_checkbox = QCheckBox('S22')
+        freq_start_label = QLabel("Start frequency:")
+        self.vna_freq_start_lineEdit = QLineEdit("60e9")
+        freq_start_unit_label = QLabel("[Hz]")
+        freq_stop_label = QLabel("Stop frequency:")
+        self.vna_freq_stop_lineEdit = QLineEdit("67e9")
+        freq_stop_unit_label = QLabel("[Hz]")
+        freq_num_steps_label = QLabel("Num freq-steps:")
+        self.vna_freq_num_steps_lineEdit = QLineEdit("201")
+        self.vna_freq_num_steps_lineEdit.setToolTip("This is the number of frequency points that will be measured,\n"
+                                                    "going from start- to stop-frequency.")
+        if_bw_label = QLabel("IF Bandwidth:")
+        self.vna_if_bandwidth_lineEdit = QLineEdit("1000")
+        if_bw_unit_label = QLabel("[Hz]")
+        output_pow_label = QLabel("RF output power:")
+        self.vna_output_power_lineEdit = QLineEdit("-15")
+        output_pow_unit_label = QLabel("[dBm]")
+        self.vna_enable_average_checkbox = QCheckBox("enable average on VNA")
+        self.vna_enable_average_checkbox.setChecked(True)
+        average_label = QLabel("Num of sweeps")
+        self.vna_average_number_lineEdit = QLineEdit("10")
+        self.vna_average_number_lineEdit.setToolTip("Number of sweeps that should be performed \nand averaged for the "
+                                                    "measurement result.")
+
+        frame_layout.addWidget(self.vna_S11_checkbox,1,0,1,2,Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.vna_S12_checkbox,1,2,1,2,Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(self.vna_S22_checkbox,1,4,1,2,Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(freq_start_label,2,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_freq_start_lineEdit,2,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(freq_start_unit_label,2,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(freq_stop_label,3,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_freq_stop_lineEdit,3,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(freq_stop_unit_label,3,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(freq_num_steps_label,4,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_freq_num_steps_lineEdit,4,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(if_bw_label,5,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_if_bandwidth_lineEdit,5,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(if_bw_unit_label,5,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(output_pow_label,6,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_output_power_lineEdit,6,2,1,3, Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(output_pow_unit_label,6,5,1,1, Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_enable_average_checkbox,7,0,1,5, Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(average_label,8,0,1,2, Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.vna_average_number_lineEdit,8,2,1,3, Qt.AlignmentFlag.AlignLeft)
+
+        # connect local callbacks & signals
+        self.vna_enable_average_checkbox.stateChanged.connect(self.__enable_avg_num_callback)
 
         return vna_measurement_config_frame
 
+    def __enable_avg_num_callback(self):
+        """
+        enables/disables textfield for average number dependend on checkbox.
+        """
+        if self.vna_enable_average_checkbox.isChecked():
+            self.vna_average_number_lineEdit.setEnabled(True)
+        else:
+            self.vna_average_number_lineEdit.setEnabled((False))
+        return
     def __init_measurement_data_config_widget(self):
         measurement_data_config_frame = QFrame()
         measurement_data_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
@@ -846,3 +913,41 @@ class UI_auto_measurement_window(QWidget):
         """
         self.button_set_current_as_zero.setEnabled(True)
         self.button_move_to_zero.setEnabled(True)
+
+    def get_vna_configuration(self):
+        """
+        Returns dict with all info necessary to configure the measurement routine
+
+        vna_info: dict = {
+            'parameter':        list[string], possibly includes 'S11','S12','S22'
+            'freq_start':       float, [Hz], start frequency for sweep
+            'freq_stop':        float, [Hz], stop frequency for sweep
+            'if_bw':            int, [Hz], IF bandwidth for measurement
+            'sweep_num_points': int, [], number of frequency points stimulated while sweep
+            'output_power':     float, [dBm], RF-output power for measurement
+            'average_number':   int, [], number of sweeps that should be averaged (1 - 65536)
+            }
+        """
+        vna_info = {}
+
+        parameter_list = []
+        if self.vna_S11_checkbox.isChecked():
+            parameter_list.append('S11')
+        if self.vna_S12_checkbox.isChecked():
+            parameter_list.append('S12')
+        if self.vna_S22_checkbox.isChecked():
+            parameter_list.append('S22')
+        vna_info['parameter'] = parameter_list
+
+        vna_info['freq_start'] = float(self.vna_freq_start_lineEdit.text())
+        vna_info['freq_stop'] = float(self.vna_freq_stop_lineEdit.text())
+        vna_info['if_bw'] = int(self.vna_if_bandwidth_lineEdit.text())
+        vna_info['sweep_num_points'] = int(self.vna_freq_num_steps_lineEdit.text())
+        vna_info['output_power'] = float(self.vna_output_power_lineEdit.text())
+
+        if self.vna_enable_average_checkbox.isChecked():
+            vna_info['average_number'] = int(self.vna_average_number_lineEdit.text())
+        else:
+            vna_info['average_number'] = 1
+
+        return vna_info

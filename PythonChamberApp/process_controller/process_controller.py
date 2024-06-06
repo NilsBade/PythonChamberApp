@@ -896,6 +896,9 @@ class ProcessController:
 
         Gets config data from auto measurement window, creates auto measurement thread and starts operation
         """
+        #ToDo implement checks to prevent start of invalid auto measurements because of wrong coordinates,
+        # vna config or similiar
+
         #   Check that no measurement is currently running
         if self.ui_chamber_control_process is not None:
             self.gui_mainWindow.prompt_warning("Please wait until process from chamber control menu is "
@@ -904,20 +907,25 @@ class ProcessController:
             return
 
         #   Setup results directory
-        meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
         path_workdirectory = os.getcwd()
         if not os.path.exists(os.path.join(path_workdirectory + '/results')):
             os.makedirs(os.path.join(path_workdirectory + '/results'))
         path_results_folder = os.path.join(os.getcwd() + '/results')
 
-        #   Check if filename is valid, avoid override
-        new_file_path_substring = "/" + self.gui_mainWindow.ui_auto_measurement_window.get_new_filename() + ".txt"
-        new_file_path = os.path.join(path_results_folder + new_file_path_substring)
-        if os.path.isfile(new_file_path):
-            self.gui_mainWindow.prompt_warning("A measurement file with the given name is already stored. \n"
-                                               "Overrride is not permitted. Please change the desired file name.",
-                                               "Duplicate Filename")
-            return
+        #   Check if filename(s) are valid, avoid override
+        meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
+        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration()
+        for param in vna_info['parameter']:
+            new_file_path_substring = "/" + meas_file_name + "_" + param + ".txt"
+            new_file_path = os.path.join(path_results_folder + new_file_path_substring)
+            if os.path.isfile(new_file_path):
+                self.gui_mainWindow.prompt_warning("A measurement file with the given name is already stored. \n"
+                                                   "Overrride is not permitted. Please change the desired file name.",
+                                                   "Duplicate Filename")
+                return
+
+        #   save generic meas_file_name without type and parameter
+        generic_file_path = os.path.join(path_results_folder + "/" + meas_file_name)
 
         #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
@@ -927,9 +935,10 @@ class ProcessController:
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
 
         if self.auto_measurement_process is None:
-            self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, x_vec=mesh_info['x_vec'],
-                                                            y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec'],
-                                                            mov_speed=jog_speed, file_location=new_file_path)
+            self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
+                                                            x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
+                                                            z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
+                                                            file_location=generic_file_path)
 
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
