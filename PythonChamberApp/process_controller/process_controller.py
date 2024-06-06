@@ -813,7 +813,8 @@ class ProcessController:
             return
 
         cust_cmd = self.gui_mainWindow.ui_vna_control_window.get_visa_string()
-        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'w', cust_cmd)
+        self.gui_mainWindow.ui_vna_control_window.append_message2console(f"Write VNA: {cust_cmd}")
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna.pna_write_custom_string, cust_cmd)
         self.ui_vna_control_process.signals.update.connect(
             self.gui_mainWindow.ui_vna_control_window.append_message2console)
         self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
@@ -831,8 +832,10 @@ class ProcessController:
                                             "Please wait for it to finish.", "Other request still running")
             return
 
+        self.gui_mainWindow.ui_vna_control_window.append_message2console(f"Reading VNA GPIB buffer...")
+
         read_string = ""
-        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'r', read_string)
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna.pna_read_custom_string, read_string)
         self.ui_vna_control_process.signals.update.connect(
             self.gui_mainWindow.ui_vna_control_window.append_message2console)
         self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
@@ -854,7 +857,7 @@ class ProcessController:
         cust_cmd = self.gui_mainWindow.ui_vna_control_window.get_visa_string()
         self.gui_mainWindow.ui_vna_control_window.append_message2console(f"Query VNA: {cust_cmd}")
 
-        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna, 'q', cust_cmd)
+        self.ui_vna_control_process = Worker(self.vna_read_write_routine, self.vna.pna_query_custom_string, cust_cmd)
         self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.ui_vna_control_window.append_message2console)
         self.ui_vna_control_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
         self.ui_vna_control_process.signals.finished.connect(self.vna_read_write_routine_finished_handler)
@@ -862,29 +865,18 @@ class ProcessController:
         self.threadpool.start(self.ui_vna_control_process)
         return
 
-    def vna_read_write_routine(self, vna: E8361RemoteGPIB, cmd_char: str, visa_str: str, update_callback, progress_callback,
+    def vna_read_write_routine(self, vna_function, visa_str: str, update_callback, progress_callback,
                                        position_update_callback):
         """
         Routine that can be run in vna worker thread and differs query, read and write.
         """
-        update_callback.emit("VNA GPIB-routine started...")
-        if cmd_char == 'r':
-            update_callback.emit("read selected")
-            response = vna.pna_read_custom_string("")
-        elif cmd_char == 'w':
-            update_callback.emit("write selected")
-            response = vna.pna_write_custom_string(visa_str=visa_str)
-        elif cmd_char == 'q':
-            update_callback.emit("query selected")
-            response = vna.pna_query_custom_string(visa_str=visa_str)
-        else:
-            response = 'ERROR - invalid selection of read, write or query!'
-
+        response = vna_function(visa_str)
         if response is None:
             update_callback.emit("Done")
         elif 'ERROR' in response:
             update_callback.emit(response)
         else:
+            response = response.rstrip('\n')
             update_callback.emit(f"Response: {response}")
         return
 
