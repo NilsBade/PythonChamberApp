@@ -354,7 +354,7 @@ class E8361RemoteGPIB:
             number_of_triggers += 1
 
         for i in range(number_of_triggers):
-            print(f"Trigger {i}\n")
+            # print(f"Trigger {i}\n") # debug
             self.pna_device.write(f"INIT{meas_cnum}:IMM")
             while self.pna_device.query('*OPC?') != '+1':   # busy wait for measurement to finish before next trigger
                 print("chamber ist beschäftigt!\n")
