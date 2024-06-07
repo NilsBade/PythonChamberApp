@@ -903,8 +903,6 @@ class ProcessController:
 
         Gets config data from auto measurement window, creates auto measurement thread and starts operation
         """
-        #ToDo implement checks to prevent start of invalid auto measurements because of wrong coordinates,
-        # vna config or similiar
 
         #   Check that no measurement is currently running
         if self.ui_chamber_control_process is not None:
@@ -930,6 +928,7 @@ class ProcessController:
                 self.gui_mainWindow.prompt_warning("A json-measurement file with the given name is already stored. \n"
                                                    "Overrride is not permitted. Please change the desired file name.",
                                                    "Duplicate json Filename")
+                return
         else:
             for param in vna_info['parameter']:
                 new_file_path_substring = "/" + meas_file_name + "_" + param + ".txt"
@@ -943,11 +942,20 @@ class ProcessController:
         #   save generic meas_file_name without type and parameter
         generic_file_path = os.path.join(path_results_folder + "/" + meas_file_name)
 
+        #   Check if mesh coordinates are valid/reachable
+        mesh_info = self.gui_mainWindow.ui_auto_measurement_window.get_mesh_cubic_data()
+        if self.auto_measurement_check_move_boundary(x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec']) is not True:
+            self.gui_mainWindow.prompt_warning("Configured mesh defines coordinates out of workspace "
+                                               "boundaries.\n Please modify mesh config.",
+                                               "Invalid mesh configuration")
+            return
+
+        #ToDo implement checks to prevent start of invalid auto measurements because invalid vna config
+
         #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
         self.gui_mainWindow.disable_vna_control_window()
 
-        mesh_info = self.gui_mainWindow.ui_auto_measurement_window.get_mesh_cubic_data()
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
         zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
 
@@ -975,6 +983,19 @@ class ProcessController:
             self.gui_mainWindow.prompt_warning("An Automated Measurement Process Thread is already running!",
                                                "More than one Measurement Process")
         return
+
+    def auto_measurement_check_move_boundary(self, x_vec: tuple[float], y_vec: tuple[float], z_vec: tuple[float]):
+        """
+        Checks if rectangular / cubic mesh is out of chamber workspace.
+        :return: True >> movements valid in workspace // False >> invalid mesh coordinates, movements
+        """
+        if x_vec[0] < 0 or x_vec[-1] > self.__x_max_coor:
+            return False
+        if y_vec[0] < 0 or y_vec[-1] > self.__y_max_coor:
+            return False
+        if z_vec[0] < 0 or z_vec[-1] > self.__z_max_coor:
+            return False
+        return True
 
     def auto_measurement_finished_handler(self, finished_info: dict):
         self.auto_measurement_process = None
