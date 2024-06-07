@@ -67,6 +67,8 @@ class UI_auto_measurement_window(QWidget):
 
     #   measurement_data_config_field
     filename_lineEdit: QLineEdit = None
+    file_type_json_checkbox: QCheckBox = None
+    file_json_readable_checkbox: QCheckBox = None
 
     #   start auto measurement button
     auto_measurement_start_button: QPushButton = None
@@ -441,13 +443,32 @@ class UI_auto_measurement_window(QWidget):
         filename_label = QLabel("Filename:")
         filename_info_label = QLabel("* Measurement Files are stored in \n'[GIT]PythonChamberApp/results/...'")
         filename_info_label.setStyleSheet("font: italic")
+        self.file_type_json_checkbox = QCheckBox(".json format")
+        self.file_type_json_checkbox.setChecked(True)
+        self.file_json_readable_checkbox = QCheckBox("format for readability")
+        self.file_json_readable_checkbox.setChecked(True)
 
-        frame_layout.addWidget(main_label, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+        frame_layout.addWidget(main_label, 0, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(filename_label,1,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.filename_lineEdit,1,1,1,2,alignment=Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(filename_info_label,2,0,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.filename_lineEdit,1,1,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(filename_info_label,2,0,1,4,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.file_type_json_checkbox,3,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(self.file_json_readable_checkbox,3,2,1,2,Qt.AlignmentFlag.AlignLeft)
+
+        # connect signals and slots for internal callbacks
+        self.file_type_json_checkbox.stateChanged.connect(self.__file_type_json_callback)
 
         return measurement_data_config_frame
+
+    def __file_type_json_callback(self):
+        """
+        disables/enables readability checkbox in data config widget
+        """
+        if self.file_type_json_checkbox.isChecked():
+            self.file_json_readable_checkbox.setEnabled(True)
+        else:
+            self.file_json_readable_checkbox.setEnabled(False)
+        return
 
     def __init_auto_measurement_progress_widget(self):
         frame_widget = QFrame()
@@ -951,3 +972,20 @@ class UI_auto_measurement_window(QWidget):
             vna_info['average_number'] = 1
 
         return vna_info
+
+    def get_is_file_json(self):
+        """
+        :return: True >> measurement file should be json format // False >> measurement file .txt format
+        """
+        return self.file_type_json_checkbox.isChecked()
+
+    def get_is_file_json_readable(self):
+        """
+        If json type checked and readibility checked >> True
+
+        if json unchecked or readibility not checked >> False
+        """
+        if self.file_type_json_checkbox.isChecked():
+            if self.file_json_readable_checkbox.isChecked():
+                return True
+        return False

@@ -71,8 +71,9 @@ class AutoMeasurement(QRunnable):
     chamber_mov_speed = 0  # unit [mm/s], see jog command doc-string!
     zero_position = [0,0,0]  # zero position must be known to write relative antenna coordinates to meas file
 
-    store_as_json: bool = True
+    store_as_json: bool = None
     measurement_file_json = None
+    json_format_readable: bool = None
     json_data_storage: dict = None
     json_S11: dict = None
     json_S12: dict = None
@@ -80,8 +81,7 @@ class AutoMeasurement(QRunnable):
 
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, zero_position: tuple[float, ...],
-                 file_location: str,
-                 file_type_json: bool = True):
+                 file_location: str, file_type_json: bool = True, file_type_json_readable: bool = True):
         super(AutoMeasurement, self).__init__()
 
         self.signals = AutoMeasurementSignals()
@@ -100,6 +100,7 @@ class AutoMeasurement(QRunnable):
         self.chamber_mov_speed = mov_speed
         self.zero_position = zero_position
         self.store_as_json = file_type_json
+        self.json_format_readable = file_type_json_readable
 
         # redundant None initialization to be sure
         self.measurement_file_S11 = None
@@ -119,6 +120,7 @@ class AutoMeasurement(QRunnable):
             measurement_config = {
                 'type':             'Auto Measurement Data JSON',
                 'timestamp':        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'zero_position':    zero_position,
                 'mesh_x_min':       x_vec[0], #[mm]
                 'mesh_x_max':       x_vec[-1], #[mm]
                 'mesh_x_steps':     len(x_vec),
@@ -164,7 +166,7 @@ class AutoMeasurement(QRunnable):
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     file.write("Auto Measurement Data File\n")
                     file.write(f"Timestamp: {timestamp}\n")
-                    file.write("Mesh configuration:\n"
+                    file.write(f"Mesh configuration:\nZero position: {zero_position}\n"
                                f"x direction - min:{x_vec[0]}[mm]; max:{x_vec[-1]}[mm]; steps:{len(x_vec)}\n"
                                f"y direction - min:{y_vec[0]}[mm]; max:{y_vec[-1]}[mm]; steps:{len(y_vec)}\n"
                                f"x direction - min:{z_vec[0]}[mm]; max:{z_vec[-1]}[mm]; steps:{len(z_vec)}\n")
@@ -232,6 +234,10 @@ class AutoMeasurement(QRunnable):
                     self.vna.pna_trigger_measurement('AutoMeasurement')
                     self.signals.update.emit("Measurement done! Read data from VNA and write to file...")
 
+                    x_coor_antennas = x_coor - self.zero_position[0]
+                    y_coor_antennas = y_coor - self.zero_position[1]
+                    z_coor_antennas = z_coor - self.zero_position[2]
+
                     if self.store_as_json:
                         for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
                             if json_dic is not None:
@@ -239,7 +245,7 @@ class AutoMeasurement(QRunnable):
                                 data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
                                 for freq_point in data:
                                     pointer = complex(real=freq_point[1], imag=freq_point[2])
-                                    json_dic['values'].append([x_coor, y_coor, z_coor, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
+                                    json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
                                 self.signals.update.emit(f"{json_dic['parameter']} data appended.")
                     else:
                         # Routine to read all configured parameters from VNA and write each result to each file.txt
@@ -253,7 +259,7 @@ class AutoMeasurement(QRunnable):
                                     pointer = complex(real=freq_point[1], imag=freq_point[2])
                                     # write measured data to file
                                     file.write(
-                                        f"{x_coor};{y_coor};{z_coor};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
+                                        f"{x_coor_antennas};{y_coor_antennas};{z_coor_antennas};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
                                 self.signals.update.emit(f"Written {possible_parameters[counter]} values to file.")
                             counter += 1
                         self.signals.update.emit("All data written to txt-file(s)!")
@@ -301,7 +307,12 @@ class AutoMeasurement(QRunnable):
                 if par_dict is not None:
                     self.json_data_storage[par_dict['parameter']] = par_dict['values']
             self.signals.update.emit(f"Data written to {self.measurement_file_json.name}")
-            self.measurement_file_json.write(json.dumps(self.json_data_storage, indent=4))
+            # decide if formatting readable
+            indent = None
+            if self.json_format_readable:
+                indent = 4
+
+            self.measurement_file_json.write(json.dumps(self.json_data_storage, indent=indent))
             self.measurement_file_json.close()
 
         return
