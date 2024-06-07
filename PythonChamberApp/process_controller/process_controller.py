@@ -293,8 +293,9 @@ class ProcessController:
         Detects all available instruments of pyvisa ResourceManager object and prints them to console
         of config window. Differs which visa implementation is used according to checkbox in config window
         """
-        resource_string = E8361RemoteGPIB(self.gui_mainWindow.ui_config_window.get_use_keysight()).list_resources()
-        self.gui_mainWindow.ui_config_window.append_message2console(f"Available Resources detected: {resource_string}")
+        resource_strings = E8361RemoteGPIB(self.gui_mainWindow.ui_config_window.get_use_keysight()).list_resources()
+        self.gui_mainWindow.ui_config_window.append_message2console(f"Available Resources detected: {resource_strings}")
+        self.gui_mainWindow.ui_config_window.update_vna_visa_address_dropdown(resource_strings)
         return
 
     def vna_connect_button_handler(self):
@@ -303,7 +304,7 @@ class ProcessController:
         """
         visa_address = self.gui_mainWindow.ui_config_window.get_vna_visa_address()
         # print error if invalid visa address
-        if visa_address == "":
+        if visa_address == "run list first..."  or visa_address == "select...":
             self.gui_mainWindow.ui_config_window.append_message2console("Please input a visa address first. Available addresses are printed to console when clicking on 'List available resources' on the left.")
             return
 

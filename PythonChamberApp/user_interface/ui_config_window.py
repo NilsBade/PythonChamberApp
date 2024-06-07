@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, \
-    QCheckBox
+    QCheckBox, QComboBox
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import datetime
 
@@ -14,7 +14,7 @@ class UI_config_window(QWidget):
     chamber_connect_button: QPushButton = None
 
     vna_list_ressources_button: QPushButton = None
-    vna_visa_name_line_edit: QLineEdit = None
+    vna_visa_name_comboBox: QComboBox = None
     vna_connection_status_label: QLabel = None
     vna_connect_button: QPushButton = None
     vna_keysight_checkbox: QCheckBox = None
@@ -82,7 +82,8 @@ class UI_config_window(QWidget):
         title_label.setStyleSheet("font-weight: bold; text-decoration: underline;")
         self.vna_list_ressources_button = QPushButton("List available resources")
         visa_name_label = QLabel("Visa-address:")
-        self.vna_visa_name_line_edit = QLineEdit("GPIB0::15::INSTR")
+        self.vna_visa_name_comboBox = QComboBox()
+        self.vna_visa_name_comboBox.addItem("run list first...")
         self.vna_connect_button = QPushButton("Connect ? IDN")
         self.vna_connect_button.setToolTip("Sends an '*IDN?' request to the device with the visa address given above.\nResponse should be checked and can be seen in Console.")
         self.vna_connection_status_label = QLabel("Status: Not Connected")
@@ -92,7 +93,7 @@ class UI_config_window(QWidget):
         vna_connect_layout.addWidget(title_label, 0,0,1,4, Qt.AlignmentFlag.AlignLeft)
         vna_connect_layout.addWidget(self.vna_list_ressources_button, 1,0,1,4, Qt.AlignmentFlag.AlignLeft)
         vna_connect_layout.addWidget(visa_name_label, 2,0,1,1, Qt.AlignmentFlag.AlignLeft)
-        vna_connect_layout.addWidget(self.vna_visa_name_line_edit, 2,1,1,3)
+        vna_connect_layout.addWidget(self.vna_visa_name_comboBox, 2,1,1,3)
         vna_connect_layout.addWidget(self.vna_connect_button,3,0,1,2)
         vna_connect_layout.addWidget(self.vna_connection_status_label,3,2,1,2,Qt.AlignmentFlag.AlignRight)
         vna_connect_layout.addWidget(self.vna_keysight_checkbox,4,0,1,4,Qt.AlignmentFlag.AlignLeft)
@@ -163,8 +164,16 @@ class UI_config_window(QWidget):
         """
         Returns vna visa address as string
         """
-        return str(self.vna_visa_name_line_edit.text())
+        return self.vna_visa_name_comboBox.currentText()
 
+    def update_vna_visa_address_dropdown(self, dev_list: list[str]):
+        """
+        Sets given list of strings as items for the vna_visa_name_dropdown selection
+        """
+        self.vna_visa_name_comboBox.clear()
+        self.vna_visa_name_comboBox.addItem("select...")
+        self.vna_visa_name_comboBox.addItems(dev_list)
+        return
     def set_vna_connected(self, state: bool):
         """
             Toggles the status message of the VNA connection widget.
