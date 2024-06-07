@@ -922,14 +922,23 @@ class ProcessController:
         #   Check if filename(s) are valid, avoid override
         meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
         vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration()
-        for param in vna_info['parameter']:
-            new_file_path_substring = "/" + meas_file_name + "_" + param + ".txt"
-            new_file_path = os.path.join(path_results_folder + new_file_path_substring)
+        file_type_json_flag = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json()
+        file_type_json_readable = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json_readable()
+        if file_type_json_flag:
+            new_file_path = os.path.join(path_results_folder + '/' + meas_file_name + '.json')
             if os.path.isfile(new_file_path):
-                self.gui_mainWindow.prompt_warning("A measurement file with the given name is already stored. \n"
+                self.gui_mainWindow.prompt_warning("A json-measurement file with the given name is already stored. \n"
                                                    "Overrride is not permitted. Please change the desired file name.",
-                                                   "Duplicate Filename")
-                return
+                                                   "Duplicate json Filename")
+        else:
+            for param in vna_info['parameter']:
+                new_file_path_substring = "/" + meas_file_name + "_" + param + ".txt"
+                new_file_path = os.path.join(path_results_folder + new_file_path_substring)
+                if os.path.isfile(new_file_path):
+                    self.gui_mainWindow.prompt_warning("A txt-measurement file with the given name is already stored. \n"
+                                                       "Overrride is not permitted. Please change the desired file name.",
+                                                       "Duplicate txt Filename")
+                    return
 
         #   save generic meas_file_name without type and parameter
         generic_file_path = os.path.join(path_results_folder + "/" + meas_file_name)
@@ -946,7 +955,9 @@ class ProcessController:
             self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
                                                             x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
                                                             z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
-                                                            zero_position=zero_pos, file_location=generic_file_path)
+                                                            zero_position=zero_pos, file_location=generic_file_path,
+                                                            file_type_json=file_type_json_flag,
+                                                            file_type_json_readable=file_type_json_readable)
 
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
