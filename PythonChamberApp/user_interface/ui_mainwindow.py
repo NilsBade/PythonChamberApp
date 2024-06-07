@@ -53,8 +53,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_vna_control_window, 'VNA control')  # Tab 2
         self.tabs.addTab(self.ui_auto_measurement_window, 'Auto Measurement')   # Tab 3
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, False)
-        self.tabs.setTabEnabled(2, False)
+        self.tabs.setTabEnabled(1, True)       # ToDo disable all tabs and wait for enable by function once testing done
+        self.tabs.setTabEnabled(2, True)
         self.tabs.setTabEnabled(3, True)
 
         self.setCentralWidget(self.tabs)
