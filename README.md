@@ -106,6 +106,10 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install PyOpenGL
     ```
+   **matplotlib**
+    ```sh
+    python -m pip install matplotlib
+    ```
    **requests**
     ```sh
     python -m pip install requests
