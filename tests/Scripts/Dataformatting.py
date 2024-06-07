@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import json
 
 
 if __name__ == '__main__':
@@ -37,5 +38,10 @@ if __name__ == '__main__':
         else:
             data_storage['S12']['values'].append(sample)
         counter += 1
+
+    file = open('datafile.json', "w")
+    jso = json.dumps(data_storage, indent=4)
+    file.write(jso)
+    file.close()
 
     print("done")
