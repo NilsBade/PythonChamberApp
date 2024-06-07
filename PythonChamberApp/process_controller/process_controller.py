@@ -241,7 +241,7 @@ class ProcessController:
         self.chamber: ChamberNetworkCommands = None
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
         self.gui_mainWindow.disable_chamber_control_window()
-        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)
+        #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False) #ToDo reenable after testing
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
@@ -284,8 +284,8 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
-        if self.vna is not None:
-            self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)
+        #if self.vna is not None:
+            #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True) ToDo reenable aber test
         return
 
     def vna_list_resources_button_handler(self):
@@ -312,7 +312,7 @@ class ProcessController:
         self.vna = None
         self.gui_mainWindow.ui_config_window.set_vna_connected(False)
         self.gui_mainWindow.disable_vna_control_window()
-        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)
+        #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False) #ToDo reenable after testing
 
         # start connect routine
         connect_thread = Worker(self.vna_connect_routine, visa_address, self.gui_mainWindow.ui_config_window.get_use_keysight())
@@ -359,8 +359,8 @@ class ProcessController:
             self.gui_mainWindow.ui_config_window.set_vna_connected(True)
             self.gui_mainWindow.ui_config_window.append_message2console(
                 "VNA object was generated and saved to app. VNA control tab enabled.")
-            if self.chamber is not None:
-                self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)
+            #if self.chamber is not None:
+            #    self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True) ToDo reenable after testing
         return
 
     # **UI_chamber_control_window Callbacks** ################################################
@@ -940,12 +940,13 @@ class ProcessController:
 
         mesh_info = self.gui_mainWindow.ui_auto_measurement_window.get_mesh_cubic_data()
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
+        zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
 
         if self.auto_measurement_process is None:
             self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
                                                             x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
                                                             z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
-                                                            file_location=generic_file_path)
+                                                            zero_position=zero_pos, file_location=generic_file_path)
 
             self.auto_measurement_process.signals.update.connect(
                 self.gui_mainWindow.ui_config_window.append_message2console)
@@ -955,7 +956,8 @@ class ProcessController:
                 self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
 
             self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
-            self.auto_measurement_process.signals.error.connect(self.auto_measurement_finished_handler)
+            # Error handler to be implemented once error messages are more detailed
+            # self.auto_measurement_process.signals.error.connect()
 
             self.threadpool.start(self.auto_measurement_process)
         else:
