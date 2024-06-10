@@ -1,25 +1,8 @@
-from PyQt6.QtWidgets import QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout, QSlider, QVBoxLayout,QHBoxLayout, QFrame
+from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout,
+                             QSlider, QVBoxLayout,QHBoxLayout, QFrame)
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-mpl.use('QtAgg')
-
 import numpy as np
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-
-
-class MplCanvas(FigureCanvas):
-    """
-    Use class to embed matplotlib graphs in QT GUI.
-    Alternative to use pyqtgraph's imageview
-    """
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
 
 class UI_display_measurement_window(QWidget):
 
@@ -38,8 +21,9 @@ class UI_display_measurement_window(QWidget):
     parameter_select_comboBox: QComboBox = None
     frequency_select_slider: QSlider = None
     frequency_select_lineEdit: QLineEdit = None
-    y_split_coor_slider: QSlider = None
-    y_split_coor_lineEdit: QLineEdit = None
+    xz_plot: pg.ImageItem = None
+    yz_plot: pg.ImageItem = None
+    xy_plot: pg.ImageItem = None
 
 
     def __init__(self):
@@ -116,8 +100,53 @@ class UI_display_measurement_window(QWidget):
 
     def __init_data_plot_widget(self):
         main_widget = QWidget()
-        main_layout = QGridLayout()
+        main_layout = QVBoxLayout()
 
+        upper_line_widget = QWidget()
+        upper_line_layout = QHBoxLayout()
+        upper_line_widget.setLayout(upper_line_layout)
+        parameter_select_label = QLabel("Show Parameter: ")
+        self.parameter_select_comboBox = QComboBox()
+        self.parameter_select_comboBox.addItem("Select...")
+        self.parameter_select_comboBox.setMinimumWidth(150)
+        frequency_label = QLabel("Frequency")
+        self.frequency_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
+        self.frequency_select_lineEdit = QLineEdit("...")
+        self.frequency_select_slider.setFixedWidth(200)
+        upper_line_layout.addWidget(parameter_select_label,alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addWidget(self.parameter_select_comboBox,alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addSpacing(100)
+        upper_line_layout.addWidget(frequency_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addWidget(self.frequency_select_slider, alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addWidget(self.frequency_select_lineEdit,alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addStretch()
+        main_layout.addWidget(upper_line_widget, stretch=0, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        graphs_layout_widget = pg.GraphicsLayoutWidget()
+        graphs_layout_widget.setBackground(background=(255, 255, 255))
+        label_pen = pg.mkPen(color='k', width=1)
+
+        xz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,0,1,1, title="XZ-Plane")
+        yz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,1,1,1, title="XZ-Plane")
+        xy_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,2,1,1, title="XZ-Plane")
+
+        self.xz_plot = pg.ImageItem()
+        self.yz_plot = pg.ImageItem()
+        self.xy_plot = pg.ImageItem()
+
+        sample_data1 = np.random.rand(10, 10, 3)
+        sample_data2 = np.random.rand(10, 10, 3)
+        sample_data3 = np.random.rand(10, 10, 3)
+
+        self.xz_plot.setImage(sample_data1)
+        self.yz_plot.setImage(sample_data2)
+        self.xy_plot.setImage(sample_data3)
+
+        xz_graph.addItem(self.xz_plot)
+        yz_graph.addItem(self.yz_plot)
+        xy_graph.addItem(self.xy_plot)
+
+        main_layout.addWidget(graphs_layout_widget)
 
         main_widget.setLayout(main_layout)
         return main_widget
