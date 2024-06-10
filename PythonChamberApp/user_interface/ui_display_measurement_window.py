@@ -29,40 +29,28 @@ class UI_display_measurement_window(QWidget):
     def __init__(self):
         super().__init__()
 
+        main_layout = QHBoxLayout()
+        self.setLayout(main_layout)
+
         data_selection_widget = self.__init_data_selection_widget()
-        data_details_widget = self.__init_data_details_widget()
         data_plot_widget = self.__init_data_plot_widget()
 
-        main_layout = QHBoxLayout()
-
-        left_frame = QFrame()
-        left_frame.setFrameStyle(QFrame.Shape.StyledPanel)
-        left_frame.setContentsMargins(5, 5, 5, 5)
-        left_frame.setFixedWidth(300)
         left_column = QVBoxLayout()
         left_column.addWidget(data_selection_widget, alignment=Qt.AlignmentFlag.AlignLeft)
-        left_column.addSpacing(50)
-        left_column.addWidget(data_details_widget, alignment=Qt.AlignmentFlag.AlignLeft)
-        left_column.addStretch()
-        left_frame.setLayout(left_column)
-        main_layout.addWidget(left_frame)
+        main_layout.addLayout(left_column, stretch=0)
 
-        right_frame = QFrame()
-        right_frame.setFrameStyle(QFrame.Shape.StyledPanel)
-        right_frame.setContentsMargins(5, 5, 5, 5)
         right_column = QVBoxLayout()
-        right_column.addWidget(data_plot_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-        right_frame.setLayout(right_column)
-        main_layout.addWidget(right_frame)
+        right_column.addWidget(data_plot_widget, stretch=1)
+        main_layout.addLayout(right_column, stretch=1)
 
-
-        self.setLayout(main_layout)
         return
 
 
 
     def __init_data_selection_widget(self):
-        main_widget = QWidget()
+        main_widget = QFrame()
+        main_widget.setFrameStyle(QFrame.Shape.StyledPanel)
+        main_widget.setContentsMargins(5, 5, 5, 5)
         main_layout = QGridLayout()
         main_widget.setLayout(main_layout)
 
@@ -79,6 +67,10 @@ class UI_display_measurement_window(QWidget):
         main_layout.addWidget(self.file_select_comboBox,1,0,2,2,alignment=Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(self.file_select_refresh_button,1,2,1,1,alignment=Qt.AlignmentFlag.AlignRight)
         main_layout.addWidget(self.file_select_read_button,2,2,1,1,alignment=Qt.AlignmentFlag.AlignRight)
+
+        data_details = self.__init_data_details_widget()
+        main_layout.addWidget(data_details,3,0,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
+        main_layout.setRowStretch(4,10)
 
         return main_widget
 
@@ -99,8 +91,11 @@ class UI_display_measurement_window(QWidget):
         return main_widget
 
     def __init_data_plot_widget(self):
-        main_widget = QWidget()
+        main_widget = QFrame()
+        main_widget.setFrameStyle(QFrame.Shape.StyledPanel)
+        main_widget.setContentsMargins(5, 5, 5, 5)
         main_layout = QVBoxLayout()
+        main_widget.setLayout(main_layout)
 
         upper_line_widget = QWidget()
         upper_line_layout = QHBoxLayout()
@@ -113,13 +108,12 @@ class UI_display_measurement_window(QWidget):
         self.frequency_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
         self.frequency_select_lineEdit = QLineEdit("...")
         self.frequency_select_slider.setFixedWidth(200)
-        upper_line_layout.addWidget(parameter_select_label,alignment=Qt.AlignmentFlag.AlignLeft)
-        upper_line_layout.addWidget(self.parameter_select_comboBox,alignment=Qt.AlignmentFlag.AlignLeft)
+        upper_line_layout.addWidget(parameter_select_label,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
+        upper_line_layout.addWidget(self.parameter_select_comboBox,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
         upper_line_layout.addSpacing(100)
-        upper_line_layout.addWidget(frequency_label, alignment=Qt.AlignmentFlag.AlignLeft)
-        upper_line_layout.addWidget(self.frequency_select_slider, alignment=Qt.AlignmentFlag.AlignLeft)
-        upper_line_layout.addWidget(self.frequency_select_lineEdit,alignment=Qt.AlignmentFlag.AlignLeft)
-        upper_line_layout.addStretch()
+        upper_line_layout.addWidget(frequency_label, alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
+        upper_line_layout.addWidget(self.frequency_select_slider, alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
+        upper_line_layout.addWidget(self.frequency_select_lineEdit,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
         main_layout.addWidget(upper_line_widget, stretch=0, alignment=Qt.AlignmentFlag.AlignLeft)
 
         graphs_layout_widget = pg.GraphicsLayoutWidget()
@@ -127,8 +121,8 @@ class UI_display_measurement_window(QWidget):
         label_pen = pg.mkPen(color='k', width=1)
 
         xz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,0,1,1, title="XZ-Plane")
-        yz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,1,1,1, title="XZ-Plane")
-        xy_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,2,1,1, title="XZ-Plane")
+        yz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,1,1,1, title="YZ-Plane")
+        xy_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,2,1,1, title="XY-Plane")
 
         self.xz_plot = pg.ImageItem()
         self.yz_plot = pg.ImageItem()
@@ -146,50 +140,29 @@ class UI_display_measurement_window(QWidget):
         yz_graph.addItem(self.yz_plot)
         xy_graph.addItem(self.xy_plot)
 
-        main_layout.addWidget(graphs_layout_widget)
+        main_layout.addWidget(graphs_layout_widget, stretch=10)
 
-        main_widget.setLayout(main_layout)
         return main_widget
-
-    def __init_canvas_widget(self):
-        """
-        sets up a widget that holds a matplotlib plot item with toolbar on top
-
-        :return: dict { 'widget': QWidget, 'plot': MplCanvas }
-        """
-        plot_widget = QWidget()
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
-        sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
-        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
-        toolbar = NavigationToolbar(sc, plot_widget)
-
-        layout = QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(sc)
-        plot_widget.setLayout(layout)
-
-        ret_dict = { 'widget': plot_widget, 'plot': sc}
-        return ret_dict
 
     def __gen_data_details_string(self, measurement_config: dict):
         """
         Generates formatted string from measurement_config info to be displayed in a Textbox or similiar.
         """
         info_string = ""
-        infostring += f"*Filetype: {measurement_config['type']}, "
-        infostring += f"Timestamp: {measurement_config['timestamp']}\n"
-        infostring += f"*Mesh configuration: [min : num of steps : max], unit [mm]\n"
-        infostring += (f"X:[{measurement_config['mesh_x_min']}:{measurement_config['mesh_x_steps']}:{measurement_config['mesh_x_max']}]\t"
+        info_string += f"*Filetype: {measurement_config['type']}, "
+        info_string += f"Timestamp: {measurement_config['timestamp']}\n"
+        info_string += f"*Mesh configuration: [min : num of steps : max], unit [mm]\n"
+        info_string += (f"X:[{measurement_config['mesh_x_min']}:{measurement_config['mesh_x_steps']}:{measurement_config['mesh_x_max']}]\t"
                        f"Y:[{measurement_config['mesh_y_min']}:{measurement_config['mesh_y_steps']}:{measurement_config['mesh_y_max']}]\t"
                        f"Z:[{measurement_config['mesh_z_min']}:{measurement_config['mesh_z_steps']}:{measurement_config['mesh_z_max']}]\n")
-        infostring += f"Zero position: {measurement_config['zero_position']}\n"
-        infostring += f"Movementspeed: {measurement_config['movespeed']} mm/s\n"
-        infostring += f"*VNA Configuration:\n"
-        infostring += f"Measured parameters: {measurement_config['parameter']}\n"
-        infostring += f"Frequency: [{measurement_config['freq_start']}:{measurement_config['freq_stop']}] [Hz] with {measurement_config['sweep_num_points']} points\n"
-        infostring += f"IF Bandwidth: {measurement_config['if_bw']} [Hz]\n"
-        infostring += f"RF Output Power: {measurement_config['output_power']} [dBm]\n"
-        infostring += f"Averaged over {measurement_config['average_number']} sweeps for each point"
+        info_string += f"Zero position: {measurement_config['zero_position']}\n"
+        info_string += f"Movementspeed: {measurement_config['movespeed']} mm/s\n"
+        info_string += f"*VNA Configuration:\n"
+        info_string += f"Measured parameters: {measurement_config['parameter']}\n"
+        info_string += f"Frequency: [{measurement_config['freq_start']}:{measurement_config['freq_stop']}] [Hz] with {measurement_config['sweep_num_points']} points\n"
+        info_string += f"IF Bandwidth: {measurement_config['if_bw']} [Hz]\n"
+        info_string += f"RF Output Power: {measurement_config['output_power']} [dBm]\n"
+        info_string += f"Averaged over {measurement_config['average_number']} sweeps for each point"
         return info_string
 
 

@@ -31,7 +31,7 @@ class HeatmapViewer(QMainWindow):
         x = np.linspace(-3.0, 3.0, 100)
         y = np.linspace(-3.0, 3.0, 100)
         x, y = np.meshgrid(x, y)
-        z = np.exp(-(x**2 + y**2))
+        z = np.exp(-(x**2 + y**4))
 
         return z
 
