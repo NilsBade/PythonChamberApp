@@ -134,8 +134,8 @@ class AutoMeasurement(QRunnable):
                 'parameter':        vna_info['parameter'],
                 'freq_start':       vna_info['freq_start'], #[Hz]
                 'freq_stop':        vna_info['freq_stop'], #[Hz]
-                'if_bw':            vna_info['if_bw'], #[Hz]
                 'sweep_num_points': vna_info['sweep_num_points'],
+                'if_bw':            vna_info['if_bw'], #[Hz]
                 'output_power':     vna_info['output_power'], #[dBm]
                 'average_number':   vna_info['average_number'],
             }
