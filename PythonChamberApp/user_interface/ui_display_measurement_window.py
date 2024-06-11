@@ -34,6 +34,9 @@ class UI_display_measurement_window(QWidget):
     xy_plot_z_select_slider: QSlider = None
     xy_plot_z_select_lineEdit: QLineEdit = None
 
+    xz_figure: Figure = None
+    yz_figure: Figure = None
+    xy_figure: Figure = None
     xz_plot: any = None
     yz_plot: any = None
     xy_plot: any = None
@@ -117,6 +120,7 @@ class UI_display_measurement_window(QWidget):
         self.parameter_select_comboBox.setMinimumWidth(150)
         frequency_label = QLabel("Frequency")
         self.frequency_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
+        self.frequency_select_slider.setMaximumWidth(300)
         self.frequency_select_lineEdit = QLineEdit("...")
         self.frequency_select_lineEdit.setFixedWidth(100)
         upper_line_layout.addWidget(parameter_select_label)
@@ -125,6 +129,7 @@ class UI_display_measurement_window(QWidget):
         upper_line_layout.addWidget(frequency_label)
         upper_line_layout.addWidget(self.frequency_select_slider)
         upper_line_layout.addWidget(self.frequency_select_lineEdit)
+        upper_line_layout.addStretch()
         main_layout.addLayout(upper_line_layout)
         main_layout.addSpacing(10)
 
@@ -194,12 +199,16 @@ class UI_display_measurement_window(QWidget):
         self.yz_plot = yz_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
         self.xy_plot = xy_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
 
+        self.xz_figure = xz_canvas.figure
+        self.yz_figure = yz_canvas.figure
+        self.xy_figure = xy_canvas.figure
+
         xz_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        xz_canvas.figure.colorbar(self.xz_plot, ax=xz_ax)
+        self.xz_figure.colorbar(self.xz_plot, ax=xz_ax)
         yz_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        yz_canvas.figure.colorbar(self.yz_plot, ax=yz_ax)
+        self.yz_figure.colorbar(self.yz_plot, ax=yz_ax)
         xy_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        xy_canvas.figure.colorbar(self.xy_plot, ax=xy_ax)
+        self.xy_figure.colorbar(self.xy_plot, ax=xy_ax)
 
         main_layout.addLayout(graphs_layout, stretch=10)
 
