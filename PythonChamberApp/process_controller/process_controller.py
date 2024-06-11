@@ -126,6 +126,7 @@ class ProcessController:
             self.display_measurement_refresh_file_dropdown)
         self.gui_mainWindow.ui_display_measurement_window.file_select_read_button.pressed.connect(
             self.display_measurement_read_file)
+        # todo connect signals so that slider interaction or parameter switch updates the graphs >> if computation is too large think of seperate threads or add "refresh" buttons to each graph layout
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -1207,6 +1208,7 @@ class ProcessController:
         xz_plane_data = self.display_measurement_get_data_in_plane(parameter=cur_parameter, freq=cur_freq, plane_normal='y', normal_coordinate=cur_y_coor)
 
         self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data)
+        # todo update all other plots after reading the measurement file as well
 
         return
 
