@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout,
-                             QSlider, QVBoxLayout,QHBoxLayout, QFrame)
+                             QSlider, QVBoxLayout, QHBoxLayout, QFrame)
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
@@ -10,10 +10,14 @@ from matplotlib.backends.backend_qtagg import \
 from matplotlib.backends.qt_compat import QtWidgets
 from matplotlib.figure import Figure
 
-class UI_display_measurement_window(QWidget):
 
+class UI_display_measurement_window(QWidget):
     # Properties
     meas_data_buffer: dict = None
+    frequency_vector: np.ndarray[float] = None
+    x_vector: np.ndarray[float] = None
+    y_vector: np.ndarray[float] = None
+    z_vector: np.ndarray[float] = None
 
     # Data selection widget
     file_select_comboBox: QComboBox = None
@@ -41,7 +45,6 @@ class UI_display_measurement_window(QWidget):
     yz_plot: any = None
     xy_plot: any = None
 
-
     def __init__(self):
         super().__init__()
 
@@ -59,9 +62,13 @@ class UI_display_measurement_window(QWidget):
         right_column.addWidget(data_plot_widget, stretch=1)
         main_layout.addLayout(right_column, stretch=1)
 
+        # connect internal Signals & Slots
+        self.frequency_select_slider.valueChanged.connect(self.__update_frequency_lineEdit)
+        self.yz_plot_x_select_slider.valueChanged.connect(self.__update_x_select_lineEdit)
+        self.xz_plot_y_select_slider.valueChanged.connect(self.__update_y_select_lineEdit)
+        self.xy_plot_z_select_slider.valueChanged.connect(self.__update_z_select_lineEdit)
+
         return
-
-
 
     def __init_data_selection_widget(self):
         main_widget = QFrame()
@@ -79,14 +86,14 @@ class UI_display_measurement_window(QWidget):
         self.file_select_refresh_button = QPushButton("Refresh")
         self.file_select_read_button = QPushButton("Read File")
 
-        main_layout.addWidget(header,0,0,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
-        main_layout.addWidget(self.file_select_comboBox,1,0,2,2,alignment=Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(self.file_select_refresh_button,1,2,1,1,alignment=Qt.AlignmentFlag.AlignRight)
-        main_layout.addWidget(self.file_select_read_button,2,2,1,1,alignment=Qt.AlignmentFlag.AlignRight)
+        main_layout.addWidget(header, 0, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignLeft)
+        main_layout.addWidget(self.file_select_comboBox, 1, 0, 2, 2, alignment=Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.file_select_refresh_button, 1, 2, 1, 1, alignment=Qt.AlignmentFlag.AlignRight)
+        main_layout.addWidget(self.file_select_read_button, 2, 2, 1, 1, alignment=Qt.AlignmentFlag.AlignRight)
 
         data_details = self.__init_data_details_widget()
-        main_layout.addWidget(data_details,3,0,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
-        main_layout.setRowStretch(4,10)
+        main_layout.addWidget(data_details, 3, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignLeft)
+        main_layout.setRowStretch(4, 10)
 
         return main_widget
 
@@ -100,9 +107,10 @@ class UI_display_measurement_window(QWidget):
         self.data_details_textbox = QTextEdit()
         self.data_details_textbox.setReadOnly(True)
         self.data_details_textbox.setText("No Data read...")
+        self.data_details_textbox.setMinimumHeight(400)
 
-        main_layout.addWidget(header,0,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
-        main_layout.addWidget(self.data_details_textbox,1,0,1,1,alignment=Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(header, 0, 0, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+        main_layout.addWidget(self.data_details_textbox, 1, 0, 1, 1, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return main_widget
 
@@ -122,7 +130,7 @@ class UI_display_measurement_window(QWidget):
         self.frequency_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
         self.frequency_select_slider.setMaximumWidth(300)
         self.frequency_select_lineEdit = QLineEdit("...")
-        self.frequency_select_lineEdit.setFixedWidth(100)
+        self.frequency_select_lineEdit.setFixedWidth(150)
         upper_line_layout.addWidget(parameter_select_label)
         upper_line_layout.addWidget(self.parameter_select_comboBox)
         upper_line_layout.addSpacing(200)
@@ -219,23 +227,177 @@ class UI_display_measurement_window(QWidget):
         Generates formatted string from measurement_config info to be displayed in a Textbox or similiar.
         """
         info_string = ""
-        info_string += f"*Filetype: {measurement_config['type']}, "
+        info_string += f"*Filetype: {measurement_config['type']}\n"
         info_string += f"Timestamp: {measurement_config['timestamp']}\n"
-        info_string += f"*Mesh configuration: [min : num of steps : max], unit [mm]\n"
-        info_string += (f"X:[{measurement_config['mesh_x_min']}:{measurement_config['mesh_x_steps']}:{measurement_config['mesh_x_max']}]\t"
-                       f"Y:[{measurement_config['mesh_y_min']}:{measurement_config['mesh_y_steps']}:{measurement_config['mesh_y_max']}]\t"
-                       f"Z:[{measurement_config['mesh_z_min']}:{measurement_config['mesh_z_steps']}:{measurement_config['mesh_z_max']}]\n")
+        info_string += f"*Mesh configuration:\n[min : num of steps : max], unit [mm]\n"
+        info_string += (
+            f"X:[{measurement_config['mesh_x_min']} : {measurement_config['mesh_x_steps']} :  {measurement_config['mesh_x_max']}]\n"
+            f"Y:[{measurement_config['mesh_y_min']} : {measurement_config['mesh_y_steps']} : {measurement_config['mesh_y_max']}]\n"
+            f"Z:[{measurement_config['mesh_z_min']} : {measurement_config['mesh_z_steps']} : {measurement_config['mesh_z_max']}]\n")
         info_string += f"Zero position: {measurement_config['zero_position']}\n"
         info_string += f"Movementspeed: {measurement_config['movespeed']} mm/s\n"
         info_string += f"*VNA Configuration:\n"
         info_string += f"Measured parameters: {measurement_config['parameter']}\n"
-        info_string += f"Frequency: [{measurement_config['freq_start']}:{measurement_config['freq_stop']}] [Hz] with {measurement_config['sweep_num_points']} points\n"
+        info_string += f"Frequency: [{measurement_config['freq_start']} : {measurement_config['freq_stop']}] [Hz] with {measurement_config['sweep_num_points']} points\n"
         info_string += f"IF Bandwidth: {measurement_config['if_bw']} [Hz]\n"
         info_string += f"RF Output Power: {measurement_config['output_power']} [dBm]\n"
         info_string += f"Averaged over {measurement_config['average_number']} sweeps for each point"
         return info_string
 
+    def __update_frequency_lineEdit(self):
+        """
+        updates frequency lineEdit according to slider position. Must be connected to slider value changed signal.
+        """
+        slider_val = self.frequency_select_slider.value()
+        if self.frequency_vector[slider_val] > 1e9:
+            self.frequency_select_lineEdit.setText(f"{self.frequency_vector[slider_val] / 1e9} GHz")
+        elif self.frequency_vector[slider_val] > 1e6:
+            self.frequency_select_lineEdit.setText(f"{self.frequency_vector[slider_val] / 1e6} MHz")
+        elif self.frequency_vector[slider_val] > 1e3:
+            self.frequency_select_lineEdit.setText(f"{self.frequency_vector[slider_val] / 1e3} kHz")
+        else:
+            self.frequency_select_lineEdit.setText(f"{self.frequency_vector[slider_val]} Hz")
+        return
 
+    def __update_x_select_lineEdit(self):
+        """
+        updates x value lineEdit according to slider position. Must be connected to slider value changed signal.
+        """
+        slider_val = self.yz_plot_x_select_slider.value()
+        self.yz_plot_x_select_lineEdit.setText(f"{round(self.x_vector[slider_val],3)} mm")
+        return
 
+    def __update_y_select_lineEdit(self):
+        """
+        updates y value lineEdit according to slider position. Must be connected to slider value changed signal.
+        """
+        slider_val = self.xz_plot_y_select_slider.value()
+        self.xz_plot_y_select_lineEdit.setText(f"{round(self.y_vector[slider_val],3)} mm")
+        return
 
+    def __update_z_select_lineEdit(self):
+        """
+        updates z value lineEdit according to slider position. Must be connected to slider value changed signal.
+        """
+        slider_val = self.xy_plot_z_select_slider.value()
+        self.xy_plot_z_select_lineEdit.setText(f"{round(self.z_vector[slider_val],3)} mm")
+        return
 
+    def get_selected_measurement_file(self):
+        """
+        Returns the selected filename as string from dropdown menu in GUI-Data Selection
+        """
+        return self.file_select_comboBox.currentText()
+
+    def set_selectable_measurement_files(self, file_names: list[str]):
+        """
+        Receives selectable file names and updates the file-dropdown menu accordingly
+
+        :param file_names: File names with type ending but without Path to result folder
+        """
+        self.file_select_comboBox.clear()
+        self.file_select_comboBox.addItems(file_names)
+        return
+
+    def set_measurement_details(self, measurement_config: dict):
+        """
+        Receives measurement config dict and prints details to Data Info textbox on GUI
+        """
+        info_string = self.__gen_data_details_string(measurement_config=measurement_config)
+        self.data_details_textbox.clear()
+        self.data_details_textbox.setText(info_string)
+        return
+
+    def get_selected_parameter(self):
+        """
+        Returns currently selected S-Parameter from dropdown menu as string ("S11" or "S12" or "S22")
+        """
+        return self.parameter_select_comboBox.currentText()
+
+    def set_selectable_parameters(self, parameters: list[str]):
+        """
+        clears dropdown and updates available items according to given list
+        """
+        self.parameter_select_comboBox.clear()
+        self.parameter_select_comboBox.addItems(parameters)
+        return
+
+    def get_selected_frequency(self):
+        """
+        Returns float value of the frequency point currently selected in GUI by slider
+        """
+        freq_idx = self.frequency_select_slider.value()
+        return self.frequency_vector[freq_idx]
+
+    def set_selectable_frequency(self, f_min: float, f_max: float, num_points: int):
+        """
+        Configures frequency slider with frequency range.
+        """
+        self.frequency_select_slider.setMinimum(0)
+        self.frequency_select_slider.setMaximum(num_points-1)   # one offset cause 0 index included
+        self.frequency_select_slider.setSingleStep(1)
+        self.frequency_select_slider.setValue(0)
+        self.frequency_vector = np.linspace(start=f_min, stop=f_max, num=num_points)
+        self.__update_frequency_lineEdit()
+        return
+
+    def get_selected_x_coordinate(self):
+        """
+        Returns selected x coordinate for YZ-Plane graph according to slider position.
+        """
+        return float(self.x_vector[self.yz_plot_x_select_slider.value()])
+
+    def set_selectable_x_coordinates(self, x_min: float, x_max: float, num_points: int):
+        """
+        Configures X-coordinate slider of YZ-Plane graph.
+        """
+        self.yz_plot_x_select_slider.setMinimum(0)
+        self.yz_plot_x_select_slider.setMaximum(num_points-1)
+        self.yz_plot_x_select_slider.setSingleStep(1)
+        self.yz_plot_x_select_slider.setValue(0)
+        self.x_vector = np.linspace(start=x_min, stop=x_max, num=num_points)
+        self.__update_x_select_lineEdit()
+        return
+
+    def get_selected_y_coordinate(self):
+        """
+        Returns selected y coordinate for XZ-Plane graph according to slider position.
+        """
+        return float(self.y_vector[self.xz_plot_y_select_slider.value()])
+
+    def set_selectable_y_coordinates(self, y_min: float, y_max: float, num_points: int):
+        """
+        Configures Y-coordinate slider of XZ-Plane graph.
+        """
+        self.xz_plot_y_select_slider.setMinimum(0)
+        self.xz_plot_y_select_slider.setMaximum(num_points - 1)
+        self.xz_plot_y_select_slider.setSingleStep(1)
+        self.xz_plot_y_select_slider.setValue(0)
+        self.y_vector = np.linspace(start=y_min, stop=y_max, num=num_points)
+        self.__update_y_select_lineEdit()
+        return
+
+    def get_selected_z_coordinate(self):
+        """
+        Returns selected z coordinate for XY-Plane graph according to slider position.
+        """
+        return float(self.z_vector[self.xy_plot_z_select_slider.value()])
+
+    def set_selectable_z_coordinates(self, z_min: float, z_max: float, num_points: int):
+        """
+        Configures Z-coordinate slider of XY-Plane graph.
+        """
+        self.xy_plot_z_select_slider.setMinimum(0)
+        self.xy_plot_z_select_slider.setMaximum(num_points - 1)
+        self.xy_plot_z_select_slider.setSingleStep(1)
+        self.xy_plot_z_select_slider.setValue(0)
+        self.z_vector = np.linspace(start=z_min, stop=z_max, num=num_points)
+        self.__update_z_select_lineEdit()
+
+    def update_xz_plane_plot(self, data_format):
+        """
+        Receives dataset as 2D coordinates + 1D Amplitude Values and updates the xz-splitplane plot accordingly
+        """
+        # delete current axis/plot
+        self.xz_figure.gca().clear()
+        self.xz_plot = self.xz_figure.subplots().pcolormesh()
