@@ -74,6 +74,7 @@ class UI_display_measurement_window(QWidget):
         self.yz_plot_x_select_slider.valueChanged.connect(self.__update_x_select_lineEdit)
         self.xz_plot_y_select_slider.valueChanged.connect(self.__update_y_select_lineEdit)
         self.xy_plot_z_select_slider.valueChanged.connect(self.__update_z_select_lineEdit)
+        # toDo connect signals to update each graph when sliders are moved >> do that in process_controller!
 
         return
 
@@ -447,6 +448,7 @@ class UI_display_measurement_window(QWidget):
 
         return
 
+    # ToDo Implement update methods for YZ and XY Plot mesh based
     @staticmethod
     def gen_meshgrid_from_meas_points(x_vec: np.ndarray[float], y_vec: np.ndarray[float]):
         """
