@@ -12,6 +12,7 @@ from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasu
 from PythonChamberApp.process_controller.multithread_worker import Worker
 from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
 import numpy as np
+import json
 
 
 class ProcessControllerSignals(QObject):
@@ -49,6 +50,9 @@ class ProcessController:
     zero_pos_x: float = None
     zero_pos_y: float = None
     zero_pos_z: float = None
+
+    # Measurement Display Data
+    read_in_measurement_data_buffer: dict = None
 
     def __init__(self):
         self.gui_app = QApplication([])
@@ -116,6 +120,12 @@ class ProcessController:
             self.auto_measurement_start_handler)
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_stop_button.pressed.connect(
             self.auto_measurement_terminate_thread_handler)
+
+        # connect all Slots & Signals display measurement window
+        self.gui_mainWindow.ui_display_measurement_window.file_select_refresh_button.pressed.connect(
+            self.display_measurement_refresh_file_dropdown)
+        self.gui_mainWindow.ui_display_measurement_window.file_select_read_button.pressed.connect(
+            self.display_measurement_read_file)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -1120,3 +1130,105 @@ class ProcessController:
             return True
         else:
             return False
+
+    # **UI_display_measurement_window Callbacks** ################################################
+    def display_measurement_refresh_file_dropdown(self):
+        """
+        Searches for available files in results-directory and updates the dropdown menu of display_measurement
+        tab accordingly. This function does not filter for any file-types or similiar.
+        """
+        file_list = [] # delete?
+        # Get path to PythonChamberApp directory or prompt warning
+        path_PythonChamberApp = os.getcwd()   # should lead to lower PythonChamberApp directory
+        path_results_directory = path_PythonChamberApp + "\\results"
+        path_sample_measurement = path_results_directory + "\\sample_measurement.json"
+        if os.path.isfile(path_sample_measurement) is False:
+            self.gui_mainWindow.update_status_bar("Path-Error occurred while searching for available measurement-files")
+            self.gui_mainWindow.prompt_warning("sample_measurement.json file not found in results folder!\nIf the file "
+                                               "was deleted please re-add it in the results folder.\nOtherwise there "
+                                               "is some problem with relative and absolute pathing.", "Path"
+                                                                                                      "issue")
+            return
+        file_list = os.listdir(path_results_directory)
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_measurement_files(file_names=file_list)
+        self.gui_mainWindow.update_status_bar("Updated available measurement-files to be read")
+        return
+
+    def display_measurement_read_file(self):
+        """
+        Reads file that is selected in mainwindow/display_measurement_window/dropdown to process controller buffer.
+        Then initiates updates of GUI objects of display_measurement_window according to buffer.
+        """
+        file_name = self.gui_mainWindow.ui_display_measurement_window.get_selected_measurement_file()
+        # check for valid file type
+        if '.json' not in file_name:
+            self.gui_mainWindow.prompt_info("Other file types than json are currently not supported for "
+                                            "import and display.", "Illegal file type")
+            return
+
+        # construct path and read file to data-buffer
+        path_PythonChamberApp = os.getcwd()  # should lead to lower PythonChamberApp directory
+        path_results_directory = path_PythonChamberApp + "\\results"
+        file_path = path_results_directory + "\\" + file_name
+        with open(file_path, 'r') as json_file:
+            self.read_in_measurement_data_buffer = json.load(json_file)
+
+        # update measurement-data-details in GUI
+        self.gui_mainWindow.ui_display_measurement_window.set_measurement_details(
+            self.read_in_measurement_data_buffer['measurement_config'])
+
+        # update parameter/display selections and set default values
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_parameters(
+            self.read_in_measurement_data_buffer['measurement_config']['parameter'])
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_frequency(
+            f_min=self.read_in_measurement_data_buffer['measurement_config']['freq_start'],
+            f_max=self.read_in_measurement_data_buffer['measurement_config']['freq_stop'],
+            num_points=self.read_in_measurement_data_buffer['measurement_config']['sweep_num_points'])
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_x_coordinates(
+            x_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_min'],
+            x_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_max'],
+            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_steps'])
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_y_coordinates(
+            y_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_min'],
+            y_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_max'],
+            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_steps'])
+        self.gui_mainWindow.ui_display_measurement_window.set_selectable_z_coordinates(
+            z_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_min'],
+            z_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_max'],
+            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps'])
+
+        # update graphs according to gui selection
+
+        return
+
+    def display_measurement_get_data_in_plane(self, parameter: str, freq: float, plane_normal: str, normal_coordinate: float):
+        """
+        Receives Filter parameters and returns a list of all points that fit the given constraints.
+        Appropriate data to display a plane/split/cut-view of field strength or phase.
+
+        :param parameter:           S-Parameter of the data of interest ("S11" or "S12" or "S22")
+        :param freq:                Frequency of the data of interest
+        :param plane_normal:        Normal vector on cut plane as string. ("x" or "y" or "z")
+        :param normal_coordinate:   Coordinate in normal-direction of the plane view
+        :return:                    list[[x0,y0,z0,frequency0,amplitude0,phase0],...] of all points on described
+                                    plane at frequency of interest
+        """
+        # Remember structure {... S11: values[] ...} // in values-list each entry: [x, y, z, freq, amplitude, phase]
+        # >> important to understand indexing
+        plane_data = []
+        normal_vec_index = None
+        if plane_normal.casefold() == 'x'.casefold():
+            normal_vec_index = 0
+        elif plane_normal.casefold() == 'y'.casefold():
+            normal_vec_index = 1
+        elif plane_normal.casefold() == 'z'.casefold():
+            normal_vec_index = 2
+        else:
+            AssertionError("Illegal plane_normal string handed to display:measurement_get_data_in_plane-method!")
+            return
+
+        for point in self.read_in_measurement_data_buffer[parameter]:
+            if point[normal_vec_index] == normal_coordinate and point[3] == freq:
+                plane_data.append(point)
+
+        return plane_data
