@@ -1,3 +1,4 @@
+import matplotlib.axes
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout,
                              QSlider, QVBoxLayout, QHBoxLayout, QFrame)
 from PyQt6.QtCore import Qt
@@ -41,9 +42,15 @@ class UI_display_measurement_window(QWidget):
     xz_figure: Figure = None
     yz_figure: Figure = None
     xy_figure: Figure = None
-    xz_plot: any = None
-    yz_plot: any = None
-    xy_plot: any = None
+    xz_plot = None
+    xz_colorbar = None
+    xz_axes: matplotlib.axes.Axes = None
+    yz_plot = None
+    yz_colorbar = None
+    yz_axes: matplotlib.axes.Axes = None
+    xy_plot = None
+    xy_colorbar = None
+    xy_axes: matplotlib.axes.Axes = None
 
     def __init__(self):
         super().__init__()
@@ -196,27 +203,27 @@ class UI_display_measurement_window(QWidget):
         z = z[:-1, :-1]
         z_min, z_max = -np.abs(z).max(), np.abs(z).max()
 
-        xz_ax = xz_canvas.figure.subplots()
-        xz_ax.set_title("XZ-Plane")
-        yz_ax = yz_canvas.figure.subplots()
-        yz_ax.set_title("YZ-Plane")
-        xy_ax = xy_canvas.figure.subplots()
-        xy_ax.set_title("XY-Plane")
-
-        self.xz_plot = xz_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-        self.yz_plot = yz_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-        self.xy_plot = xy_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-
         self.xz_figure = xz_canvas.figure
         self.yz_figure = yz_canvas.figure
         self.xy_figure = xy_canvas.figure
 
-        xz_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        self.xz_figure.colorbar(self.xz_plot, ax=xz_ax)
-        yz_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        self.yz_figure.colorbar(self.yz_plot, ax=yz_ax)
-        xy_ax.axis([x.min(), x.max(), y.min(), y.max()])
-        self.xy_figure.colorbar(self.xy_plot, ax=xy_ax)
+        self.xz_axes = self.xz_figure.subplots()
+        self.xz_axes.set_title("XZ-Plane")
+        self.yz_axes = self.yz_figure.subplots()
+        self.yz_axes.set_title("YZ-Plane")
+        self.xy_axes = self.xy_figure.subplots()
+        self.xy_axes.set_title("XY-Plane")
+
+        self.xz_plot = self.xz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.yz_plot = self.yz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.xy_plot = self.xy_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+
+        self.xz_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
+        self.yz_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
+        self.xy_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
 
         main_layout.addLayout(graphs_layout, stretch=10)
 
@@ -344,6 +351,7 @@ class UI_display_measurement_window(QWidget):
     def get_selected_x_coordinate(self):
         """
         Returns selected x coordinate for YZ-Plane graph according to slider position.
+        WARNING: this coordinate is in chamber coordinates like displayed in GUI, not relative to AUT center!
         """
         return float(self.x_vector[self.yz_plot_x_select_slider.value()])
 
@@ -362,6 +370,7 @@ class UI_display_measurement_window(QWidget):
     def get_selected_y_coordinate(self):
         """
         Returns selected y coordinate for XZ-Plane graph according to slider position.
+        WARNING: this coordinate is in chamber coordinates like displayed in GUI, not relative to AUT center!
         """
         return float(self.y_vector[self.xz_plot_y_select_slider.value()])
 
@@ -380,6 +389,7 @@ class UI_display_measurement_window(QWidget):
     def get_selected_z_coordinate(self):
         """
         Returns selected z coordinate for XY-Plane graph according to slider position.
+        WARNING: this coordinate is in chamber coordinates like displayed in GUI, not relative to AUT center!
         """
         return float(self.z_vector[self.xy_plot_z_select_slider.value()])
 
@@ -394,10 +404,85 @@ class UI_display_measurement_window(QWidget):
         self.z_vector = np.linspace(start=z_min, stop=z_max, num=num_points)
         self.__update_z_select_lineEdit()
 
-    def update_xz_plane_plot(self, data_format):
+    def update_xz_plane_plot(self, point_list: list[float]):
         """
         Receives dataset as 2D coordinates + 1D Amplitude Values and updates the xz-splitplane plot accordingly
+
+        :param point_list:      [ [x0, y0, z0, freq0, amplitude0, phase0], [....], ... ], with all Y-coordinates
+        the same and all frequencies the same >> display plane-view at one frequency point
         """
         # delete current axis/plot
-        self.xz_figure.gca().clear()
-        self.xz_plot = self.xz_figure.subplots().pcolormesh()
+        self.xz_axes.remove()
+        self.xz_colorbar.remove()
+
+        # find min and max amplitude in given dataset to set up axis/colorbar
+        numpy_list = np.array(point_list)
+        max_values = numpy_list.max(axis=0)  #[x,y,z,freq,AMPLITUDE,phase]
+        min_values = numpy_list.min(axis=0)
+        max_amp_dB = max_values[4]
+        min_amp_dB = min_values[4]
+
+        # approach with mesh-data of numpy >> would need repositioning of mesh points since quadrilateral-corners
+        # must be equally placed AROUND the measured spot which is not straight forward since we have coordinates
+        # which describe the precise spot of measurement
+        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
+
+        # WATCHOUT: this step assumes that the local buffered vectors are always the same as the ones handed over via the list!
+        amp_array = np.zeros([self.z_vector.__len__(), self.x_vector.__len__()])
+        point_counter = 0
+        x_idx = 0
+        y_idx = 0
+        for y in self.z_vector:
+            for x in self.x_vector:
+                amp_array[y_idx][x_idx] = numpy_list[point_counter][4]
+                x_idx += 1
+            x_idx = 0
+            y_idx += 1
+
+        self.xz_axes = self.xz_figure.subplots()
+        self.xz_axes.set_title("XZ_Plane")
+        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, amp_array, cmap='Spectral_r', vmin=min_amp_dB,
+                                                            vmax=max_amp_dB)
+        self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
+
+        return
+
+    @staticmethod
+    def gen_meshgrid_from_meas_points(x_vec: np.ndarray[float], y_vec: np.ndarray[float]):
+        """
+        Calucalates the stepsize within each vector. subtracts half a stepsize from each entry and adds a new point to
+        the end of the vector. Thus, the resulting mesh has the described points by x_vec and y_vec in the center of
+        each element.
+        The resulting two arrays describe a mesh that has **as many elements as points** that were described in the
+        beginning. Therefor, pcolormesh(X,Y,C,..) can be used handing a C-array that holds values for each element
+        at the right index-pair [x, y].
+
+        e.g. point describes by x_vec and y_vec:
+
+          x--x--x
+          |  |  |
+          x--x--x
+
+        becomes
+
+         x--x--x--x
+         |  |  |  |
+         x--x--x--x
+         |  |  |  |
+         x--x--x--x
+
+        with points from beginning  in center of each element.
+        """
+        x_stepsize = abs(x_vec[1] - x_vec[0])
+        y_stepsize = abs(y_vec[1] - y_vec[0])
+
+        new_x_vec = np.append(x_vec, x_vec[-1] + x_stepsize)
+        new_y_vec = np.append(y_vec, y_vec[-1] + y_stepsize)
+
+        new_x_vec = new_x_vec.__sub__(x_stepsize/2)
+        new_y_vec = new_y_vec.__sub__(y_stepsize/2)
+
+        xm_vec, ym_vec = np.meshgrid(new_x_vec, new_y_vec, indexing='xy')
+
+        return xm_vec, ym_vec
+

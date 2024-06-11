@@ -1198,6 +1198,15 @@ class ProcessController:
             num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps'])
 
         # update graphs according to gui selection
+        cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
+        cur_freq = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency()
+        cur_x_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_x_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][0]
+        cur_y_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][1]
+        cur_z_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][2]
+
+        xz_plane_data = self.display_measurement_get_data_in_plane(parameter=cur_parameter, freq=cur_freq, plane_normal='y', normal_coordinate=cur_y_coor)
+
+        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data)
 
         return
 
