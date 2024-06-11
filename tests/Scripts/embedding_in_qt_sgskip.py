@@ -26,7 +26,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         super().__init__()
         self._main = QtWidgets.QWidget()
         self.setCentralWidget(self._main)
-        layout = QtWidgets.QVBoxLayout(self._main)
+        layout = QtWidgets.QHBoxLayout(self._main)
 
         static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
         # Ideally one would use self.addToolBar here, but it is slightly

@@ -3,6 +3,12 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, 
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
+# Modules to embed matplotlib canvas // Ignore unrecognized references!
+from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.backends.backend_qtagg import \
+    NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.qt_compat import QtWidgets
+from matplotlib.figure import Figure
 
 class UI_display_measurement_window(QWidget):
 
@@ -21,9 +27,16 @@ class UI_display_measurement_window(QWidget):
     parameter_select_comboBox: QComboBox = None
     frequency_select_slider: QSlider = None
     frequency_select_lineEdit: QLineEdit = None
-    xz_plot: pg.ImageItem = None
-    yz_plot: pg.ImageItem = None
-    xy_plot: pg.ImageItem = None
+    xz_plot_y_select_slider: QSlider = None
+    xz_plot_y_select_lineEdit: QLineEdit = None
+    yz_plot_x_select_slider: QSlider = None
+    yz_plot_x_select_lineEdit: QLineEdit = None
+    xy_plot_z_select_slider: QSlider = None
+    xy_plot_z_select_lineEdit: QLineEdit = None
+
+    xz_plot: any = None
+    yz_plot: any = None
+    xy_plot: any = None
 
 
     def __init__(self):
@@ -97,9 +110,7 @@ class UI_display_measurement_window(QWidget):
         main_layout = QVBoxLayout()
         main_widget.setLayout(main_layout)
 
-        upper_line_widget = QWidget()
         upper_line_layout = QHBoxLayout()
-        upper_line_widget.setLayout(upper_line_layout)
         parameter_select_label = QLabel("Show Parameter: ")
         self.parameter_select_comboBox = QComboBox()
         self.parameter_select_comboBox.addItem("Select...")
@@ -107,40 +118,90 @@ class UI_display_measurement_window(QWidget):
         frequency_label = QLabel("Frequency")
         self.frequency_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
         self.frequency_select_lineEdit = QLineEdit("...")
-        self.frequency_select_slider.setFixedWidth(200)
-        upper_line_layout.addWidget(parameter_select_label,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
-        upper_line_layout.addWidget(self.parameter_select_comboBox,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
-        upper_line_layout.addSpacing(100)
-        upper_line_layout.addWidget(frequency_label, alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
-        upper_line_layout.addWidget(self.frequency_select_slider, alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
-        upper_line_layout.addWidget(self.frequency_select_lineEdit,alignment=Qt.AlignmentFlag.AlignLeft, stretch=0)
-        main_layout.addWidget(upper_line_widget, stretch=0, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.frequency_select_lineEdit.setFixedWidth(100)
+        upper_line_layout.addWidget(parameter_select_label)
+        upper_line_layout.addWidget(self.parameter_select_comboBox)
+        upper_line_layout.addSpacing(200)
+        upper_line_layout.addWidget(frequency_label)
+        upper_line_layout.addWidget(self.frequency_select_slider)
+        upper_line_layout.addWidget(self.frequency_select_lineEdit)
+        main_layout.addLayout(upper_line_layout)
+        main_layout.addSpacing(10)
 
-        graphs_layout_widget = pg.GraphicsLayoutWidget()
-        graphs_layout_widget.setBackground(background=(255, 255, 255))
-        label_pen = pg.mkPen(color='k', width=1)
+        middle_line_layout = QHBoxLayout()
+        xz_split_label = QLabel("XZ-Plane, Y:")
+        self.xz_plot_y_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
+        self.xz_plot_y_select_lineEdit = QLineEdit("...")
+        self.xz_plot_y_select_lineEdit.setMaximumWidth(70)
+        yz_split_label = QLabel("YZ-Plane, X:")
+        self.yz_plot_x_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
+        self.yz_plot_x_select_lineEdit = QLineEdit("...")
+        self.yz_plot_x_select_lineEdit.setMaximumWidth(70)
+        xy_split_label = QLabel("XY-Plane, Z:")
+        self.xy_plot_z_select_slider = QSlider(orientation=Qt.Orientation.Horizontal)
+        self.xy_plot_z_select_lineEdit = QLineEdit("...")
+        self.xy_plot_z_select_lineEdit.setMaximumWidth(70)
+        middle_line_layout.addWidget(xz_split_label)
+        middle_line_layout.addWidget(self.xz_plot_y_select_slider)
+        middle_line_layout.addWidget(self.xz_plot_y_select_lineEdit)
+        middle_line_layout.addSpacing(50)
+        middle_line_layout.addWidget(yz_split_label)
+        middle_line_layout.addWidget(self.yz_plot_x_select_slider)
+        middle_line_layout.addWidget(self.yz_plot_x_select_lineEdit)
+        middle_line_layout.addSpacing(50)
+        middle_line_layout.addWidget(xy_split_label)
+        middle_line_layout.addWidget(self.xy_plot_z_select_slider)
+        middle_line_layout.addWidget(self.xy_plot_z_select_lineEdit)
+        main_layout.addLayout(middle_line_layout)
 
-        xz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,0,1,1, title="XZ-Plane")
-        yz_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,1,1,1, title="YZ-Plane")
-        xy_graph: pg.PlotItem = graphs_layout_widget.addPlot(0,2,1,1, title="XY-Plane")
+        # Setup Graphs with default display
+        graphs_layout = QHBoxLayout()
+        xz_layout = QVBoxLayout()
+        yz_layout = QVBoxLayout()
+        xy_layout = QVBoxLayout()
+        graphs_layout.addLayout(xz_layout)
+        graphs_layout.addLayout(yz_layout)
+        graphs_layout.addLayout(xy_layout)
 
-        self.xz_plot = pg.ImageItem()
-        self.yz_plot = pg.ImageItem()
-        self.xy_plot = pg.ImageItem()
+        xz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
+        yz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
+        xy_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
 
-        sample_data1 = np.random.rand(10, 10, 3)
-        sample_data2 = np.random.rand(10, 10, 3)
-        sample_data3 = np.random.rand(10, 10, 3)
+        # Watchout: Do not use alignmentflags, since they clash with QT!
+        xz_layout.addWidget(xz_canvas)
+        xz_layout.addWidget(NavigationToolbar(xz_canvas))
+        yz_layout.addWidget(yz_canvas)
+        yz_layout.addWidget(NavigationToolbar(yz_canvas))
+        xy_layout.addWidget(xy_canvas)
+        xy_layout.addWidget(NavigationToolbar(xy_canvas))
 
-        self.xz_plot.setImage(sample_data1)
-        self.yz_plot.setImage(sample_data2)
-        self.xy_plot.setImage(sample_data3)
+        # sample data
+        y, x = np.meshgrid(np.linspace(-3, 3, 100), np.linspace(-3, 3, 100))
+        z = (1 - x / 2. + x ** 5 + y ** 3) * np.exp(-x ** 2 - y ** 2)
+        # x and y are bounds, so z should be the value *inside* those bounds.
+        # Therefore, remove the last value from the z array.
+        z = z[:-1, :-1]
+        z_min, z_max = -np.abs(z).max(), np.abs(z).max()
 
-        xz_graph.addItem(self.xz_plot)
-        yz_graph.addItem(self.yz_plot)
-        xy_graph.addItem(self.xy_plot)
+        xz_ax = xz_canvas.figure.subplots()
+        xz_ax.set_title("XZ-Plane")
+        yz_ax = yz_canvas.figure.subplots()
+        yz_ax.set_title("YZ-Plane")
+        xy_ax = xy_canvas.figure.subplots()
+        xy_ax.set_title("XY-Plane")
 
-        main_layout.addWidget(graphs_layout_widget, stretch=10)
+        self.xz_plot = xz_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.yz_plot = yz_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.xy_plot = xy_ax.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+
+        xz_ax.axis([x.min(), x.max(), y.min(), y.max()])
+        xz_canvas.figure.colorbar(self.xz_plot, ax=xz_ax)
+        yz_ax.axis([x.min(), x.max(), y.min(), y.max()])
+        yz_canvas.figure.colorbar(self.yz_plot, ax=yz_ax)
+        xy_ax.axis([x.min(), x.max(), y.min(), y.max()])
+        xy_canvas.figure.colorbar(self.xy_plot, ax=xy_ax)
+
+        main_layout.addLayout(graphs_layout, stretch=10)
 
         return main_widget
 
