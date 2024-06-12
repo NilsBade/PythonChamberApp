@@ -13,6 +13,7 @@ from PythonChamberApp.process_controller.multithread_worker import Worker
 from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
 import numpy as np
 import json
+from datetime import datetime
 
 
 class ProcessControllerSignals(QObject):
@@ -126,7 +127,26 @@ class ProcessController:
             self.display_measurement_refresh_file_dropdown)
         self.gui_mainWindow.ui_display_measurement_window.file_select_read_button.pressed.connect(
             self.display_measurement_read_file)
-        # todo connect signals so that slider interaction or parameter switch updates the graphs >> if computation is too large think of seperate threads or add "refresh" buttons to each graph layout
+        # ToDo Change the update callback in a way that when "read file" is pressed the first time, the function does not try to read from an empty QCombobox (maybe check for empty list and if dropdown-list is empty just return)
+        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+        #     self.display_measurement_update_xz_plot_callback)
+        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+        #     self.display_measurement_update_yz_plot_callback)
+        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+        #     self.display_measurement_update_xy_plot_callback)
+        # >> slider
+        self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
+            self.display_measurement_update_xz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
+            self.display_measurement_update_yz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
+            self.display_measurement_update_xy_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.xz_plot_y_select_slider.valueChanged.connect(
+            self.display_measurement_update_xz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.yz_plot_x_select_slider.valueChanged.connect(
+            self.display_measurement_update_yz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.xy_plot_z_select_slider.valueChanged.connect(
+            self.display_measurement_update_xy_plot_callback)
 
         # enable Multithread via threadpool
         self.threadpool = QThreadPool()
@@ -1160,6 +1180,8 @@ class ProcessController:
         Reads file that is selected in mainwindow/display_measurement_window/dropdown to process controller buffer.
         Then initiates updates of GUI objects of display_measurement_window according to buffer.
         """
+        print(f"Start Read " + datetime.now().strftime("%H:%M:%S") + '\n')
+
         file_name = self.gui_mainWindow.ui_display_measurement_window.get_selected_measurement_file()
         # check for valid file type
         if '.json' not in file_name:
@@ -1174,6 +1196,53 @@ class ProcessController:
         with open(file_path, 'r') as json_file:
             self.read_in_measurement_data_buffer = json.load(json_file)
 
+        # add additional vector data to dict for coherent dataflow from processcontroller to sub-methods/windows
+        self.read_in_measurement_data_buffer['f_vec'] = np.linspace(
+            start=self.read_in_measurement_data_buffer['measurement_config']['freq_start'],
+            stop=self.read_in_measurement_data_buffer['measurement_config']['freq_stop'],
+            num=self.read_in_measurement_data_buffer['measurement_config']['sweep_num_points'])
+        self.read_in_measurement_data_buffer['x_vec'] = np.linspace(
+            start=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_min'],
+            stop=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_max'],
+            num=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_steps'])
+        self.read_in_measurement_data_buffer['y_vec'] = np.linspace(
+            start=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_min'],
+            stop=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_max'],
+            num=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_steps'])
+        self.read_in_measurement_data_buffer['z_vec'] = np.linspace(
+            start=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_min'],
+            stop=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_max'],
+            num=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps'])
+
+        # generate numpy array in data-buffer for faster computation
+        #   >> array indexing: [ Value: (1 - amplitude, 2 - phase), Parameter: (1,2,3) , frequency: (num of freq points), x_coor: (num of x steps), y_coor: (num of y steps), z_coor: (num of z steps) ]
+        #   e.g. Select S11, @20GHz, X:10, Y:20, Z:30 leads to
+        #       >> data_array[2, p, f, x, y, z] with p = find_idx('S11' in measurement_config['parameter']), f = find_idx(20e9 in freq_vector) , ...
+        data_array = np.zeros([2, self.read_in_measurement_data_buffer['measurement_config']['parameter'].__len__(),
+                                self.read_in_measurement_data_buffer['measurement_config']['sweep_num_points'],
+                                self.read_in_measurement_data_buffer['measurement_config']['mesh_x_steps'],
+                                self.read_in_measurement_data_buffer['measurement_config']['mesh_y_steps'],
+                                self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps']])
+        # fill amplitude values
+        parameter_idx = 0
+        amplitude_idx = 4
+        phase_idx = 5
+        for parameter in self.read_in_measurement_data_buffer['measurement_config']['parameter']:
+            value_list = self.read_in_measurement_data_buffer[parameter]
+            list_idx = 0
+            # value_list setup like [ [x0, y0, z0, f0, amp0, phase0], ...] runs through 1. frequency, 2. x-coor, 3. y-coor, 4. z-coor
+            for z_idx in range(self.read_in_measurement_data_buffer['z_vec'].__len__()):
+                for y_idx in range(self.read_in_measurement_data_buffer['y_vec'].__len__()):
+                    for x_idx in range(self.read_in_measurement_data_buffer['x_vec'].__len__()):
+                        for f_idx in range(self.read_in_measurement_data_buffer['f_vec'].__len__()):
+                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][amplitude_idx]
+                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][phase_idx]
+                            list_idx += 1
+            value_list = None
+            parameter_idx += 1
+
+        self.read_in_measurement_data_buffer['data_array'] = data_array
+
         # update measurement-data-details in GUI
         self.gui_mainWindow.ui_display_measurement_window.set_measurement_details(
             self.read_in_measurement_data_buffer['measurement_config'])
@@ -1182,21 +1251,16 @@ class ProcessController:
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_parameters(
             self.read_in_measurement_data_buffer['measurement_config']['parameter'])
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_frequency(
-            f_min=self.read_in_measurement_data_buffer['measurement_config']['freq_start'],
-            f_max=self.read_in_measurement_data_buffer['measurement_config']['freq_stop'],
-            num_points=self.read_in_measurement_data_buffer['measurement_config']['sweep_num_points'])
+            f_vec=self.read_in_measurement_data_buffer['f_vec'])
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_x_coordinates(
-            x_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_min'],
-            x_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_max'],
-            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_x_steps'])
+            x_vec=self.read_in_measurement_data_buffer['x_vec'])
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_y_coordinates(
-            y_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_min'],
-            y_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_max'],
-            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_y_steps'])
+            y_vec=self.read_in_measurement_data_buffer['y_vec'])
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_z_coordinates(
-            z_min=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_min'],
-            z_max=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_max'],
-            num_points=self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps'])
+            z_vec=self.read_in_measurement_data_buffer['z_vec'])
+
+        print(f"Finished Read " + datetime.now().strftime("%H:%M:%S") + '\n')
+        print(f"Get GUI inputs " + datetime.now().strftime("%H:%M:%S") + '\n')
 
         # update graphs according to gui selection
         cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
@@ -1205,9 +1269,16 @@ class ProcessController:
         cur_y_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][1]
         cur_z_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][2]
 
-        xz_plane_data = self.display_measurement_get_data_in_plane(parameter=cur_parameter, freq=cur_freq, plane_normal='y', normal_coordinate=cur_y_coor)
+        print(f"Start slice-data calculation " + datetime.now().strftime("%H:%M:%S") + '\n')
+        xz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, 0, :]
+        yz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, 0, :, :]
+        xy_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, :, 0]
 
-        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data)
+        print(f"Start Plot update " + datetime.now().strftime("%H:%M:%S") + '\n')
+        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data_from_array)
+        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(yz_plane_data_from_array)
+        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(xy_plane_data_from_array)
+        print(f"Plots updated " + datetime.now().strftime("%H:%M:%S") + '\n')
         # todo update all other plots after reading the measurement file as well
 
         return
@@ -1243,3 +1314,59 @@ class ProcessController:
                 plane_data.append(point)
 
         return plane_data
+
+    def display_measurement_update_xz_plot_callback(self):
+        """
+        Reads all information from gui and sends new plane-data to xz plot in Gui.
+        Must be connected to adequate signals.
+        """
+        if self.read_in_measurement_data_buffer is None:
+            AssertionError("Update requested before data loaded!")
+            return
+        amplitude_select = 0
+        cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
+        parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
+        cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
+        cur_y_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate_by_idx()
+
+        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, :, cur_y_coor_idx, :]
+        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(plane_data)
+        return
+
+    def display_measurement_update_yz_plot_callback(self):
+        """
+        Reads all information from gui and sends new plane-data to xy plot in Gui.
+        Must be connected to adequate signals.
+        """
+        if self.read_in_measurement_data_buffer is None:
+            AssertionError("Update requested before data loaded!")
+            return
+        amplitude_select = 0
+        cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
+        parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
+        cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
+        cur_x_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_x_coordinate_by_idx()
+
+        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, cur_x_coor_idx, :, :]
+        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(plane_data)
+        return
+
+    def display_measurement_update_xy_plot_callback(self):
+        """
+        Reads all information from gui and sends new plane-data to xy plot in Gui.
+        Must be connected to adequate signals.
+        """
+        if self.read_in_measurement_data_buffer is None:
+            AssertionError("Update requested before data loaded!")
+            return
+        amplitude_select = 0
+        cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
+        parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
+        cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
+        cur_z_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate_by_idx()
+
+        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, :, :, cur_z_coor_idx]
+        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(plane_data)
+        return
+
+

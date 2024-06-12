@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, 
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
+from datetime import datetime
 # Modules to embed matplotlib canvas // Ignore unrecognized references!
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.backends.backend_qtagg import \
@@ -14,11 +15,10 @@ from matplotlib.figure import Figure
 
 class UI_display_measurement_window(QWidget):
     # Properties
-    meas_data_buffer: dict = None
-    frequency_vector: np.ndarray[float] = None
-    x_vector: np.ndarray[float] = None
-    y_vector: np.ndarray[float] = None
-    z_vector: np.ndarray[float] = None
+    frequency_vector: np.ndarray = None
+    x_vector: np.ndarray = None
+    y_vector: np.ndarray = None
+    z_vector: np.ndarray = None
 
     # Data selection widget
     file_select_comboBox: QComboBox = None
@@ -39,6 +39,9 @@ class UI_display_measurement_window(QWidget):
     xy_plot_z_select_slider: QSlider = None
     xy_plot_z_select_lineEdit: QLineEdit = None
 
+    xz_canvas: FigureCanvas = None
+    yz_canvas: FigureCanvas = None
+    xy_canvas: FigureCanvas = None
     xz_figure: Figure = None
     yz_figure: Figure = None
     xy_figure: Figure = None
@@ -184,17 +187,17 @@ class UI_display_measurement_window(QWidget):
         graphs_layout.addLayout(yz_layout)
         graphs_layout.addLayout(xy_layout)
 
-        xz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
-        yz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
-        xy_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
+        self.xz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
+        self.yz_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
+        self.xy_canvas: FigureCanvas = FigureCanvas(Figure(figsize=(3, 5)))
 
         # Watchout: Do not use alignmentflags, since they clash with QT!
-        xz_layout.addWidget(xz_canvas)
-        xz_layout.addWidget(NavigationToolbar(xz_canvas))
-        yz_layout.addWidget(yz_canvas)
-        yz_layout.addWidget(NavigationToolbar(yz_canvas))
-        xy_layout.addWidget(xy_canvas)
-        xy_layout.addWidget(NavigationToolbar(xy_canvas))
+        xz_layout.addWidget(self.xz_canvas)
+        xz_layout.addWidget(NavigationToolbar(self.xz_canvas))
+        yz_layout.addWidget(self.yz_canvas)
+        yz_layout.addWidget(NavigationToolbar(self.yz_canvas))
+        xy_layout.addWidget(self.xy_canvas)
+        xy_layout.addWidget(NavigationToolbar(self.xy_canvas))
 
         # sample data
         y, x = np.meshgrid(np.linspace(-3, 3, 100), np.linspace(-3, 3, 100))
@@ -204,9 +207,9 @@ class UI_display_measurement_window(QWidget):
         z = z[:-1, :-1]
         z_min, z_max = -np.abs(z).max(), np.abs(z).max()
 
-        self.xz_figure = xz_canvas.figure
-        self.yz_figure = yz_canvas.figure
-        self.xy_figure = xy_canvas.figure
+        self.xz_figure = self.xz_canvas.figure
+        self.yz_figure = self.yz_canvas.figure
+        self.xy_figure = self.xy_canvas.figure
 
         self.xz_axes = self.xz_figure.subplots()
         self.xz_axes.set_title("XZ-Plane")
@@ -337,15 +340,21 @@ class UI_display_measurement_window(QWidget):
         freq_idx = self.frequency_select_slider.value()
         return self.frequency_vector[freq_idx]
 
-    def set_selectable_frequency(self, f_min: float, f_max: float, num_points: int):
+    def get_selected_frequency_by_idx(self):
+        """
+        Returns selected frequency's index in freq-vector according to slider position
+        """
+        return self.frequency_select_slider.value()
+
+    def set_selectable_frequency(self, f_vec: np.ndarray):
         """
         Configures frequency slider with frequency range.
         """
         self.frequency_select_slider.setMinimum(0)
-        self.frequency_select_slider.setMaximum(num_points-1)   # one offset cause 0 index included
+        self.frequency_select_slider.setMaximum(f_vec.__len__()-1)   # one offset cause 0 index included
         self.frequency_select_slider.setSingleStep(1)
         self.frequency_select_slider.setValue(0)
-        self.frequency_vector = np.linspace(start=f_min, stop=f_max, num=num_points)
+        self.frequency_vector = f_vec
         self.__update_frequency_lineEdit()
         return
 
@@ -356,15 +365,21 @@ class UI_display_measurement_window(QWidget):
         """
         return float(self.x_vector[self.yz_plot_x_select_slider.value()])
 
-    def set_selectable_x_coordinates(self, x_min: float, x_max: float, num_points: int):
+    def get_selected_x_coordinate_by_idx(self):
+        """
+        Returns selected x coordinate's index in x-vector according to slider position
+        """
+        return self.yz_plot_x_select_slider.value()
+
+    def set_selectable_x_coordinates(self, x_vec: np.ndarray):
         """
         Configures X-coordinate slider of YZ-Plane graph.
         """
         self.yz_plot_x_select_slider.setMinimum(0)
-        self.yz_plot_x_select_slider.setMaximum(num_points-1)
+        self.yz_plot_x_select_slider.setMaximum(x_vec.__len__()-1)
         self.yz_plot_x_select_slider.setSingleStep(1)
         self.yz_plot_x_select_slider.setValue(0)
-        self.x_vector = np.linspace(start=x_min, stop=x_max, num=num_points)
+        self.x_vector = x_vec
         self.__update_x_select_lineEdit()
         return
 
@@ -375,15 +390,21 @@ class UI_display_measurement_window(QWidget):
         """
         return float(self.y_vector[self.xz_plot_y_select_slider.value()])
 
-    def set_selectable_y_coordinates(self, y_min: float, y_max: float, num_points: int):
+    def get_selected_y_coordinate_by_idx(self):
+        """
+        Returns selected y coordinate's index in y-vector according to slider position
+        """
+        return self.xz_plot_y_select_slider.value()
+
+    def set_selectable_y_coordinates(self, y_vec: np.ndarray):
         """
         Configures Y-coordinate slider of XZ-Plane graph.
         """
         self.xz_plot_y_select_slider.setMinimum(0)
-        self.xz_plot_y_select_slider.setMaximum(num_points - 1)
+        self.xz_plot_y_select_slider.setMaximum(y_vec.__len__()-1)
         self.xz_plot_y_select_slider.setSingleStep(1)
         self.xz_plot_y_select_slider.setValue(0)
-        self.y_vector = np.linspace(start=y_min, stop=y_max, num=num_points)
+        self.y_vector = y_vec
         self.__update_y_select_lineEdit()
         return
 
@@ -394,63 +415,108 @@ class UI_display_measurement_window(QWidget):
         """
         return float(self.z_vector[self.xy_plot_z_select_slider.value()])
 
-    def set_selectable_z_coordinates(self, z_min: float, z_max: float, num_points: int):
+    def get_selected_z_coordinate_by_idx(self):
+        """
+        Returns selected z coordinate's index in z-vector according to slider position
+        """
+        return self.xy_plot_z_select_slider.value()
+
+    def set_selectable_z_coordinates(self, z_vec: np.ndarray):
         """
         Configures Z-coordinate slider of XY-Plane graph.
         """
         self.xy_plot_z_select_slider.setMinimum(0)
-        self.xy_plot_z_select_slider.setMaximum(num_points - 1)
+        self.xy_plot_z_select_slider.setMaximum(z_vec.__len__()-1)
         self.xy_plot_z_select_slider.setSingleStep(1)
         self.xy_plot_z_select_slider.setValue(0)
-        self.z_vector = np.linspace(start=z_min, stop=z_max, num=num_points)
+        self.z_vector = z_vec
         self.__update_z_select_lineEdit()
 
-    def update_xz_plane_plot(self, point_list: list[float]):
+    def update_xz_plane_plot(self, data_array: np.ndarray):
         """
-        Receives dataset as 2D coordinates + 1D Amplitude Values and updates the xz-splitplane plot accordingly
+        Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
+        X and Z Axis.
 
-        :param point_list:      [ [x0, y0, z0, freq0, amplitude0, phase0], [....], ... ], with all Y-coordinates
-        the same and all frequencies the same >> display plane-view at one frequency point
+        e.g. At xvec[0], zvec[0] is data_array[0,0]. At xvec[20], zvec[100] is data_array[20,100] etc.
         """
         # delete current axis/plot
         self.xz_axes.remove()
         self.xz_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        numpy_list = np.array(point_list)
-        max_values = numpy_list.max(axis=0)  #[x,y,z,freq,AMPLITUDE,phase]
-        min_values = numpy_list.min(axis=0)
-        max_amp_dB = max_values[4]
-        min_amp_dB = min_values[4]
+        max_amp_dB = data_array.max()
+        min_amp_dB = data_array.min()
 
         # approach with mesh-data of numpy >> would need repositioning of mesh points since quadrilateral-corners
         # must be equally placed AROUND the measured spot which is not straight forward since we have coordinates
         # which describe the precise spot of measurement
         xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
 
-        # WATCHOUT: this step assumes that the local buffered vectors are always the same as the ones handed over via the list!
-        amp_array = np.zeros([self.z_vector.__len__(), self.x_vector.__len__()])
-        point_counter = 0
-        x_idx = 0
-        y_idx = 0
-        for y in self.z_vector:
-            for x in self.x_vector:
-                amp_array[y_idx][x_idx] = numpy_list[point_counter][4]
-                x_idx += 1
-            x_idx = 0
-            y_idx += 1
-
+        print("generate subplots " + datetime.now().strftime("%H:%M:%S") + '\n')
         self.xz_axes = self.xz_figure.subplots()
         self.xz_axes.set_title("XZ_Plane")
-        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, amp_array, cmap='Spectral_r', vmin=min_amp_dB,
+        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
                                                             vmax=max_amp_dB)
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
+        print("Issue Redraw " + datetime.now().strftime("%H:%M:%S") + '\n')
+        self.xz_canvas.draw()
 
         return
 
-    # ToDo Implement update methods for YZ and XY Plot mesh based
+    def update_yz_plane_plot(self, data_array: np.ndarray):
+        """
+        Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
+        Y and Z Axis.
+
+        e.g. At yvec[0], zvec[0] is data_array[0,0]. At yvec[20], zvec[100] is data_array[20,100] etc.
+        """
+        # delete current axis/plot
+        self.yz_axes.remove()
+        self.yz_colorbar.remove()
+
+        # find min and max amplitude in given dataset to set up axis/colorbar
+        max_amp_dB = data_array.max()
+        min_amp_dB = data_array.min()
+
+        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.y_vector, self.z_vector)
+
+        self.yz_axes = self.yz_figure.subplots()
+        self.yz_axes.set_title("YZ_Plane")
+        self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
+                                               vmax=max_amp_dB)
+        self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
+        self.yz_canvas.draw()
+        return
+
+    def update_xy_plane_plot(self, data_array: np.ndarray):
+        """
+        Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
+        X and Y Axis.
+
+        e.g. At xvec[0], yvec[0] is data_array[0,0]. At xvec[20], yvec[100] is data_array[20,100] etc.
+        """
+        # delete current axis/plot
+        self.xy_axes.remove()
+        self.xy_colorbar.remove()
+
+        # find min and max amplitude in given dataset to set up axis/colorbar
+        max_amp_dB = data_array.max()
+        min_amp_dB = data_array.min()
+
+        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.y_vector)
+
+        self.xy_axes = self.xy_figure.subplots()
+        self.xy_axes.set_title("XY_Plane")
+        self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
+                                               vmax=max_amp_dB)
+        self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
+        self.xy_canvas.draw()
+        return
+
+
+
     @staticmethod
-    def gen_meshgrid_from_meas_points(x_vec: np.ndarray[float], y_vec: np.ndarray[float]):
+    def gen_meshgrid_from_meas_points(x_vec: np.ndarray, y_vec: np.ndarray):
         """
         Calucalates the stepsize within each vector. subtracts half a stepsize from each entry and adds a new point to
         the end of the vector. Thus, the resulting mesh has the described points by x_vec and y_vec in the center of
@@ -484,7 +550,7 @@ class UI_display_measurement_window(QWidget):
         new_x_vec = new_x_vec.__sub__(x_stepsize/2)
         new_y_vec = new_y_vec.__sub__(y_stepsize/2)
 
-        xm_vec, ym_vec = np.meshgrid(new_x_vec, new_y_vec, indexing='xy')
+        xm_vec, ym_vec = np.meshgrid(new_x_vec, new_y_vec, indexing='ij')
 
         return xm_vec, ym_vec
 
