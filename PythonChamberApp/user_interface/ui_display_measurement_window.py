@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-import matplotlib.axes
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout,
                              QSlider, QVBoxLayout, QHBoxLayout, QFrame)
 from PyQt6.QtCore import Qt
@@ -9,10 +5,7 @@ import pyqtgraph as pg
 import numpy as np
 from datetime import datetime
 # Modules to embed matplotlib canvas // Ignore unrecognized references!
-<<<<<<< HEAD
 import matplotlib.axes
-=======
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.backends.backend_qtagg import \
     NavigationToolbar2QT as NavigationToolbar
@@ -86,12 +79,9 @@ class UI_display_measurement_window(QWidget):
         self.xy_plot_z_select_slider.valueChanged.connect(self.__update_z_select_lineEdit)
         # toDo connect signals to update each graph when sliders are moved >> do that in process_controller!
 
-<<<<<<< HEAD
         # disable plot interactions until data was read
         self.disable_plot_interactions()
 
-=======
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         return
 
     def __init_data_selection_widget(self):
@@ -307,7 +297,6 @@ class UI_display_measurement_window(QWidget):
         self.xy_plot_z_select_lineEdit.setText(f"{round(self.z_vector[slider_val],3)} mm")
         return
 
-<<<<<<< HEAD
     @staticmethod
     def __set_slider_values_noSignals(slider_obj: QSlider, val_vec: np.ndarray):
         """
@@ -354,8 +343,6 @@ class UI_display_measurement_window(QWidget):
         self.xy_plot_z_select_lineEdit.setEnabled(False)
         return
 
-=======
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
     def get_selected_measurement_file(self):
         """
         Returns the selected filename as string from dropdown menu in GUI-Data Selection
@@ -391,15 +378,10 @@ class UI_display_measurement_window(QWidget):
         """
         clears dropdown and updates available items according to given list
         """
-<<<<<<< HEAD
         self.parameter_select_comboBox.blockSignals(True)
         self.parameter_select_comboBox.clear()
         self.parameter_select_comboBox.addItems(parameters)
         self.parameter_select_comboBox.blockSignals(False)
-=======
-        self.parameter_select_comboBox.clear()
-        self.parameter_select_comboBox.addItems(parameters)
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         return
 
     def get_selected_frequency(self):
@@ -419,15 +401,8 @@ class UI_display_measurement_window(QWidget):
         """
         Configures frequency slider with frequency range.
         """
-<<<<<<< HEAD
         # encapsulate setValue to not issue graph updates when new values are configured while reading new meas file
         self.__set_slider_values_noSignals(self.frequency_select_slider, f_vec)
-=======
-        self.frequency_select_slider.setMinimum(0)
-        self.frequency_select_slider.setMaximum(f_vec.__len__()-1)   # one offset cause 0 index included
-        self.frequency_select_slider.setSingleStep(1)
-        self.frequency_select_slider.setValue(0)
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.frequency_vector = f_vec
         self.__update_frequency_lineEdit()
         return
@@ -449,15 +424,8 @@ class UI_display_measurement_window(QWidget):
         """
         Configures X-coordinate slider of YZ-Plane graph.
         """
-<<<<<<< HEAD
         # encapsulate setValue to not issue graph updates when new values are configured while reading new meas file
         self.__set_slider_values_noSignals(self.yz_plot_x_select_slider, x_vec)
-=======
-        self.yz_plot_x_select_slider.setMinimum(0)
-        self.yz_plot_x_select_slider.setMaximum(x_vec.__len__()-1)
-        self.yz_plot_x_select_slider.setSingleStep(1)
-        self.yz_plot_x_select_slider.setValue(0)
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.x_vector = x_vec
         self.__update_x_select_lineEdit()
         return
@@ -479,15 +447,8 @@ class UI_display_measurement_window(QWidget):
         """
         Configures Y-coordinate slider of XZ-Plane graph.
         """
-<<<<<<< HEAD
         # encapsulate setValue to not issue graph updates when new values are configured while reading new meas file
         self.__set_slider_values_noSignals(self.xz_plot_y_select_slider, y_vec)
-=======
-        self.xz_plot_y_select_slider.setMinimum(0)
-        self.xz_plot_y_select_slider.setMaximum(y_vec.__len__()-1)
-        self.xz_plot_y_select_slider.setSingleStep(1)
-        self.xz_plot_y_select_slider.setValue(0)
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.y_vector = y_vec
         self.__update_y_select_lineEdit()
         return
@@ -509,15 +470,8 @@ class UI_display_measurement_window(QWidget):
         """
         Configures Z-coordinate slider of XY-Plane graph.
         """
-<<<<<<< HEAD
         # encapsulate setValue to not issue graph updates when new values are configured while reading new meas file
         self.__set_slider_values_noSignals(self.xy_plot_z_select_slider, z_vec)
-=======
-        self.xy_plot_z_select_slider.setMinimum(0)
-        self.xy_plot_z_select_slider.setMaximum(z_vec.__len__()-1)
-        self.xy_plot_z_select_slider.setSingleStep(1)
-        self.xy_plot_z_select_slider.setValue(0)
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.z_vector = z_vec
         self.__update_z_select_lineEdit()
 
@@ -541,19 +495,11 @@ class UI_display_measurement_window(QWidget):
         # which describe the precise spot of measurement
         xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
 
-<<<<<<< HEAD
-=======
-        print("generate subplots " + datetime.now().strftime("%H:%M:%S") + '\n')
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.xz_axes = self.xz_figure.subplots()
         self.xz_axes.set_title("XZ_Plane")
         self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
                                                             vmax=max_amp_dB)
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
-<<<<<<< HEAD
-=======
-        print("Issue Redraw " + datetime.now().strftime("%H:%M:%S") + '\n')
->>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
         self.xz_canvas.draw()
 
         return
