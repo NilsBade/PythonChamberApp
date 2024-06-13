@@ -1180,8 +1180,7 @@ class ProcessController:
         Reads file that is selected in mainwindow/display_measurement_window/dropdown to process controller buffer.
         Then initiates updates of GUI objects of display_measurement_window according to buffer.
         """
-        print(f"Start Read " + datetime.now().strftime("%H:%M:%S") + '\n')
-
+        self.read_in_measurement_data_buffer = None
         file_name = self.gui_mainWindow.ui_display_measurement_window.get_selected_measurement_file()
         # check for valid file type
         if '.json' not in file_name:
@@ -1189,6 +1188,7 @@ class ProcessController:
                                             "import and display.", "Illegal file type")
             return
 
+        self.gui_mainWindow.update_status_bar("Start reading measurement file... This may take a moment!")
         # construct path and read file to data-buffer
         path_PythonChamberApp = os.getcwd()  # should lead to lower PythonChamberApp directory
         path_results_directory = path_PythonChamberApp + "\\results"
@@ -1259,9 +1259,7 @@ class ProcessController:
         self.gui_mainWindow.ui_display_measurement_window.set_selectable_z_coordinates(
             z_vec=self.read_in_measurement_data_buffer['z_vec'])
 
-        print(f"Finished Read " + datetime.now().strftime("%H:%M:%S") + '\n')
-        print(f"Get GUI inputs " + datetime.now().strftime("%H:%M:%S") + '\n')
-
+        self.gui_mainWindow.update_status_bar("Data read. Objects initialized. start plot updating...")
         # update graphs according to gui selection
         cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
         cur_freq = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency()
@@ -1269,51 +1267,18 @@ class ProcessController:
         cur_y_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][1]
         cur_z_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][2]
 
-        print(f"Start slice-data calculation " + datetime.now().strftime("%H:%M:%S") + '\n')
         xz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, 0, :]
         yz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, 0, :, :]
         xy_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, :, 0]
 
-        print(f"Start Plot update " + datetime.now().strftime("%H:%M:%S") + '\n')
         self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data_from_array)
         self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(yz_plane_data_from_array)
         self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(xy_plane_data_from_array)
-        print(f"Plots updated " + datetime.now().strftime("%H:%M:%S") + '\n')
-        # todo update all other plots after reading the measurement file as well
 
+        self.gui_mainWindow.ui_display_measurement_window.enable_plot_interactions()
+
+        self.gui_mainWindow.update_status_bar("Data file read successfully! Graphs enabled.")
         return
-
-    def display_measurement_get_data_in_plane(self, parameter: str, freq: float, plane_normal: str, normal_coordinate: float):
-        """
-        Receives Filter parameters and returns a list of all points that fit the given constraints.
-        Appropriate data to display a plane/split/cut-view of field strength or phase.
-
-        :param parameter:           S-Parameter of the data of interest ("S11" or "S12" or "S22")
-        :param freq:                Frequency of the data of interest
-        :param plane_normal:        Normal vector on cut plane as string. ("x" or "y" or "z")
-        :param normal_coordinate:   Coordinate in normal-direction of the plane view
-        :return:                    list[[x0,y0,z0,frequency0,amplitude0,phase0],...] of all points on described
-                                    plane at frequency of interest
-        """
-        # Remember structure {... S11: values[] ...} // in values-list each entry: [x, y, z, freq, amplitude, phase]
-        # >> important to understand indexing
-        plane_data = []
-        normal_vec_index = None
-        if plane_normal.casefold() == 'x'.casefold():
-            normal_vec_index = 0
-        elif plane_normal.casefold() == 'y'.casefold():
-            normal_vec_index = 1
-        elif plane_normal.casefold() == 'z'.casefold():
-            normal_vec_index = 2
-        else:
-            AssertionError("Illegal plane_normal string handed to display:measurement_get_data_in_plane-method!")
-            return
-
-        for point in self.read_in_measurement_data_buffer[parameter]:
-            if point[normal_vec_index] == normal_coordinate and point[3] == freq:
-                plane_data.append(point)
-
-        return plane_data
 
     def display_measurement_update_xz_plot_callback(self):
         """
