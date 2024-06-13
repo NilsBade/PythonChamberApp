@@ -127,13 +127,12 @@ class ProcessController:
             self.display_measurement_refresh_file_dropdown)
         self.gui_mainWindow.ui_display_measurement_window.file_select_read_button.pressed.connect(
             self.display_measurement_read_file)
-        # ToDo Change the update callback in a way that when "read file" is pressed the first time, the function does not try to read from an empty QCombobox (maybe check for empty list and if dropdown-list is empty just return)
-        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
-        #     self.display_measurement_update_xz_plot_callback)
-        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
-        #     self.display_measurement_update_yz_plot_callback)
-        # self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
-        #     self.display_measurement_update_xy_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_xz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_yz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_xy_plot_callback)
         # >> slider
         self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
             self.display_measurement_update_xz_plot_callback)
