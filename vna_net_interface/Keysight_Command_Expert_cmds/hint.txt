@@ -1,0 +1,8 @@
+Here come all the command scripts to be used when using a keysight GPIB Adapter.
+Since python struggles with using the keysight VISA implementation directly (include-path problems
+since WIN10, see pyVisa docu FAQ, "viopen function not found"), a workaround is the regular
+keysigth workflow with installing connection expert and command expert and
+use the command expert API/Script-functions to use in python programs.
+
+Since Command expert scripts need to be local to the python project/script that uses them,
+all the configured commands should be saved in this directory.

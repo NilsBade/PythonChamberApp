@@ -31,7 +31,11 @@ class MainWindow(QMainWindow):
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float):
         super().__init__()
         self.setWindowTitle("PythonChamberApp V1.0")
+<<<<<<< HEAD
         self.setGeometry(100, 100, 1550, 800)  # Set window dimensions
+=======
+        self.setGeometry(100, 100, 900, 500)  # Set window dimensions
+>>>>>>> d3fcb55ff57cd8bfa21b0870617ee122d9e692fe
 
         self.__setup_center_widgets(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
         self.__setup_statusbar()
