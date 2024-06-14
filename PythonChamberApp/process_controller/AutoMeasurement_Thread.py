@@ -313,24 +313,27 @@ class AutoMeasurement(QRunnable):
             self.signals.update.emit("Reading data from dicts and print to json file...")
             # Assembly large data-list with syntax:
             #   [ [x, y, z, f, S11-amp, S11-ph, S12-amp, S12-ph, S22-amp, S22-ph], ... ]
-            #   Dependend on the parameters that are supposed to be measured, each point-list in the overall list
+            #   Dependent on the parameters that are supposed to be measured, each point-list in the overall list
             #   has length of 6 (one S-param), 8 (two S-param) or 10 (three S-param). The order in which they are
             #   stored, if present, is S11 > S12 > S22. Their indexing shifts so that point-lists are as short as
             #   possible. Indexes are stored in property buffer-dicts as 'amp_idx' and 'phase_idx'.
+            # 1. generate point_list_entry-buffer with right length to store all parameter measurements
             num_of_parameters = self.json_data_storage['measurement_config']['parameter'].__len__()
-            # generate point_list_entry-buffer with right length to store all parameter measurements
-            point_list_entry_buffer = [0, 0, 0, 0]
+            point_list_entry_buffer = [0.0, 0.0, 0.0, 0.0]
             for i in range(num_of_parameters):
-                point_list_entry_buffer.append(0)  # amplitude
-                point_list_entry_buffer.append(0)  # phase
-            # find total length of list, each list should be same length // assign base-buffer to read from coor & freq
+                point_list_entry_buffer.append(0.0)  # amplitude
+                point_list_entry_buffer.append(0.0)  # phase
+            # 2. find total length of list, each list should be same length //
+            # assign base-buffer to read from coor & freq
             num_points_measured = 0
             base_buffer = None
             for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
                 if par_dict is not None:
-                    num_points_measured = par_dict.__len__()
+                    num_points_measured = par_dict['values'].__len__()
                     base_buffer = par_dict
-            # run through base-buffer list to get all coordinates and frequencies and append the measured amplitudes and phases to the list entries.
+            # 3. run through base-buffer list to get all coordinates and frequencies and append the measured
+            # amplitudes and phases to the data-list as ONE list-entry for all measured S-parameters in one point
+            # at one frequency.
             for idx in range(num_points_measured):
                 point_list_entry_buffer[0] = base_buffer['values'][idx][0]
                 point_list_entry_buffer[1] = base_buffer['values'][idx][1]
@@ -340,7 +343,8 @@ class AutoMeasurement(QRunnable):
                     if par_dict is not None:
                         point_list_entry_buffer[par_dict['amp_idx']] = par_dict['values'][idx][4]
                         point_list_entry_buffer[par_dict['phase_idx']] = par_dict['values'][idx][5]
-                self.json_data_storage['data'].append(point_list_entry_buffer)
+                self.json_data_storage['data'].append(point_list_entry_buffer.copy())  # Must use copy(), otherwise only reference handed to list!
+
             # decide if formatting readable
             indent = None
             if self.json_format_readable:
