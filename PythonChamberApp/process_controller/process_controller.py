@@ -133,6 +133,12 @@ class ProcessController:
             self.display_measurement_update_yz_plot_callback)
         self.gui_mainWindow.ui_display_measurement_window.parameter_select_comboBox.currentTextChanged.connect(
             self.display_measurement_update_xy_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
+            self.display_measurement_update_xz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
+            self.display_measurement_update_yz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
+            self.display_measurement_update_xy_plot_callback)
         # >> slider
         self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
             self.display_measurement_update_xz_plot_callback)

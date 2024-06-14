@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QLabel, QBoxLayout, QComboBox, QPushButton, QTextEdit, QGridLayout,
-                             QSlider, QVBoxLayout, QHBoxLayout, QFrame)
+                             QSlider, QVBoxLayout, QHBoxLayout, QFrame, QCheckBox)
 from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
@@ -19,6 +19,9 @@ class UI_display_measurement_window(QWidget):
     x_vector: np.ndarray = None
     y_vector: np.ndarray = None
     z_vector: np.ndarray = None
+    x_zero_pos: float = None
+    y_zero_pos: float = None
+    z_zero_pos: float = None
 
     # Data selection widget
     file_select_comboBox: QComboBox = None
@@ -32,6 +35,7 @@ class UI_display_measurement_window(QWidget):
     parameter_select_comboBox: QComboBox = None
     frequency_select_slider: QSlider = None
     frequency_select_lineEdit: QLineEdit = None
+    coor_AUT_checkBox: QCheckBox = None
     xz_plot_y_select_slider: QSlider = None
     xz_plot_y_select_lineEdit: QLineEdit = None
     yz_plot_x_select_slider: QSlider = None
@@ -77,7 +81,6 @@ class UI_display_measurement_window(QWidget):
         self.yz_plot_x_select_slider.valueChanged.connect(self.__update_x_select_lineEdit)
         self.xz_plot_y_select_slider.valueChanged.connect(self.__update_y_select_lineEdit)
         self.xy_plot_z_select_slider.valueChanged.connect(self.__update_z_select_lineEdit)
-        # toDo connect signals to update each graph when sliders are moved >> do that in process_controller!
 
         # disable plot interactions until data was read
         self.disable_plot_interactions()
@@ -145,12 +148,15 @@ class UI_display_measurement_window(QWidget):
         self.frequency_select_slider.setMaximumWidth(300)
         self.frequency_select_lineEdit = QLineEdit("...")
         self.frequency_select_lineEdit.setFixedWidth(150)
+        self.coor_AUT_checkBox = QCheckBox("Display AUT Coordinates")
         upper_line_layout.addWidget(parameter_select_label)
         upper_line_layout.addWidget(self.parameter_select_comboBox)
         upper_line_layout.addSpacing(200)
         upper_line_layout.addWidget(frequency_label)
         upper_line_layout.addWidget(self.frequency_select_slider)
         upper_line_layout.addWidget(self.frequency_select_lineEdit)
+        upper_line_layout.addSpacing(200)
+        upper_line_layout.addWidget(self.coor_AUT_checkBox)
         upper_line_layout.addStretch()
         main_layout.addLayout(upper_line_layout)
         main_layout.addSpacing(10)
@@ -320,6 +326,7 @@ class UI_display_measurement_window(QWidget):
         self.parameter_select_comboBox.setEnabled(True)
         self.frequency_select_slider.setEnabled(True)
         self.frequency_select_lineEdit.setEnabled(True)
+        self.coor_AUT_checkBox.setEnabled(True)
         self.xz_plot_y_select_slider.setEnabled(True)
         self.xz_plot_y_select_lineEdit.setEnabled(True)
         self.yz_plot_x_select_slider.setEnabled(True)
@@ -335,6 +342,7 @@ class UI_display_measurement_window(QWidget):
         self.parameter_select_comboBox.setEnabled(False)
         self.frequency_select_slider.setEnabled(False)
         self.frequency_select_lineEdit.setEnabled(False)
+        self.coor_AUT_checkBox.setEnabled(False)
         self.xz_plot_y_select_slider.setEnabled(False)
         self.xz_plot_y_select_lineEdit.setEnabled(False)
         self.yz_plot_x_select_slider.setEnabled(False)
@@ -361,11 +369,16 @@ class UI_display_measurement_window(QWidget):
 
     def set_measurement_details(self, measurement_config: dict):
         """
-        Receives measurement config dict and prints details to Data Info textbox on GUI
+        Receives measurement config dict and prints details to Data Info textbox on GUI.
+        Also stores zero position locally in display_window_object for later graph-display in AUT coordinates.
         """
         info_string = self.__gen_data_details_string(measurement_config=measurement_config)
         self.data_details_textbox.clear()
         self.data_details_textbox.setText(info_string)
+
+        self.x_zero_pos = measurement_config['zero_position'][0]
+        self.y_zero_pos = measurement_config['zero_position'][1]
+        self.z_zero_pos = measurement_config['zero_position'][2]
         return
 
     def get_selected_parameter(self):
@@ -406,6 +419,13 @@ class UI_display_measurement_window(QWidget):
         self.frequency_vector = f_vec
         self.__update_frequency_lineEdit()
         return
+
+    def get_displ_aut_coordinates(self):
+        """
+        Returns state of checkbox to decide whether AUT coordinates should be used for plotting (True) or chamber
+        coordinates should be displayed (False).
+        """
+        return self.coor_AUT_checkBox.isChecked()
 
     def get_selected_x_coordinate(self):
         """
@@ -475,10 +495,14 @@ class UI_display_measurement_window(QWidget):
         self.z_vector = z_vec
         self.__update_z_select_lineEdit()
 
+    # noinspection PyUnreachableCode
     def update_xz_plane_plot(self, data_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         X and Z Axis.
+
+        Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
+        window) and acts accordingly.
 
         e.g. At xvec[0], zvec[0] is data_array[0,0]. At xvec[20], zvec[100] is data_array[20,100] etc.
         """
@@ -492,10 +516,15 @@ class UI_display_measurement_window(QWidget):
         max_amp_dB = data_array.max()
         min_amp_dB = data_array.min()
 
-        # approach with mesh-data of numpy >> would need repositioning of mesh points since quadrilateral-corners
-        # must be equally placed AROUND the measured spot which is not straight forward since we have coordinates
-        # which describe the precise spot of measurement
-        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
+            aut_z_vec = self.z_vector.__sub__(self.z_zero_pos)
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(aut_x_vec, aut_z_vec)
+        else:
+            # approach with mesh-data of numpy >> would need repositioning of mesh points since quadrilateral-corners
+            # must be equally placed AROUND the measured spot which is not straight forward since we have coordinates
+            # which describe the precise spot of measurement
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
 
         self.xz_axes = self.xz_figure.subplots()
         self.xz_axes.set_title("XZ_Plane")
@@ -506,10 +535,14 @@ class UI_display_measurement_window(QWidget):
 
         return
 
+    # noinspection PyUnreachableCode
     def update_yz_plane_plot(self, data_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         Y and Z Axis.
+
+        Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
+        window) and acts accordingly.
 
         e.g. At yvec[0], zvec[0] is data_array[0,0]. At yvec[20], zvec[100] is data_array[20,100] etc.
         """
@@ -521,7 +554,12 @@ class UI_display_measurement_window(QWidget):
         max_amp_dB = data_array.max()
         min_amp_dB = data_array.min()
 
-        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.y_vector, self.z_vector)
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_y_vec = self.y_vector.__sub__(self.y_zero_pos)
+            aut_z_vec = self.z_vector.__sub__(self.z_zero_pos)
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(aut_y_vec, aut_z_vec)
+        else:
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.y_vector, self.z_vector)
 
         self.yz_axes = self.yz_figure.subplots()
         self.yz_axes.set_title("YZ_Plane")
@@ -531,10 +569,14 @@ class UI_display_measurement_window(QWidget):
         self.yz_canvas.draw()
         return
 
+    # noinspection PyUnreachableCode
     def update_xy_plane_plot(self, data_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         X and Y Axis.
+
+        Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
+        window) and acts accordingly.
 
         e.g. At xvec[0], yvec[0] is data_array[0,0]. At xvec[20], yvec[100] is data_array[20,100] etc.
         """
@@ -546,7 +588,12 @@ class UI_display_measurement_window(QWidget):
         max_amp_dB = data_array.max()
         min_amp_dB = data_array.min()
 
-        xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.y_vector)
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
+            aut_y_vec = self.y_vector.__sub__(self.y_zero_pos)
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(aut_x_vec, aut_y_vec)
+        else:
+            xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.y_vector)
 
         self.xy_axes = self.xy_figure.subplots()
         self.xy_axes.set_title("XY_Plane")
