@@ -140,14 +140,21 @@ class AutoMeasurement(QRunnable):
                 'average_number':   vna_info['average_number'],
             }
             self.json_data_storage['measurement_config'] = measurement_config
+            self.json_data_storage['data'] = []
 
-            # setup dictionaries for separate parameter measurements
+            # setup dictionaries for separate parameter measurements and assign index in reduced list
+            amp_idx = 4
+            phase_idx = 5
             if 'S11' in vna_info['parameter']:
-                self.json_S11 = {'parameter': 'S11', 'values': []}
+                self.json_S11 = {'parameter': 'S11', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+                amp_idx += 2
+                phase_idx += 2
             if 'S12' in vna_info['parameter']:
-                self.json_S12 = {'parameter': 'S12', 'values': []}
+                self.json_S12 = {'parameter': 'S12', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+                amp_idx += 2
+                phase_idx += 2
             if 'S22' in vna_info['parameter']:
-                self.json_S22 = {'parameter': 'S22', 'values': []}
+                self.json_S22 = {'parameter': 'S22', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
         else:
             # open separate txt measurement file for each parameter configured
             if 'S11' in vna_info['parameter']:
@@ -241,6 +248,7 @@ class AutoMeasurement(QRunnable):
                     if self.store_as_json:
                         for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
                             if json_dic is not None:
+                                # read data to buffer property
                                 self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
                                 data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
                                 for freq_point in data:
@@ -303,16 +311,43 @@ class AutoMeasurement(QRunnable):
         # close json file - dicts must be assembled and data written to file before close()
         if self.measurement_file_json is not None:
             self.signals.update.emit("Reading data from dicts and print to json file...")
+            # Assembly large data-list with syntax:
+            #   [ [x, y, z, f, S11-amp, S11-ph, S12-amp, S12-ph, S22-amp, S22-ph], ... ]
+            #   Dependend on the parameters that are supposed to be measured, each point-list in the overall list
+            #   has length of 6 (one S-param), 8 (two S-param) or 10 (three S-param). The order in which they are
+            #   stored, if present, is S11 > S12 > S22. Their indexing shifts so that point-lists are as short as
+            #   possible. Indexes are stored in property buffer-dicts as 'amp_idx' and 'phase_idx'.
+            num_of_parameters = self.json_data_storage['measurement_config']['parameter'].__len__()
+            # generate point_list_entry-buffer with right length to store all parameter measurements
+            point_list_entry_buffer = [0, 0, 0, 0]
+            for i in range(num_of_parameters):
+                point_list_entry_buffer.append(0)  # amplitude
+                point_list_entry_buffer.append(0)  # phase
+            # find total length of list, each list should be same length // assign base-buffer to read from coor & freq
+            num_points_measured = 0
+            base_buffer = None
             for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
                 if par_dict is not None:
-                    self.json_data_storage[par_dict['parameter']] = par_dict['values']
-            self.signals.update.emit(f"Data written to {self.measurement_file_json.name}")
+                    num_points_measured = par_dict.__len__()
+                    base_buffer = par_dict
+            # run through base-buffer list to get all coordinates and frequencies and append the measured amplitudes and phases to the list entries.
+            for idx in range(num_points_measured):
+                point_list_entry_buffer[0] = base_buffer['values'][idx][0]
+                point_list_entry_buffer[1] = base_buffer['values'][idx][1]
+                point_list_entry_buffer[2] = base_buffer['values'][idx][2]
+                point_list_entry_buffer[3] = base_buffer['values'][idx][3]
+                for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
+                    if par_dict is not None:
+                        point_list_entry_buffer[par_dict['amp_idx']] = par_dict['values'][idx][4]
+                        point_list_entry_buffer[par_dict['phase_idx']] = par_dict['values'][idx][5]
+                self.json_data_storage['data'].append(point_list_entry_buffer)
             # decide if formatting readable
             indent = None
             if self.json_format_readable:
                 indent = 4
 
             self.measurement_file_json.write(json.dumps(self.json_data_storage, indent=indent))
+            self.signals.update.emit(f"Data written to {self.measurement_file_json.name}")
             self.measurement_file_json.close()
 
         return
