@@ -506,8 +506,6 @@ class UI_display_measurement_window(QWidget):
 
         e.g. At xvec[0], zvec[0] is data_array[0,0]. At xvec[20], zvec[100] is data_array[20,100] etc.
         """
-        # ToDO bei Plot-routinen erweitern, dass auch wahlweise in Antennen-koordinaten von der Zero-Position aus die achsen beschriftet werden anstatt in chamber-koordinaten.
-        #  Dann muss man nämlich selber immer nachrechnen welche Z koordinate wirklich welchem abstand von der AUT entspricht.
         # delete current axis/plot
         self.xz_axes.remove()
         self.xz_colorbar.remove()
