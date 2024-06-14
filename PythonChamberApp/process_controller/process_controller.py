@@ -1230,21 +1230,46 @@ class ProcessController:
                                 self.read_in_measurement_data_buffer['measurement_config']['mesh_z_steps']])
         # fill amplitude values
         parameter_idx = 0
-        amplitude_idx = 4
-        phase_idx = 5
-        for parameter in self.read_in_measurement_data_buffer['measurement_config']['parameter']:
-            value_list = self.read_in_measurement_data_buffer[parameter]
-            list_idx = 0
-            # value_list setup like [ [x0, y0, z0, f0, amp0, phase0], ...] runs through 1. frequency, 2. x-coor, 3. y-coor, 4. z-coor
-            for z_idx in range(self.read_in_measurement_data_buffer['z_vec'].__len__()):
-                for y_idx in range(self.read_in_measurement_data_buffer['y_vec'].__len__()):
-                    for x_idx in range(self.read_in_measurement_data_buffer['x_vec'].__len__()):
-                        for f_idx in range(self.read_in_measurement_data_buffer['f_vec'].__len__()):
-                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][amplitude_idx]
-                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][phase_idx]
-                            list_idx += 1
-            value_list = None
-            parameter_idx += 1
+        amplitude_idx = 4   # default for first parameter
+        phase_idx = 5       # default for first parameter
+        s11_idx = None
+        s12_idx = None
+        s22_idx = None
+        # find which parameters were measured and how long list entries are - initialize indexing
+        if 'S11' in self.read_in_measurement_data_buffer['measurement_config']['parameter']:
+            s11_idx = [amplitude_idx, phase_idx]
+            amplitude_idx += 2
+            phase_idx += 2
+        if 'S12' in self.read_in_measurement_data_buffer['measurement_config']['parameter']:
+            s12_idx = [amplitude_idx, phase_idx]
+            amplitude_idx += 2
+            phase_idx += 2
+        if 'S22' in self.read_in_measurement_data_buffer['measurement_config']['parameter']:
+            s22_idx = [amplitude_idx, phase_idx]
+
+        value_list = self.read_in_measurement_data_buffer['data']
+        list_idx = 0
+        # value_list setup like [ [x0, y0, z0, f0, s11amp0, s11phase0, s12amp0, s12phase0, s22amp0, s22phase0], ...] runs through 1. frequency, 2. x-coor, 3. y-coor, 4. z-coor
+        for z_idx in range(self.read_in_measurement_data_buffer['z_vec'].__len__()):
+            for y_idx in range(self.read_in_measurement_data_buffer['y_vec'].__len__()):
+                for x_idx in range(self.read_in_measurement_data_buffer['x_vec'].__len__()):
+                    for f_idx in range(self.read_in_measurement_data_buffer['f_vec'].__len__()):
+                        # For each list entry write all S parameter values to array in one go (this inner loop)
+                        parameter_idx = 0
+                        if s11_idx is not None:
+                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[0]]
+                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[1]]
+                            parameter_idx += 1
+                        if s12_idx is not None:
+                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s12_idx[0]]
+                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s12_idx[1]]
+                            parameter_idx += 1
+                        if s22_idx is not None:
+                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s22_idx[0]]
+                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s22_idx[1]]
+                        list_idx += 1
+
+
 
         self.read_in_measurement_data_buffer['data_array'] = data_array
 
