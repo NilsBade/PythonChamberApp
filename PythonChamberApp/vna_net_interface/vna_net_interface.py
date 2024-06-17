@@ -21,7 +21,10 @@ class E8361RemoteGPIB:
             #os.add_dll_directory('C:\\Program Files\\Keysight\\IO Libraries Suite\\bin')
             #os.add_dll_directory('C:\\Program Files (x86)\\Keysight\\IO Libraries Suite\\bin')
             #importlib.reload(pyvisa)
-            self.resource_manager = pyvisa.ResourceManager('ktvisa32')  # ToDo check and how the different adapters really work and when which library is used! Does not work on institute computer!
+            self.resource_manager = pyvisa.ResourceManager('ktvisa32')
+            # ToDo check and how the different adapters really work and when which library is used!
+            #  Both adapters work on laptop as development-base, but checkbox seems to have no clear effect - maybe
+            #  Keysight implementation is always used with extra dll-paths?! >> Fix when deployed on institut PC.
         else:
             self.resource_manager = pyvisa.ResourceManager() # default path seems to find NI visa lib. Adapter works 06.06.2024.
         self.running_measurements = []

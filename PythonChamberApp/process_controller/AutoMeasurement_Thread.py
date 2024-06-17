@@ -85,7 +85,7 @@ class AutoMeasurement(QRunnable):
         super(AutoMeasurement, self).__init__()
 
         self.signals = AutoMeasurementSignals()
-        #self.chamber = chamber  # toDo reenable after test
+        self.chamber = chamber  # Comment here when testing without chamber
         self.vna = vna
         self.vna.pna_preset()
         self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
@@ -233,7 +233,7 @@ class AutoMeasurement(QRunnable):
 
                     self.signals.update.emit(
                         'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
-                    #self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # toDo reenable after test
+                    self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # Comment here when testing without chamber
                     self.signals.update.emit("Movement done!")
 
                     # Routine to do vna measurement and store data somewhere put here...

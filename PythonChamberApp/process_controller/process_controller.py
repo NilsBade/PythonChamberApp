@@ -277,7 +277,7 @@ class ProcessController:
         self.chamber: ChamberNetworkCommands = None
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
         self.gui_mainWindow.disable_chamber_control_window()
-        #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False) #ToDo reenable after testing
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)      # Comment here when testing without chamber
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
@@ -320,8 +320,8 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
-        #if self.vna is not None:
-            #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True) ToDo reenable aber test
+        if self.vna is not None:                                                                            # Comment here when testing without chamber
+            self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)   # Comment here when testing without chamber
         return
 
     def vna_list_resources_button_handler(self):
@@ -348,7 +348,7 @@ class ProcessController:
         self.vna = None
         self.gui_mainWindow.ui_config_window.set_vna_connected(False)
         self.gui_mainWindow.disable_vna_control_window()
-        #self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False) #ToDo reenable after testing
+        self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)      # Comment here when testing without chamber
 
         # start connect routine
         connect_thread = Worker(self.vna_connect_routine, visa_address, self.gui_mainWindow.ui_config_window.get_use_keysight())
@@ -395,8 +395,8 @@ class ProcessController:
             self.gui_mainWindow.ui_config_window.set_vna_connected(True)
             self.gui_mainWindow.ui_config_window.append_message2console(
                 "VNA object was generated and saved to app. VNA control tab enabled.")
-            #if self.chamber is not None:
-            #    self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True) ToDo reenable after testing
+            if self.chamber is not None:                                                                        # Comment here when testing without chamber
+                self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)   # Comment here when testing without chamber
         return
 
     # **UI_chamber_control_window Callbacks** ################################################
@@ -1167,12 +1167,14 @@ class ProcessController:
         # Get path to PythonChamberApp directory or prompt warning
         path_PythonChamberApp = os.getcwd()   # should lead to lower PythonChamberApp directory
         path_results_directory = path_PythonChamberApp + "\\results"
-        path_sample_measurement = path_results_directory + "\\sample_measurement.json"
-        if os.path.isfile(path_sample_measurement) is False:
+        if os.path.isdir(path_results_directory) is False:
             self.gui_mainWindow.update_status_bar("Path-Error occurred while searching for available measurement-files")
-            self.gui_mainWindow.prompt_warning("sample_measurement.json file not found in results folder!\nIf the file "
-                                               "was deleted please re-add it in the results folder.\nOtherwise there "
-                                               "is some problem with relative and absolute pathing.", "Path"
+            self.gui_mainWindow.prompt_warning("'results' directory was not found when searching for "
+                                               "available\n files! This may occur when the root directory from where "
+                                               "the app is\nrunning (current working directory) is in the wrong place\n"
+                                               "in reference to the results folder.\nMake sure when running the "
+                                               "app your working directory is the 'more general' PythonChamberApp "
+                                               "folder.\n\nYour current working directory: " + path_PythonChamberApp, "Path"
                                                                                                       "issue")
             return
         file_list = os.listdir(path_results_directory)
