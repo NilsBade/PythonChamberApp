@@ -1,7 +1,8 @@
 # PythonChamberApp
 > Python based app that automates measurement processes for the E3 institute at TUHH.
 
-The app connects to the measurement chamber and a vector network analyzer (VNA) that are located in the same network as the app's host via http protocol.
+The app connects to the measurement chamber that is located in the same network as host/controller via http protocol.
+Moreover, the app supports to use a GPIB/USB Interface to control a vector network analyzer (VNA) via VISA standard.
 Given the IP addresses and API-commands of the chamber and the VNA, the app takes inputs about the desired near-field-scan (mesh, boundaries, ..) through an UI
 and controls both devices/measurement equipment in an alternating fashion to achieve an automated measurement process for a defined volume.
 
@@ -19,58 +20,59 @@ PythonChamberApp/
 ├── .venv/ **[local!]**
 │
 ├── docs/
-│   ├── user_interface.md
-│   ├── connection_handler.md
-│   ├── process_controller.md
-│   ├── figure_generator.md
-│   ├── chamber_net_interface.md
-│   └── vna_net_interface.md
+│   ├── user_interface.md - not done
+│   ├── connection_handler.md - not done
+│   ├── process_controller.md - not done
+│   ├── figure_generator.md - not done
+│   ├── chamber_net_interface.md - not done
+│   └── vna_net_interface.md - not done
 │
 ├── PythonChamberApp/
-│   ├── __init__.py	[?]
-│   ├── runner.py	[?]
+│   ├── runner.py (>> starts the app <<)
 │   ├── user_interface/
-│   │   ├── __init__.py
-│   │   ├── hello.py
-│   │   └── helpers.py
+│   │   ├── ui_3d_visualizer.py
+│   │   ├── ui_auto_measurement.py
+│   │   ├── ui_chamber_control_window.py
+│   │   ├── ui_config_window.py
+│   │   ├── ui_display_measurement_window.py
+│   │   ├── ui_mainwindow.py
+│   │   └── ui_vna_control_window.py
 │   │
 │   ├── connection_handler/
 │   │   ├── __init__.py
-│   │   ├── helpers.py
-│   │   └── world.py
+│   │   └── network_device.py
 │   │
 │   ├── process_controller/
 │   │	├── __init__.py
-│   │   ├── helpers.py
-│   │   └── world.py
+│   │   ├── AutoMeasurement_Thread.py
+│   │   ├── multithread_worker.py
+│   │   └── process_controller.py
 │   │
-│   ├── figure_generator/
-│   │	├── __init__.py
-│   │   ├── helpers.py
-│   │   └── world.py
+│   ├── figure_generator/ (NOT USED)
+│   │   └── __init__.py
 │   │
 │   ├── chamber_net_interface/
 │   │	├── __init__.py
-│   │   ├── helpers.py
-│   │   └── world.py
+│   │   └── chamber_net_interface.py
 │   │
 │   └── vna_net_interface/
 │    	├── __init__.py
-│       ├── helpers.py
-│       └── world.py
+│       └── vna_net_interface.py
 │
-├── data/
+├── data/ (NOT USED)
 │   ├── figures?
 │   └── logos?
 │
 ├── tests/
 │   ├── integration/
-│   │   ├── helpers_tests.py
-│   │   └── hello_tests.py
+│   │   ├── test_chamber_net_interface.py
+│   │   └── test_chamber_websocket.py (NOT USED, does not work)
+│   │
+│   ├── Scripts/
+│   │   └── various test scripts for everything...
 │   │
 │   └── unit/
-│       ├── helpers_tests.py
-│       └── world_tests.py
+│       └── test_connection_handler.py (Unit tests for chamber network interface class)
 │
 ├── figures/
 │   └── ...
@@ -80,7 +82,7 @@ PythonChamberApp/
 └── README.md
 ```
 
-![](figures/SoftwareStructure.png)
+![SoftwareStructure](figures/SoftwareStructure.png)
 
 ## Installation
 To run the PythonChamberApp the following steps are necessary:
@@ -140,15 +142,51 @@ throw errors trying to import the module.
 
 ## Usage example
 
-``ToDo``
-A few motivating and useful examples of how your product can be used. Spice this up with code blocks and potentially more screenshots.
-
-_For more examples and usage, please refer to the [Wiki][wiki]._
+The PythonChamberApp can be used to probe the near field radiation of an antenna in a 3d volume.
+To evaluate e.g. the focus-performance of a newly designed antenna for our medical radar applications, this setup is 
+capable of automating the measurement process and provides an easy-to-use interface to analyse the measured data 
+afterward. Moreover, being implemented with MatPlotLib, the graphs can be exported easily to be used for documentation 
+or similar. 
 
 ## Development setup
 
-``ToDo``
-Describe how to install all development dependencies and how to run an automated test-suite of some kind. Potentially do this for multiple platforms.
+To further develop the app one should read into the folder structure first and look into the object relations to stick
+to the given structure. This improves readability of the whole project as well as extendability for new people 
+that take part in the project.
+
+That being said, look into the [SoftwareStructure](figures/SoftwareStructure.png).
+The chamberApp will always be started from the runner script. 
+This assures that all paths are configured correctly before importing all modules and subclasses.
+From there the ProcessController class is the core and kind of 'backend' of the app.
+Throughout the init(), a mainwindow-instance is created (ref ./PythonChamberApp/user_interface/mainwindow.py) which 
+itself, again generates all subwindows as objects.
+
+Each subwindow is defined as an own class and owned by the mainwindow.
+Everything that can be managed just in the GUI, is implemented as private function in each window-class.
+In the properties of each subwindow-class all the interactive GUI-objects are listed to give an overview 
+what can be 'used'. These GUI objects are connected to more complex callback functions be the ProcessController 
+throughout it's init().
+
+To prevent the app from freezing despite the network communication with other devices, the app uses a threadpool to 
+manage requests to other devices. Every request to the chamber via http has its own thread-slot in the 
+processController, allowing only one request at a time. Communication with the VNA works the same way.
+
+The AutoMeasurementProcess is implemented as a whole own thread that is run by the app in the background. It organizes
+movements and measurements in alternating fashion and sends feedback to the GUI via signals. Always when another thread
+(worker) is started, its signals are connected to GUI functions as Slots beforehand, so that update messages from 
+threads running in the background appear on the GUI without freezing it.
+If you want to develop more functionality that may long computation or file-read-time, please consider to implement 
+methods so that they can be processed by a worker-thread in the background and send their results via signals.
+
+The Display Measurement Window is implemented without multithreading eventhough reading files may take time. 
+This is a meant design decision to give the user some kind of feedback about the size of data that is read
+and to prevent from doing some other stuff in the app, modifying parameters, while properties of the processcontroller
+are directly modified by the other thread in the meantime. (see property 'read_in_measurement_data_buffer': dict)
+
+Even though only the chamber interface has its own unittests implemented so far, programming unittests for new classes 
+and functions is always a good idea! 
+If you want to do it the same way or test the unit-tests of the chamber_net_interface again, you need to install 
+the following package: 
 
 ```sh
 make install
@@ -157,6 +195,8 @@ npm test
 
 ## Release History
 
+* 0.1.0
+  * First Version of App 'released' 17.06.2024
 * 0.0.2
     * ADD: Filestructure!
     * FIX: nothing so far

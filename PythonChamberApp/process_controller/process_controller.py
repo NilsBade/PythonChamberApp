@@ -16,16 +16,6 @@ import json
 from datetime import datetime
 
 
-class ProcessControllerSignals(QObject):
-    """
-    This class defines signals related to the ProcessController
-
-    position_changed
-        >> signals that callback has updated the live position of the chamber head
-    """
-    position_changed = pyqtSignal()
-
-
 class ProcessController:
     # Properties
     chamber: ChamberNetworkCommands = None
