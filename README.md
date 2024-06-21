@@ -154,7 +154,7 @@ To further develop the app one should read into the folder structure first and l
 to the given structure. This improves readability of the whole project as well as extendability for new people 
 that take part in the project.
 
-That being said, look into the [SoftwareStructure](figures/SoftwareStructure.png).
+That being said, look into the [SoftwareStructure](#file-structure).
 The chamberApp will always be started from the runner script. 
 This assures that all paths are configured correctly before importing all modules and subclasses.
 From there the ProcessController class is the core and kind of 'backend' of the app.
@@ -192,6 +192,26 @@ the following package:
 make install
 npm test
 ```
+
+## Hardware Setup
+By default, the chamber should already be completely wired to the driver board ([SKRat V1.0](/docs/Datasheets%20RatRig%20Electronics/BTT_SKRat_V1.0_User_Manual.pdf))
+and the Raspberry Pi 4. This enables control of all Stepper motors and the limit switches. 
+If something was detached and wiring is open, details about the driver-board wiring are given in the [SKRat Wiring-Section](#skrat-wiring) next up.
+
+> [!CAUTION] 
+> When you start working with the chamber, the first thing it has to do is **home all axis**. Therefor, the 
+> [BL-Touch-Sensor](docs/Datasheets%20RatRig%20Electronics/BLTouch-Datasheet.pdf) with its plate must be **mounted to 
+> the Probehead!** Klipper does not differentiate between a not-triggered and a not-wired sensor, which would result in 
+> the bed, running into the bearings!
+
+The only part that is meant to be frequently attached and detached from the chamber is the Z-endstop/limit-switch,
+ which is the BL-Touch sensor. It can be easily connected and disconnected by clipping the plate to the probehead
+(connection is magnetic) and plugging the wiring into the socket located in the top-center above the upper bearing
+ of the leadscrew in the back of the chamber.
+
+
+### SKRat Wiring
+![Skrat-Wiring](figures/BTT-SKRat-Wiring.png)
 
 ## Release History
 
