@@ -124,13 +124,13 @@ To run the PythonChamberApp the following steps are necessary:
     ```sh
     python -m pip install pyvisa
     ```
-    > [!NOTE]
-    > If you plan to develop new features for the app, also install **pytest** to support unit test functionality
-    >   ```sh
-    >   python -m pip install pytest
-    >   ```
-    > Installing pytest, make sure that it is installed **in the same virtual environment** the whole app is running in.
-    > Otherwise pytest will not be able to find the modules imported by the unit-tests but throw a "ModuleNotFoundError".
+> [!NOTE]
+> If you plan to develop new features for the app, also install **pytest** to support unit test functionality
+>   ```sh
+>   python -m pip install pytest
+>   ```
+> Installing pytest, make sure that it is installed **in the same virtual environment** the whole app is running in.
+> Otherwise pytest will not be able to find the modules imported by the unit-tests but throw a "ModuleNotFoundError".
   
 6. Install a visa backend for the [PyVisa Package](https://pyvisa.readthedocs.io/en/latest/index.html), used by the PythonChamberApp.
 Dependend on the hardware you want to use you should choose between the [Keysight IO Libraries Suite](https://www.keysight.com/de/de/lib/software-detail/programming-examples/io-libraries-example-programs-2798637.html)
