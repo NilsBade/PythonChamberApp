@@ -449,7 +449,7 @@ class ProcessController:
         response = chamber.chamber_home_with_flag(axis='xyz')
         if response['status_code'] == 204:
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
-            update_callback.emit("Requests Movement to Front")
+            update_callback.emit("Requests Movement to Middle")
             chamber.chamber_jog_abs(x=self.zero_pos_x, y=self.zero_pos_y, z=150, speed=75.0)
             position_update_callback.emit({'abs_x': self.zero_pos_x, 'abs_y': self.zero_pos_y, 'abs_z': 150.0})
             update_callback.emit("Manual chamber control enabled")
@@ -827,7 +827,7 @@ class ProcessController:
         """
         update_callback.emit("Request Z-Tilt-Adjustment...")
         chamber.chamber_z_tilt_with_flag()
-        update_callback.emit("Adjustment completed. Moving to front...")
+        update_callback.emit("Adjustment completed. Moving to Middle...")
         chamber.chamber_jog_abs(x=self.zero_pos_x, y=self.zero_pos_y, z=150, speed=75.0)
         position_update_callback.emit({'abs_x': self.zero_pos_x, 'abs_y': self.zero_pos_y, 'abs_z': 150.0})
 
