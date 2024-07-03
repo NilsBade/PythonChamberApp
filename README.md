@@ -214,14 +214,53 @@ The only part that is meant to be frequently attached and detached from the cham
 ![Skrat-Wiring](figures/BTT-SKRat-Wiring.png)
 
 ## Step-by-Step Guide to Run a Measurement
-1. **Start the PythonChamberApp**
+1. **Prepare the Chamber & VNA**
+    - Make sure the **chamber**'s driver board and Raspberry Pi 4 are connected.
+    - Connect the **Raspberry Pi 4** to the institute network or eduroam via **ethernet cable**.
+    - Plug the **chamber**'s power supply in.
+    - **Turn on** the **VNA** and wait until fully started.
+    - Connect the host computer of the PythonChamberApp to the **VNA** via **GPIB-USB cable**.
+2. **Start the PythonChamberApp**
     - Run the runner.py script.
-    - The main window of the app should appear.
-2. **Connect to the Chamber**
-    - Enter the IP address of the chamber in the 'Config Window'.
-    - Click 'Connect'.
+    - The main window / config tab of the app should appear.
+3. **Connect to the Chamber**
+    - Enter the IP address of the chamber in the 'Config Window' and click 'Connect'.
     - The connection status should change to 'Connected' and the send commands and received messages are displayed in the terminal window.
-3. **Connect to the VNA**
+4. **Connect to the VNA**
+    - Refresh the list of detected GPIB devices. Search for the VNA instrument and click 'Connect'.
+    - The IDN of the selected device will be requested once 'Connect' is clicked. The Response is displayed in the terminal. If the right device responded / the IDN fits the equipment, proceed.
+5. **Set up the Chamber**
+    - Attach the BL-Touch to the ProbeHead of the chamber and plug the wiring in the socket above the read-Z-leadscrew. If present, detach any AUT that is screwed to the base-plate of the chamber.
+    - Navigate to 'Chamber Control'-tab in the app and issue "Home All Axis".
+    - If necessary after homing, issue a 'Z-Tilt-Compensation' to adjust the angle of the base-plate according to the probehead.
+6. **Mount Antennas**
+    - Detach the BL-Touch sensor from the ProbeHead and attach the ProbeAntenna. 
+      - When connecting the 185 cable to the Probeantenna, make sure that the metal wrench part above the nut is facing to the front (flat sides facing to left and right of the chamber) so that the wire-rotation-fixture can be mounted later.
+      - After the 185 cable is fixed with the adequate torque wrench, clip the Probeantenna to the Probeheas and fix it with fours M4 screws on each corner (Screws are located at the back of the chamber at shoulder-height).
+      - Put in the Wire-Rotation-fixture to prevent the 185 cable to rotate in antenna adapter during antenna-movement.
+    - Screw the AUT that should be measured to the base-plate of the chamber. If necessary move the plate further down via the PythonChamberApp-'Chamber control'-tab to make sure the AUT is not touching the ProbeAntenna.
+    - Connect Port 2 of the VNA to the AUT cable - the wire that ends at about 1m height on the back of the chamber. Use adequate torque wrench! Hang the wire in the cable tie so that there is no force/moment acting on the screwed connection of the wiring.
+    - Connect Port 1 of the VNA to the ProbeAntenna cable - the wire that ends at the top of the chamber. Use adequate torque wrench! Losen one side of the VNA cable fixture on the top of the chamber, put the cable in and slightly fix the VNA wire inbetween both halfs so that behind the fixture, the cable is loose and 'can move freely'.
+7. **Set up the AutoMeasurement**
+    - Navigate to AutoMeasurement tab in the app.
+    - First Antenna Info: Put in antenna heights and click 'Set Zero Z-coor from antenna-dimensions'.
+    - Click 'Go Over Zero'
+    - The Antennas should be aligned with 10mm distance in Z-direction.
+    - Navigate to 'Chamber control'-tab and use manual chamber control to align the axis of AUT and probeantenna as exact as possible (XY-plane). 
+    - Carefully bring the antennas closer to each other in small steps until they virtually touch each other. (DO NOT PRESS ANTENNAS ON EACH OTHER!)
+    - Navigate back to 'AutoMeasurement'-tab and click 'Set current as Zero'. This Zero-position will be the root coordinate for the measurement-mesh [0,0,0].
+    - Second Mesh Configuration: Set the desired mesh-size and density for the measurement-mesh.
+    - Third VNA Configuration: Set the desired VNA-parameters for the measurement.
+    - Fourth Data Management: Set the desired filename for the measurement data to be saved. It will be located in the 'results' directory.
+8. **Start the AutoMeasurement Process**
+    - Attach all enclosure panels to the chamber to bring all absorbers in place.
+    - Click 'Start AutoMeasurement' in the 'AutoMeasurement'-tab.
+    - The app will now start the measurement process and move the antennas in the defined mesh.
+    - The process can be stopped at any time by clicking 'Stop AutoMeasurement'.
+    - The progress of the measurement is displayed in the upper middle of the 'Auto Measurement'-tab
+9. **Analyse the Measurement Data**
+    - The 'Display Measurement'-tab allows to review measured data from saved files in 'result' directory.
+    - Review section-views in XY, XZ, YZ-plane for each frequency point measured.
 
 ## Release History
 
