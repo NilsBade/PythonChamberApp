@@ -95,8 +95,8 @@ class ProcessController:
         self.gui_mainWindow.ui_vna_control_window.visa_query_button.pressed.connect(self.vna_query_button_handler)
 
         # setup AutoMeasurement
-        self.zero_pos_x = self.__x_max_coor / 2
-        self.zero_pos_y = self.__y_max_coor / 2
+        self.zero_pos_x = 258.0     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
+        self.zero_pos_y = 225.5     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
         self.zero_pos_z = None
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
@@ -450,8 +450,8 @@ class ProcessController:
         if response['status_code'] == 204:
             position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
             update_callback.emit("Requests Movement to Front")
-            chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=50.0)
-            position_update_callback.emit({'abs_x': 258.0, 'abs_y': 0.0, 'abs_z': 100.0})
+            chamber.chamber_jog_abs(x=self.zero_pos_x, y=self.zero_pos_y, z=150, speed=75.0)
+            position_update_callback.emit({'abs_x': self.zero_pos_x, 'abs_y': self.zero_pos_y, 'abs_z': 150.0})
             update_callback.emit("Manual chamber control enabled")
             progress_callback.emit(response)
         else:
@@ -828,8 +828,8 @@ class ProcessController:
         update_callback.emit("Request Z-Tilt-Adjustment...")
         chamber.chamber_z_tilt_with_flag()
         update_callback.emit("Adjustment completed. Moving to front...")
-        chamber.chamber_jog_abs(x=258.0, y=0.0, z=100, speed=75.0)
-        position_update_callback.emit({'abs_x': 258.0, 'abs_y': 0.0, 'abs_z': 100.0})
+        chamber.chamber_jog_abs(x=self.zero_pos_x, y=self.zero_pos_y, z=150, speed=75.0)
+        position_update_callback.emit({'abs_x': self.zero_pos_x, 'abs_y': self.zero_pos_y, 'abs_z': 150.0})
 
         return
 
