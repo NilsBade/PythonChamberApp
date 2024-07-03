@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout, \
     QFrame, QComboBox, QStackedWidget, QProgressBar, QCheckBox
 from PyQt6.QtCore import QCoreApplication, Qt
-from datetime import datetime
+from datetime import timedelta
 from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
 import pyqtgraph as pg
 import numpy as np
@@ -133,7 +133,7 @@ class UI_auto_measurement_window(QWidget):
 
         third_column = QVBoxLayout()
         auto_measurement_progress_widget = self.__init_auto_measurement_progress_widget()
-        auto_measurement_progress_widget.setFixedHeight(150)
+        auto_measurement_progress_widget.setFixedHeight(170)
         view_widget = self.__init_3d_graphic()
         self.view_widget_status_label = QLabel("Mesh-display initialized! Display updates once 'Zero Position' defined...")
         view_widget_status_label_holder = QWidget()
@@ -487,10 +487,12 @@ class UI_auto_measurement_window(QWidget):
         curr_layer_label = QLabel("Current Layer:")
         curr_point_total_label = QLabel("Total Progress Point-wise:")
         curr_status_label = QLabel("Status:")
+        time_to_go_label = QLabel("Time to go:")
         frame_layout.addWidget(curr_point_in_layer_label,1,0,1,1, alignment=Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(curr_layer_label,2,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(curr_point_total_label,3,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(curr_status_label,4,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
+        frame_layout.addWidget(time_to_go_label,5,0,1,1,alignment=Qt.AlignmentFlag.AlignLeft)
 
         self.meas_progress_points_in_layer = QLabel("0")
         self.meas_progress_current_point_in_layer = QLabel("0")
@@ -502,6 +504,7 @@ class UI_auto_measurement_window(QWidget):
         self.meas_progress_total_point_current = QLabel("0")
         self.meas_progress_total_point_progressBar = QProgressBar()
         self.meas_progress_status_label = QLabel("Not started...")
+        self.meas_progress_time_to_go = QLabel("00:00:00")
         self.auto_measurement_stop_button = QPushButton("Stop Measurement")
 
         backslash1 = QLabel("/")
@@ -525,6 +528,8 @@ class UI_auto_measurement_window(QWidget):
 
         frame_layout.addWidget(self.meas_progress_status_label,4,1,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
         frame_layout.addWidget(self.auto_measurement_stop_button,4,4,1,2,alignment=Qt.AlignmentFlag.AlignCenter)
+
+        frame_layout.addWidget(self.meas_progress_time_to_go,5,1,1,3,alignment=Qt.AlignmentFlag.AlignLeft)
 
         return frame_widget
 
@@ -804,7 +809,9 @@ class UI_auto_measurement_window(QWidget):
 
             'current_point_number_in_layer': int,
 
-            'status_flag': string (optional)
+            'status_flag': string (optional),
+
+            'time_to_go': float >> estimated time in seconds
           }
 
         :param state_info: dictionary
@@ -815,6 +822,7 @@ class UI_auto_measurement_window(QWidget):
         current_layer_number = state_info['current_layer_number']
         total_points_in_measurement = state_info['total_points_in_measurement']
         total_current_point_number = state_info['total_current_point_number']
+        time_to_go = state_info['time_to_go']
 
         self.meas_progress_points_in_layer.setText(str(num_of_points_in_current_layer))
         self.meas_progress_current_point_in_layer.setText(str(current_point_number_in_layer))
@@ -833,6 +841,8 @@ class UI_auto_measurement_window(QWidget):
         self.meas_progress_total_point_progressBar.setMinimum(0)
         self.meas_progress_total_point_progressBar.setMaximum(total_points_in_measurement)
         self.meas_progress_total_point_progressBar.setValue(total_current_point_number)
+
+        self.meas_progress_time_to_go.setText(str(timedelta(seconds=time_to_go)))
 
         if 'status_flag' in state_info:
             self.meas_progress_status_label.setText(state_info['status_flag'])

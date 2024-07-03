@@ -79,6 +79,9 @@ class AutoMeasurement(QRunnable):
     json_S12: dict = None
     json_S22: dict = None
 
+    average_time_per_point = 0  # unit [s], calculated from all points that were measured so far
+
+
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, zero_position: tuple[float, ...],
                  file_location: str, file_type_json: bool = True, file_type_json_readable: bool = True):
@@ -207,11 +210,13 @@ class AutoMeasurement(QRunnable):
             'num_of_layers_in_measurement': num_of_layers,
             'num_of_points_in_current_layer': num_of_points_per_layer,
             'status_flag': "Measurement running ...",
+            'time_to_go': 'N/A',    # time to go in [seconds] as float
         }
 
         layer_count = 0
         point_in_layer_count = 0
         total_point_count = 0
+
         for z_coor in self.mesh_z_vector:
             layer_count += 1
             # measure one layer
@@ -272,6 +277,13 @@ class AutoMeasurement(QRunnable):
                             counter += 1
                         self.signals.update.emit("All data written to txt-file(s)!")
 
+                    # Timekeeping for average time per point
+                    if total_point_count == 1:
+                        start_timestamp = datetime.now()
+                        progress_dict['time_to_go'] = 0
+                    else:
+                        self.average_time_per_point = (datetime.now() - start_timestamp).total_seconds()/total_point_count
+                        progress_dict['time_to_go'] = round(self.average_time_per_point * (total_num_of_points - total_point_count))
 
 
                     # give progression update
