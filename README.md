@@ -213,6 +213,16 @@ The only part that is meant to be frequently attached and detached from the cham
 ### SKRat Wiring
 ![Skrat-Wiring](figures/BTT-SKRat-Wiring.png)
 
+## Step-by-Step Guide to Run a Measurement
+1. **Start the PythonChamberApp**
+    - Run the runner.py script.
+    - The main window of the app should appear.
+2. **Connect to the Chamber**
+    - Enter the IP address of the chamber in the 'Config Window'.
+    - Click 'Connect'.
+    - The connection status should change to 'Connected' and the send commands and received messages are displayed in the terminal window.
+3. **Connect to the VNA**
+
 ## Release History
 
 * 0.1.0
