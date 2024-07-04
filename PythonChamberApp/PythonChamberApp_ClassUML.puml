@@ -241,6 +241,7 @@ package process_controller <<Frame>>  {
 
 package user_interface <<Frame>> {
     class VisualizerPyqtGraph <<Static Methods>>{
+    {abstract}@File: ui_3d_visualizer.py
         {static} + generate_3d_chamber_print_bed_obj(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float): opengl.GLMeshItem
         {static} + generate_3d_chamber_workspace(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float): opengl.GLViewWidget
         {static} + generate_3d_antenna_object(antenna_height: float, antenna_width: float, point_up: bool): opengl.GLLinePlotItem
@@ -251,6 +252,7 @@ package user_interface <<Frame>> {
     }
 
     class UI_auto_measurement_window {
+    {abstract}@File: ui_auto_measurement.py
         - chamber_x_max_coor: float
         - chamber_y_max_coor: float
         - chamber_z_max_coor: float
@@ -347,22 +349,156 @@ package user_interface <<Frame>> {
     }
 
     class UI_chamber_control_window {
-
+    {abstract}@File: ui_chamber_control_window.py
+        + home_all_axis_button: QPushButton
+        + z_tilt_adjust_button: QPushButton
+        + button_move_x_inc: QPushButton
+        + button_move_x_dec: QPushButton
+        + button_move_y_inc: QPushButton
+        + button_move_y_dec: QPushButton
+        + button_move_z_inc: QPushButton
+        + button_move_z_dec: QPushButton
+        + button_move_home_xy: QPushButton
+        + button_move_home_z: QPushButton
+        + button_move_stepsize_input_line: QLineEdit
+        - go_abs_coor_x_editfield: QLineEdit
+        - go_abs_coor_y_editfield: QLineEdit
+        - go_abs_coor_z_editfield: QLineEdit
+        + go_abs_coor_go_button: QPushButton
+        - live_x_coor_label: QLabel
+        - live_y_coor_label: QLabel
+        - live_z_coor_label: QLabel
+        - position_graph_bed_object: gl.GLMeshItem
+        - position_graph_head_object: gl.GLScatterPlotItem
+        - chamber_workspace_plot: gl.GLLinePlotItem
+        - position_graph_x_max_coor: float
+        - position_graph_y_max_coor: float
+        - position_graph_z_max_coor: float
+        - position_graph_z_head_bed_offset: float
+        __
+        'methods'
+        + __init__(position_graph_x_max_coor: float, position_graph_y_max_coor: float, position_graph_z_max_coor: float, chamber_z_head_bed_offset: float)
+        - __init_button_navigation_widget()
+        - __init_live_position_widget()
+        - __init_position_graph_widget()
+        + get_go_abs_coor_inputs(): dict
+        + get_button_move_stepsize(): float
+        + get_button_move_jogspeed(): float
+        + append_message2console(message: str)
+        + update_live_coor_display(x: float, y: float, z: float)
     }
 
     class UI_config_window {
-
+    {abstract}@File: ui_config_window.py
+        - chamber_ip_line_edit: QLineEdit
+        - chamber_api_line_edit: QLineEdit
+        - chamber_connection_status_label: QLabel
+        + chamber_connect_button: QPushButton
+        + vna_list_ressources_button: QPushButton
+        - vna_visa_name_comboBox: QComboBox
+        - vna_connection_status_label: QLabel
+        + vna_connect_button: QPushButton
+        - vna_keysight_checkbox: QCheckBox
+        - config_console_textbox: QTextEdit
+        __
+        'methods'
+        + __init__()
+        - __init_chamber_connection_block()
+        - __init_vna_connection_block()
+        - __init_console_field()
+        + append_message2console(message: str)
+        + clear_console()
+        + get_chamber_connect_data(): dict
+        + set_chamber_connected(state: bool)
+        + get_vna_visa_address(): String
+        + update_vna_visa_address_dropdown(dev_list: list[String])
+        + set_vna_connected(state: bool)
+        + get_use_keysight(): bool
     }
 
     class UI_display_measurement_window {
-
+    {abstract}@File: ui_display_measurement_window.py
+        - frequency_vector: ndarray
+        - x_vector: ndarray
+        - y_vector: ndarray
+        - z_vector: ndarray
+        - x_zero_pos: float
+        - y_zero_pos: float
+        - z_zero_pos: float
+        - file_select_comboBox: QComboBox
+        file_select_refresh_button: QPushButton
+        file_select_read_button: QPushButton
+        - data_details_textbox: QTextEdit
+        parameter_select_comboBox: QComboBox
+        frequency_select_slider: QSlider
+        - frequency_select_lineEdit: QLineEdit
+        coor_AUT_checkBox: QCheckBox
+        xz_plot_y_select_slider: QSlider
+        - xz_plot_y_select_lineEdit: QLineEdit
+        yz_plot_x_select_slider: QSlider
+        - yz_plot_x_select_lineEdit: QLineEdit
+        xy_plot_z_select_slider: QSlider
+        - xy_plot_z_select_lineEdit: QLineEdit
+        - xz_canvas: FigureCanvas
+        - yz_canvas: FigureCanvas
+        - xy_canvas: FigureCanvas
+        - xz_figure: Figure
+        - yz_figure: Figure
+        - xy_figure: Figure
+        - xz_plot: QuadMesh
+        - xz_colorbar: Colorbar
+        - xz_axes: Axes
+        - yz_plot: QuadMesh
+        - yz_colorbar: Colorbar
+        - yz_axes: Axes
+        - xy_plot: QuadMesh
+        - xy_colorbar: Colorbar
+        - xy_axes: Axes
+        __
+        'methods'
+        + __init__()
+        - __init_data_selection_widget()
+        - __init_data_details_widget()
+        - __init_data_plot_widget()
+        - __gen_data_details_string(measurement_config: dict): String
+        - __update_frequency_lineEdit()
+        - __update_x_select_lineEdit()
+        - __update_y_select_lineEdit()
+        - __update_z_select_lineEdit()
+        {static} - __set_slider_values_noSignals(slider_obj: QSlider, val_vec: ndarray)
+        + enable_plot_interactions()
+        + disable_plot_interactions()
+        + get_selected_measurement_file(): String
+        + set_selectable_measurement_files(file_names: list[String])
+        + set_measurement_details(measurement_config: dict)
+        + get_selected_parameter(): String
+        + set_selectable_parameters(parameters: list[str])
+        + get_selected_frequency(): float
+        + get_selected_frequency_by_idx(): int
+        + set_selectable_frequency(f_vec: np.ndarray)
+        + get_displ_aut_coordinates(): bool
+        + get_selected_x_coordinate(): float
+        + get_selected_x_coordinate_by_idx(): int
+        + set_selectable_x_coordinates(x_vec: np.ndarray)
+        + get_selected_y_coordinate(): float
+        + get_selected_y_coordinate_by_idx(): int
+        + set_selectable_y_coordinates(y_vec: np.ndarray)
+        + get_selected_z_coordinate(): float
+        + get_selected_z_coordinate_by_idx(): int
+        + set_selectable_z_coordinates(z_vec: np.ndarray)
+        + update_xz_plane_plot(data_array: np.ndarray)
+        + update_yz_plane_plot(data_array: np.ndarray)
+        + update_xy_plane_plot(data_array: np.ndarray)
+        {static} + gen_meshgrid_from_meas_points(x_vec: np.ndarray, y_vec: np.ndarray): ndarray, ndarray
     }
 
     class MainWindow {
+    {abstract}@File: ui_mainwindow.py
 
     }
 
     class UI_vna_control_window {
+    {abstract}@File: ui_vna_control_window.py
 
     }
 }
@@ -372,5 +508,7 @@ NetworkDevice <|-- ChamberNetworkCommands
 Worker o-- WorkerSignals
 
 
-
+hide members
+show methods
+'hide empty members
 @enduml
