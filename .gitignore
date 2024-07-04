@@ -232,6 +232,6 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # Python Chamber App specific -> no results pushed to git
-.results/*
-.results/script_sample_data.json
+results/*
+results/script_sample_data.json
 
