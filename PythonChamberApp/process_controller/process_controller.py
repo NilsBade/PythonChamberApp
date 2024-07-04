@@ -35,7 +35,7 @@ class ProcessController:
     __x_max_coor: float = 510.0  # Measured with V1 BL Touch sensor mount, 30.05.2024
     __y_max_coor: float = 454.0
     __z_max_coor: float = 908.0
-    __z_head_bed_offset = 49.0
+    __z_head_bed_offset: float = 49.0
 
     # Auto measurement data
     zero_pos_x: float = None

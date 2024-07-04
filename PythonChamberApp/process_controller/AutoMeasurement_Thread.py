@@ -59,6 +59,7 @@ class AutoMeasurement(QRunnable):
 
     # Properties
     chamber: ChamberNetworkCommands = None
+    signals: AutoMeasurementSignals = None
     _is_running: bool = None
     vna: E8361RemoteGPIB = None
     measurement_file_S11 = None
@@ -68,8 +69,8 @@ class AutoMeasurement(QRunnable):
     mesh_x_vector: tuple[float, ...] = None
     mesh_y_vector: tuple[float, ...] = None
     mesh_z_vector: tuple[float, ...] = None
-    chamber_mov_speed = 0  # unit [mm/s], see jog command doc-string!
-    zero_position = [0,0,0]  # zero position must be known to write relative antenna coordinates to meas file
+    chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
+    zero_position: tuple[float] = [0,0,0]  # zero position must be known to write relative antenna coordinates to meas file
 
     store_as_json: bool = None
     measurement_file_json = None
@@ -79,7 +80,7 @@ class AutoMeasurement(QRunnable):
     json_S12: dict = None
     json_S22: dict = None
 
-    average_time_per_point = 0  # unit [s], calculated from all points that were measured so far
+    average_time_per_point: float = 0  # unit [s], calculated from all points that were measured so far
 
 
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],

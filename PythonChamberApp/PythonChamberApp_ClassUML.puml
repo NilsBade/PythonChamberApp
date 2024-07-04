@@ -1,0 +1,514 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+'Python Modules'
+package Python_Modules {
+    class PyQt6 << (M, yellow) >>
+    hide PyQt6 members
+    class PyQtGraph << (M, yellow) >>
+    hide PyQtGraph members
+    class PyOpenGL << (M, yellow) >>
+    hide PyOpenGL members
+    class matplotlib << (M, yellow) >>
+    hide matplotlib members
+    class requests << (M, yellow) >>
+    hide requests members
+    class numpy << (M, yellow) >>
+    hide numpy members
+    class pyvisa << (M, yellow) >>
+    hide pyvisa members
+}
+
+'Grouping' || 'Class definitions'
+package Hardware_Abstraction <<Frame>> {
+    class NetworkDevice {
+        {abstract}@File: PythonChamberApp/connection_handler/network_device.py
+        - __ip_address: String
+        - __api_key: String
+        __
+        'methods'
+        + set_ip_address(new_ip: String): void
+        + set_api_key(new_key: String): void
+        + get_ip_address(): String
+        + get_api_key(): String
+        + check_if_reachable(): requests.Response
+    }
+
+    class ChamberNetworkCommands {
+        {abstract}@File: PythonChamberApp/chamber_net_interface/chamber_net_interface.py
+        ...
+        __
+        'methods'
+        + chamber_connect_serial() : dict
+        + chamber_disconnect_serial() : dict
+        - __chamber_jog_with_flag(x: float, y: float, z: float, speed: float, abs_coordinate: bool) : dict
+        + chamber_jog_abs(x: float, y: float, z: float, speed: float) : dict
+        + chamber_jog_rel(x: float, y: float, z: float, speed: float) : dict
+        + chamber_home_with_flag(axis: String) : dict
+        + chamber_system_restart(): dict
+        + chamber_z_tilt_with_flag(): dict
+        + chamber_isflagset(): bool
+        + chamber_set_flag(): dict
+        + chamber_reset_flag(): dict
+    }
+
+    class E8361RemoteGPIB {
+        {abstract}@File: PythonChamberApp/vna_net_interface/vna_net_interface.py
+        - resource_manager: pyvisa.ResourceManager
+        - pna_device: pyvisa.Resource
+        - running_measurements: list
+        __
+        'methods'
+        + list_resources(): tuple(String)
+        + list_resources_all(): tuple(String)
+        + connect_pna(resource_name: String): bool
+        + disconnect_pna()
+        + pna_read_idn(): String
+        + pna_preset(): bool
+        + pna_add_measurement(meas_name: String, parameter: list[String]): int <<Don't Use>>
+        - get_idx_of_meas(meas_name: String): int
+        - pna_set_freq_start(meas_name: String, freq_start: float): bool
+        - pna_set_freq_stop(meas_name: String, freq_stop: float): bool
+        - pna_set_IF_BW(meas_name: String, if_bw: float): bool
+        - pna_set_sweep_num_of_points(meas_name: String, num_of_points: int): bool
+        - pna_set_output_power(meas_name: String, power_dbm: float): bool
+        - pna_is_busy(): bool
+        - pna_get_x_axis(meas_name: String) : list
+        + pna_read_meas_data(meas_name: String, parameter: String) : list[list[float]]
+        - pna_set_trigger_manual(): bool
+        - pna_trigger_measurement(meas_name: String): bool
+        - pna_set_trigger_continuous(): bool
+        - pna_set_average_number(meas_name: String, avg_number: int): bool
+        - pna_disable_average(meas_name: String): bool
+        + pna_add_measurement_detailed(meas_name: String, parameter: list[String], freq_start: float, freq_stop: float,
+                                             if_bw: float, sweep_num_points: int, output_power: float, trigger_manual: bool, average_number: int): bool
+        + pna_write_custom_string(visa_str: String)
+        + pna_read_custom_string(visa_str: String): pyvisa.Response
+        + pna_query_custom_string(visa_str: String): pyvisa.Response
+    }
+
+}
+
+package process_controller <<Frame>>  {
+    class AutoMeasurementSignals {
+        {abstract}@File: AutoMeasurement_Thread.py
+        + finished: pyqtSignal(dict)
+        + error: pyqtSignal(dict)
+        + result: pyqtSignal()
+        + progress: pyqtSignal(dict)
+        + update: pyqtSignal(String)
+    }
+
+    class AutoMeasurement {
+        {abstract}@File: AutoMeasurement_Thread.py
+        - chamber: ChamberNetworkCommands
+        - signals: AutoMeasurementSignals
+        - _is_running: bool
+        - vna: E8361RemoteGPIB
+        - mesh_x_vector: tuple[float, ...]
+        - mesh_y_vector: tuple[float, ...]
+        - mesh_z_vector: tuple[float, ...]
+        - chamber_mov_speed: float
+        - zero_position: tuple[float]
+        - store_as_json: bool
+        - measurement_file_json
+        - json_format_readable: bool
+        - json_data_storage: dict
+        - json_S11: dict
+        - json_S12: dict
+        - json_S22: dict
+        - average_time_per_point: float
+        __
+        'methods'
+        + __init__(chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
+                 y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, zero_position: tuple[float, ...],
+                 file_location: String, file_type_json: bool, file_type_json_readable: bool)
+        - run()
+        + stop()
+        - close_all_files()
+    }
+
+    class WorkerSignals {
+        {abstract}@File: multithread_worker.py
+        + finished: pyqtSignal()
+        + error: pyqtSignal(tuple)
+        + result: pyqtSignal(object)
+        + position_update: pyqtSignal(dict)
+        + progress: pyqtSignal(dict)
+        + update: pyqtSignal(String)
+    }
+
+    class Worker {
+        {abstract}@File: multithread_worker.py
+        __
+        'methods'
+        + __init__(callback, *args, **kwargs)
+        - run()
+    }
+
+    class ProcessController {
+        {abstract}@File: process_controller.py
+        - chamber: ChamberNetworkCommands
+        - vna: E8361RemoteGPIB
+        - gui_mainWindow: user_interface.MainWindow
+        - gui_app: QApplication
+        - threadpool: QThreadPool
+        - auto_measurement_process: AutoMeasurement
+        - ui_chamber_control_process: Worker
+        - ui_vna_control_process: Worker
+        .. Position Logging ..
+        - __x_live: float
+        - __y_live: float
+        - __z_live: float
+        .. Hardcoded Config ..
+        - __x_max_coor: float
+        - __y_max_coor: float
+        - __z_max_coor: float
+        - __z_head_bed_offset
+        .. Auto Measurement Data ..
+        - zero_pos_x: float
+        - zero_pos_y: float
+        - zero_pos_z: float
+        - read_in_measurement_data_buffer: dict
+        __
+        'methods'
+        + __init__()
+
+        .. Callbacks connected to  UI objects ..
+        + chamber_connect_button_handler_threaded()
+        + vna_list_resources_button_handler()
+        + vna_connect_button_handler()
+
+        + chamber_control_home_all_button_handler()
+        + chamber_control_home_xy_button_handler()
+        + chamber_control_home_z_button_handler()
+        + chamber_control_x_inc_button_handler()
+        + chamber_control_x_dec_button_handler()
+        + chamber_control_y_inc_button_handler()
+        + chamber_control_y_dec_button_handler()
+        + chamber_control_z_inc_button_handler()
+        + chamber_control_z_dec_button_handler()
+        + chamber_control_go_to_button_handler()
+        + chamber_control_z_tilt_button_handler()
+
+        + vna_write_button_handler()
+        + vna_read_button_handler()
+        + vna_query_button_handler()
+
+        + auto_measurement_start_handler()
+        + auto_measurement_goZero_button_handler()
+        + auto_measurement_setZero_button_handler()
+        + auto_measurement_set_z_zero_from_antenna_dimensions_button_handler()
+        + auto_measurement_terminate_thread_handler()
+
+        + display_measurement_refresh_file_dropdown()
+        + display_measurement_update_xz_plot_callback()
+        + display_measurement_update_yz_plot_callback()
+        + display_measurement_update_xy_plot_callback()
+
+        .. Routines and signal-handlers ..
+        - chamber_connect_routine(ip_address: String, api_key: String, update_callback, progress_callback, position_update_callback)
+        - chamber_connect_result_handler(new_chamber: ChamberNetworkCommands)
+        - vna_connect_routine(visa_address: String, use_keysight_flag: bool, update_callback, progress_callback, position_update_callback)
+        - vna_connect_result_handler(new_vna: E8361RemoteGPIB)
+
+        - chamber_control_thread_finished_handler()
+        - chamber_control_home_all_progress_handler(progress: dict)
+        - chamber_control_home_all_routine(chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback)
+        - __accept_home_dialog()
+        - chamber_control_home_xy_routine(chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback)
+        - chamber_control_home_z_routine(chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback)
+        - chamber_control_jog_one_axis_rel_routine(chamber: ChamberNetworkCommands, axis: str, jogspeed: float, rel_coor: float,
+        update_callback, progress_callback, position_update_callback)
+        - chamber_control_jog_to_abs_coor_routine(chamber: ChamberNetworkCommands, x_coor: float, y_coor: float, z_coor: float, jogspeed: float,
+        update_callback, progress_callback, position_update_callback)
+        - chamber_control_z_tilt_routine(chamber: ChamberNetworkCommands, update_callback, progress_callback, position_update_callback)
+
+        - vna_read_write_routine(vna_function, visa_str: str, update_callback, progress_callback, position_update_callback)
+        - vna_read_write_routine_finished_handler()
+
+        - auto_measurement_finished_handler(finished_info: dict)
+        - __accept_stop_meas_dialog(): bool
+
+
+        .. Internal methods ..
+        - chamber_control_update_live_position(pos_update_info: dict)
+        - check_movement_valid(self, pos_update_info: dict): bool
+        - auto_measurement_check_move_boundary(x_vec: tuple[float], y_vec: tuple[float], z_vec: tuple[float]): bool
+        - display_measurement_read_file()
+    }
+}
+
+package user_interface <<Frame>> {
+    class VisualizerPyqtGraph <<Static Methods>>{
+    {abstract}@File: ui_3d_visualizer.py
+        {static} + generate_3d_chamber_print_bed_obj(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float): opengl.GLMeshItem
+        {static} + generate_3d_chamber_workspace(chamber_max_x: float, chamber_max_y: float, chamber_max_z: float, chamber_z_head_bed_offset: float): opengl.GLViewWidget
+        {static} + generate_3d_antenna_object(antenna_height: float, antenna_width: float, point_up: bool): opengl.GLLinePlotItem
+        {static} + generate_3d_antenna_object_vertices(antenna_height: float, antenna_width: float, point_up: bool): numpy.array
+        {static} + generate_3d_mesh_scatter_plot(x_vec: np.array, y_vec: np.array, z_vec: np.array): opengl.GLScatterPlotItem
+        {static} + generate_point_list(x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...]): list[list[float]]
+        {static} + generate_outline_point_list(x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...]): list[list[float]]
+    }
+
+    class UI_auto_measurement_window {
+    {abstract}@File: ui_auto_measurement.py
+        - chamber_x_max_coor: float
+        - chamber_y_max_coor: float
+        - chamber_z_max_coor: float
+        - chamber_z_head_bed_offset: float
+        - current_zero_x: float
+        - current_zero_y: float
+        - current_zero_z: float
+        - probe_antenna_length_lineEdit: QLineEdit
+        - aut_height_lineEdit: QLineEdit
+        + auto_measurement_jogSpeed_lineEdit: QLineEdit
+        + button_set_z_zero_from_antennas: QPushButton
+        + button_move_to_zero: QPushButton
+        + button_set_current_as_zero: QPushButton
+        - label_show_current_position: QLabel
+        - label_show_current_zero: QLabel
+        - stacked_mesh_config_widget: QStackedWidget
+        - mesh_cubic_x_length_lineEdit: QLineEdit
+        - mesh_cubic_x_max_length_label: QLabel
+        - mesh_cubic_x_num_of_steps_lineEdit: QLineEdit
+        - mesh_cubic_y_length_lineEdit: QLineEdit
+        - mesh_cubic_y_max_length_label: QLabel
+        - mesh_cubic_y_num_of_steps_lineEdit: QLineEdit
+        - mesh_cubic_z_start_lineEdit: QLineEdit
+        - mesh_cubic_z_stop_lineEdit: QLineEdit
+        - mesh_cubic_z_max_distance_label: QLabel
+        - mesh_cubic_z_num_of_steps_lineEdit: QLineEdit
+        - vna_S11_checkbox: QCheckBox
+        - vna_S12_checkbox: QCheckBox
+        - vna_S22_checkbox: QCheckBox
+        - vna_freq_start_lineEdit: QLineEdit
+        - vna_freq_stop_lineEdit: QLineEdit
+        - vna_freq_num_steps_lineEdit: QLineEdit
+        - vna_if_bandwidth_lineEdit: QLineEdit
+        - vna_output_power_lineEdit: QLineEdit
+        - vna_enable_average_checkbox: QCheckBox
+        - vna_average_number_lineEdit: QLineEdit
+        - filename_lineEdit: QLineEdit
+        - file_type_json_checkbox: QCheckBox
+        - file_json_readable_checkbox: QCheckBox
+        + auto_measurement_start_button: QPushButton
+        + auto_measurement_stop_button = QPushButton
+        - meas_progress_points_in_layer: QLabel
+        - meas_progress_current_point_in_layer: QLabel
+        - meas_progress_in_layer_progressBar: QProgressBar
+        - meas_progress_layer_max_count: QLabel
+        - meas_progress_layer_current: QLabel
+        - meas_progress_layer_progressBar: QProgressBar
+        - meas_progress_total_point_max_count: QLabel
+        - meas_progress_total_point_current: QLabel
+        - meas_progress_total_point_progressBar: QProgressBar
+        - meas_progress_status_label: QLabel
+        - graphic_bed_obj: gl.GLMeshItem
+        - graphic_measurement_mesh_obj: gl.GLScatterPlotItem
+        - graphic_probe_antenna_obj: gl.GLLinePlotItem
+        - __probe_antenna_obj_width: float
+        - graphic_aut_obj: gl.GLLinePlotItem
+        - __aut_obj_width: float
+        - plot_2d_layout_widget: pg.GraphicsLayoutWidget
+        - plot_2d_xy: pg.PlotItem
+        - plot_xy_zero_cos: pg.PlotDataItem
+        - plot_xy_mesh_points: pg.PlotDataItem
+        - plot_2d_yz: pg.PlotItem
+        - plot_yz_zero_cos: pg.PlotDataItem
+        - plot_yz_mesh_points: pg.PlotDataItem
+        __
+        'methods'
+        + __init__(chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float, chamber_z_head_bed_offset: float)
+        - __init_antenna_info_inputs_widget()
+        - __init_measurement_mesh_config_widget()
+        - __switch_mesh_config(index)
+        - __init_vna_measurement_config_widget()
+        - __enable_avg_num_callback()
+        - __init_measurement_data_config_widget()
+        - __file_type_json_callback()
+        - __init_auto_measurement_progress_widget()
+        - __init_3d_graphic()
+        - __init_2d_plots()
+        + update_2d_plots()
+        + update_live_coor_display(new_x: float, new_y: float, new_z: float)
+        + update_current_zero_pos(new_x: float, new_y: float, new_z: float)
+        - update_mesh_max_input_labels()
+        - update_mesh_display()
+        + update_auto_measurement_progress_state(state_info: dict)
+        + get_mesh_cubic_data(): dict
+        + get_probe_antenna_length(): float
+        + get_aut_height(): float
+        + get_auto_measurement_jogspeed(): float
+        + get_new_filename(): String
+        + disable_chamber_move_interaction()
+        + enable_chamber_move_interaction()
+        + get_vna_configuration(): dict
+        + get_is_file_json(): bool
+        + get_is_file_json_readable(): bool
+    }
+
+    class UI_chamber_control_window {
+    {abstract}@File: ui_chamber_control_window.py
+        + home_all_axis_button: QPushButton
+        + z_tilt_adjust_button: QPushButton
+        + button_move_x_inc: QPushButton
+        + button_move_x_dec: QPushButton
+        + button_move_y_inc: QPushButton
+        + button_move_y_dec: QPushButton
+        + button_move_z_inc: QPushButton
+        + button_move_z_dec: QPushButton
+        + button_move_home_xy: QPushButton
+        + button_move_home_z: QPushButton
+        + button_move_stepsize_input_line: QLineEdit
+        - go_abs_coor_x_editfield: QLineEdit
+        - go_abs_coor_y_editfield: QLineEdit
+        - go_abs_coor_z_editfield: QLineEdit
+        + go_abs_coor_go_button: QPushButton
+        - live_x_coor_label: QLabel
+        - live_y_coor_label: QLabel
+        - live_z_coor_label: QLabel
+        - position_graph_bed_object: gl.GLMeshItem
+        - position_graph_head_object: gl.GLScatterPlotItem
+        - chamber_workspace_plot: gl.GLLinePlotItem
+        - position_graph_x_max_coor: float
+        - position_graph_y_max_coor: float
+        - position_graph_z_max_coor: float
+        - position_graph_z_head_bed_offset: float
+        __
+        'methods'
+        + __init__(position_graph_x_max_coor: float, position_graph_y_max_coor: float, position_graph_z_max_coor: float, chamber_z_head_bed_offset: float)
+        - __init_button_navigation_widget()
+        - __init_live_position_widget()
+        - __init_position_graph_widget()
+        + get_go_abs_coor_inputs(): dict
+        + get_button_move_stepsize(): float
+        + get_button_move_jogspeed(): float
+        + append_message2console(message: str)
+        + update_live_coor_display(x: float, y: float, z: float)
+    }
+
+    class UI_config_window {
+    {abstract}@File: ui_config_window.py
+        - chamber_ip_line_edit: QLineEdit
+        - chamber_api_line_edit: QLineEdit
+        - chamber_connection_status_label: QLabel
+        + chamber_connect_button: QPushButton
+        + vna_list_ressources_button: QPushButton
+        - vna_visa_name_comboBox: QComboBox
+        - vna_connection_status_label: QLabel
+        + vna_connect_button: QPushButton
+        - vna_keysight_checkbox: QCheckBox
+        - config_console_textbox: QTextEdit
+        __
+        'methods'
+        + __init__()
+        - __init_chamber_connection_block()
+        - __init_vna_connection_block()
+        - __init_console_field()
+        + append_message2console(message: str)
+        + clear_console()
+        + get_chamber_connect_data(): dict
+        + set_chamber_connected(state: bool)
+        + get_vna_visa_address(): String
+        + update_vna_visa_address_dropdown(dev_list: list[String])
+        + set_vna_connected(state: bool)
+        + get_use_keysight(): bool
+    }
+
+    class UI_display_measurement_window {
+    {abstract}@File: ui_display_measurement_window.py
+        - frequency_vector: ndarray
+        - x_vector: ndarray
+        - y_vector: ndarray
+        - z_vector: ndarray
+        - x_zero_pos: float
+        - y_zero_pos: float
+        - z_zero_pos: float
+        - file_select_comboBox: QComboBox
+        file_select_refresh_button: QPushButton
+        file_select_read_button: QPushButton
+        - data_details_textbox: QTextEdit
+        parameter_select_comboBox: QComboBox
+        frequency_select_slider: QSlider
+        - frequency_select_lineEdit: QLineEdit
+        coor_AUT_checkBox: QCheckBox
+        xz_plot_y_select_slider: QSlider
+        - xz_plot_y_select_lineEdit: QLineEdit
+        yz_plot_x_select_slider: QSlider
+        - yz_plot_x_select_lineEdit: QLineEdit
+        xy_plot_z_select_slider: QSlider
+        - xy_plot_z_select_lineEdit: QLineEdit
+        - xz_canvas: FigureCanvas
+        - yz_canvas: FigureCanvas
+        - xy_canvas: FigureCanvas
+        - xz_figure: Figure
+        - yz_figure: Figure
+        - xy_figure: Figure
+        - xz_plot: QuadMesh
+        - xz_colorbar: Colorbar
+        - xz_axes: Axes
+        - yz_plot: QuadMesh
+        - yz_colorbar: Colorbar
+        - yz_axes: Axes
+        - xy_plot: QuadMesh
+        - xy_colorbar: Colorbar
+        - xy_axes: Axes
+        __
+        'methods'
+        + __init__()
+        - __init_data_selection_widget()
+        - __init_data_details_widget()
+        - __init_data_plot_widget()
+        - __gen_data_details_string(measurement_config: dict): String
+        - __update_frequency_lineEdit()
+        - __update_x_select_lineEdit()
+        - __update_y_select_lineEdit()
+        - __update_z_select_lineEdit()
+        {static} - __set_slider_values_noSignals(slider_obj: QSlider, val_vec: ndarray)
+        + enable_plot_interactions()
+        + disable_plot_interactions()
+        + get_selected_measurement_file(): String
+        + set_selectable_measurement_files(file_names: list[String])
+        + set_measurement_details(measurement_config: dict)
+        + get_selected_parameter(): String
+        + set_selectable_parameters(parameters: list[str])
+        + get_selected_frequency(): float
+        + get_selected_frequency_by_idx(): int
+        + set_selectable_frequency(f_vec: np.ndarray)
+        + get_displ_aut_coordinates(): bool
+        + get_selected_x_coordinate(): float
+        + get_selected_x_coordinate_by_idx(): int
+        + set_selectable_x_coordinates(x_vec: np.ndarray)
+        + get_selected_y_coordinate(): float
+        + get_selected_y_coordinate_by_idx(): int
+        + set_selectable_y_coordinates(y_vec: np.ndarray)
+        + get_selected_z_coordinate(): float
+        + get_selected_z_coordinate_by_idx(): int
+        + set_selectable_z_coordinates(z_vec: np.ndarray)
+        + update_xz_plane_plot(data_array: np.ndarray)
+        + update_yz_plane_plot(data_array: np.ndarray)
+        + update_xy_plane_plot(data_array: np.ndarray)
+        {static} + gen_meshgrid_from_meas_points(x_vec: np.ndarray, y_vec: np.ndarray): ndarray, ndarray
+    }
+
+    class MainWindow {
+    {abstract}@File: ui_mainwindow.py
+
+    }
+
+    class UI_vna_control_window {
+    {abstract}@File: ui_vna_control_window.py
+
+    }
+}
+
+'Class relations'
+NetworkDevice <|-- ChamberNetworkCommands
+Worker o-- WorkerSignals
+
+
+hide members
+show methods
+'hide empty members
+@enduml

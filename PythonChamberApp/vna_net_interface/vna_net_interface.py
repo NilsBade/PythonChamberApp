@@ -264,8 +264,8 @@ class E8361RemoteGPIB:
 
         meas_cnum = self.running_measurements[meas_idx]['cnum']
 
-        self.pna_device.write(f"CALC{cnum}:PAR:SEL '{meas_name}'")
-        response = self.pna_device.query(f"SENS{cnum}:X?")
+        self.pna_device.write(f"CALC{meas_cnum}:PAR:SEL '{meas_name}'")
+        response = self.pna_device.query(f"SENS{meas_cnum}:X?")
         x_axis_stim_points = [float(x) for x in response.split(',')]
         return x_axis_stim_points
 
