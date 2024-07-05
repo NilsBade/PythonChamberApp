@@ -20,12 +20,8 @@ PythonChamberApp/
 ├── .venv/ **[local!]**
 │
 ├── docs/
-│   ├── user_interface.md - not done
-│   ├── connection_handler.md - not done
-│   ├── process_controller.md - not done
-│   ├── figure_generator.md - not done
-│   ├── chamber_net_interface.md - not done
-│   └── vna_net_interface.md - not done
+│   ├── Datasheets RatRig Electronics/...
+│   └── Module Readme's - Not Done
 │
 ├── PythonChamberApp/
 │   ├── runner.py (>> starts the app <<)
@@ -142,19 +138,18 @@ throw errors trying to import the module.
 
 ## Usage example
 
-The PythonChamberApp can be used to probe the near field radiation of an antenna in a 3d volume.
+The PythonChamberApp can be used to probe the near field radiation pattern of an antenna in a 3d volume.
 To evaluate e.g. the focus-performance of a newly designed antenna for our medical radar applications, this setup is 
-capable of automating the measurement process and provides an easy-to-use interface to analyse the measured data 
-afterward. Moreover, being implemented with MatPlotLib, the graphs can be exported easily to be used for documentation 
+capable of automating the measurement process and provides an easy-to-use interface to analyse the measured data. Moreover, being implemented with MatPlotLib, the graphs can be exported easily to be used for documentation 
 or similar. 
 
 ## Development setup
 
-To further develop the app one should read into the folder structure first and look into the object relations to stick
+To further develop the app one should read into the folder structure first and look into the Class/Object-relations to stick
 to the given structure. This improves readability of the whole project as well as extendability for new people 
 that take part in the project.
 
-That being said, look into the [SoftwareStructure](#file-structure).
+That being said, look into the [SoftwareStructure](#file-structure) and UML Diagrams further down in this section.
 The chamberApp will always be started from the runner script. 
 This assures that all paths are configured correctly before importing all modules and subclasses.
 From there the ProcessController class is the core and kind of 'backend' of the app.
@@ -162,20 +157,25 @@ Throughout the init(), a mainwindow-instance is created (ref ./PythonChamberApp/
 itself, again generates all subwindows as objects.
 
 Each subwindow is defined as an own class and owned by the mainwindow.
-Everything that can be managed just in the GUI, is implemented as private function in each window-class.
+Everything that can be managed just by the GUI, is implemented as private function in each window-class.
 In the properties of each subwindow-class all the interactive GUI-objects are listed to give an overview 
-what can be 'used'. These GUI objects are connected to more complex callback functions be the ProcessController 
+what can be 'used'. These GUI objects are connected to more complex callback functions by the ProcessController 
 throughout it's init().
 
 To prevent the app from freezing despite the network communication with other devices, the app uses a threadpool to 
-manage requests to other devices. Every request to the chamber via http has its own thread-slot in the 
-processController, allowing only one request at a time. Communication with the VNA works the same way.
+manage requests to other devices. Every request to the chamber via http has **the same** thread-slot - *ui_chamber_control_process* - in the 
+processController, allowing only one request at a time. 
+
+Communication with the VNA works via a GPIB Cable (General Purpose Instrument Bus).
+The commands are implemented with the pyvisa package and the communication also runs in one assigned 'thread-slot', namely *ui_vna_control_process*.
 
 The AutoMeasurementProcess is implemented as a whole own thread that is run by the app in the background. It organizes
-movements and measurements in alternating fashion and sends feedback to the GUI via signals. Always when another thread
+movements and measurements in alternating fashion and sends feedback to the GUI via signals. 
+
+Always when another thread
 (worker) is started, its signals are connected to GUI functions as Slots beforehand, so that update messages from 
 threads running in the background appear on the GUI without freezing it.
-If you want to develop more functionality that may long computation or file-read-time, please consider to implement 
+If you want to develop more functionality that may need long computation- or file-read-time, please consider to implement 
 methods so that they can be processed by a worker-thread in the background and send their results via signals.
 
 The Display Measurement Window is implemented without multithreading eventhough reading files may take time. 
@@ -183,15 +183,14 @@ This is a meant design decision to give the user some kind of feedback about the
 and to prevent from doing some other stuff in the app, modifying parameters, while properties of the processcontroller
 are directly modified by the other thread in the meantime. (see property 'read_in_measurement_data_buffer': dict)
 
-Even though only the chamber interface has its own unittests implemented so far, programming unittests for new classes 
-and functions is always a good idea! 
-If you want to do it the same way or test the unit-tests of the chamber_net_interface again, you need to install 
-the following package: 
-
-```sh
-make install
-npm test
-```
+To get to know the overall structure with some visualization, there is a simplified class UML diagram for the first Version of the app.
+![Simplified UML Class Diagram](figures/PythonChamberApp_ClassUML_Overview.png)
+If you want to see all the classes with their properties and methods, you can have a look into the [detailed UML diagram](figures/PythonChamberApp_ClassUML_Detailed.png).
+Notation of attributes being private or public is used to show which attributes are meant to be accessed from outside the class directly
+(most times by the ProcessController through the MainWindow-instance) and which are not! Even though Python allows to modify/get most
+attributes of classes despite the object orientated programming, try to stick to the methods and attributes that are 'public'. 
+If you feel like you need to access a private attribute, look for a (public) method that returns the information you need.
+There should always be a simple or more sophisticated get-ter method for each private attribute.
 
 ## Hardware Setup
 By default, the chamber should already be completely wired to the driver board ([SKRat V1.0](/docs/Datasheets%20RatRig%20Electronics/BTT_SKRat_V1.0_User_Manual.pdf))
@@ -266,6 +265,7 @@ The only part that is meant to be frequently attached and detached from the cham
 
 * 0.1.0
   * First Version of App 'released' 17.06.2024
+  * UML diagrams finished that fit this app version ([overview](figures/PythonChamberApp_ClassUML_Overview.png), [deltailed](figures/PythonChamberApp_ClassUML_Detailed.png)) 05.07.2024 
 * 0.0.2
     * ADD: Filestructure!
     * FIX: nothing so far
