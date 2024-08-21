@@ -324,15 +324,19 @@ value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
 ```
 ## Release History
 
-* 0.1.0
+* 1.1
+  * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab [ToDo 21.8.24]
+  * Added Phase-Graphs below the amplitude graphs [ToDo 21.8.24]
+* 1.0
   * First Version of App 'released' 17.06.2024
+  * capable of controlling an automated measurement and display measured amplitude data in split-view graphs
   * UML diagrams finished that fit this app version ([overview](figures/PythonChamberApp_ClassUML_Overview.png), [deltailed](figures/PythonChamberApp_ClassUML_Detailed.png)) 05.07.2024 
-* 0.0.2
+* 0.2
     * ADD: Filestructure!
     * FIX: nothing so far
     * CHANGE: adaptations to readme file with personal data
     * started file structure based on recommendations on [RealPython](https://realpython.com/python-application-layouts/#application-with-internal-packages)
-* 0.0.1
+* 0.1
     * Initialization with templates for .gitignore file and readme
 
 ## Meta
