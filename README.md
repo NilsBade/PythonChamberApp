@@ -293,7 +293,35 @@ Same holds for a potential third S-parameter that would then be stored as ninth 
 Since the overall dict is stored in json format in the txt-file, regular json routines are able to read it back in as dictionary (or similar) easily.  
 One possible implementation of a routine that reads a txt-file and saves the data in a way that enables  fast visualization 
 is the 'display_measurement_read_file()'-method in the [processController](PythonChamberApp/process_controller/process_controller.py).
+The method generates a 6D numpy-array (for faster computation) that is organized as follows
+```
+array indexing: [ Value: (0 - amplitude, 1 - phase), 
+Parameter: (1,2,3) , 
+frequency: (num of freq points), 
+x_coor: (num of x steps), 
+y_coor: (num of y steps), 
+z_coor: (num of z steps) ]
 
+e.g. Select phase of S11, @20GHz, X:10, Y:20, Z:30 leads to
+data_array[1, p, f, x, y, z] with p = find_idx('S11' in measurement_config['parameter']), f = find_idx(20e9 in freq_vector) , ...
+```
+This is very beneficial when displaying split-view-data since the planes can be described very easily by the indices.
+
+e.g. **xz_plane_data_from_array = data_array[0, 0, 0, :, 0, :]**  
+* first - zero selects 'amplitude values'
+* second - zero selects first S-parameter from all that were measured
+* third - zero selects first frequency point that was measured
+* fourth - ':' selects all values along x-axis
+* fifth - '0' selects first y-value from measured volume
+* sixth - ':' selects all values along z-axis
+
+Consequently, 'xz_plane_data_from_array' will be a 2D array that holds the amplitude values at each probed point in a plane with y-axis as normal-vector.
+The values must be found by the index of each coordinate in the corresponding axis-vector.
+In other words, when searching for the amplitude at X: 50, Z: 100, one must search for the index of '50' in the x-axis-vector and the index of '100' in the z-axis-vector.
+Then one can get the value by 
+```
+value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
+```
 ## Release History
 
 * 0.1.0
