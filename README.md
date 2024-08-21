@@ -141,7 +141,7 @@ Otherwise, pyvisa will throw errors trying to import the module.
 The PythonChamberApp can be used to probe the near field radiation pattern of an antenna in a 3D volume.
 To evaluate e.g. the focus-performance of a newly designed antenna for our medical radar applications, this setup is 
 capable of automating the measurement process and provides an easy-to-use interface to analyse the measured data. Moreover, being implemented with MatPlotLib, the graphs can be exported easily to be used for documentation 
-or similar. 
+or similar.
 
 ## Development setup
 
@@ -260,6 +260,39 @@ The only part that is meant to be frequently attached and detached from the cham
 9. **Analyse the Measurement Data**
     - The 'Display Measurement'-tab allows to review measured data from saved files in 'result' directory.
     - Review section-views in XY, XZ, YZ-plane for each frequency point measured.
+
+## Measurement Data Format
+The app stores the measured data in a txt file according to json format. 
+The [Automeasurement Thread](PythonChamberApp/process_controller/AutoMeasurement_Thread.py) defines the thread that controls the measurement and storing of data.
+The data is organized in a dict that itself holds two key-value pairs. Firstly the 'measurement_config' that again holds several key-value pairs that define the measurement that was taken.
+Secondly there is the 'data' key-value pair. The 'data' key holds the measured data as a **list** in the following format:
+ ```
+ {
+ "measurement_config": {
+ ...
+ }
+"data": [  
+[ x-coordinate, y-coordinate, z-coordinate, frequency, Param1-amplitude, Param1-phase (degree), '__may more parameters__' ],  
+[...], ... 
+ ]  
+ 
+ }
+ ```
+The list behind the 'data'-key is a list of lists. Each list in the 'data'-list corresponds to one point in the volume that was probed.
+Thus, each single list holds at least x-coor, y-coor, z-coor, frequency + one time AMPLITUDE & PHASE of one S-parameter. 
+Dependent on the taken measurement it could be that multiple S-parameters were measured at each point in space.
+In that case, for each S-parameter, the list gets 2 entries longer to hold amplitude and phase of another S-parameter.
+Accordingly, the single lists in the 'data'-list can be 6-10 entries long.  
+The number of entries that must be expected, as well as the association of the numbers to a certain S-parameter (S11, S12 or S22), 
+can be concluded from reading the { 'measurement_config': { 'parameter': [list] } }.
+Knowing the 'parameter'-list, one knows that the first two values behind the 'frequency' (the fifth and sixth value) in a single 'data'-list-list
+correspond to the first S-parameter listed in the 'parameter'-list. If there is a second S-parameter listed in the 'parameter'-list,
+one knows that there will be a seventh and eighth entry in each 'data'-list-list, corresponding the amplitude and phase of the second S-parameter.
+Same holds for a potential third S-parameter that would then be stored as ninth and tenth value in each 'data'-list-list.
+
+Since the overall dict is stored in json format in the txt-file, regular json routines are able to read it back in as dictionary (or similar) easily.  
+One possible implementation of a routine that reads a txt-file and saves the data in a way that enables  fast visualization 
+is the 'display_measurement_read_file()'-method in the [processController](PythonChamberApp/process_controller/process_controller.py).
 
 ## Release History
 
