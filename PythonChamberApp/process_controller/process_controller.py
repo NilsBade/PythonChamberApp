@@ -1213,8 +1213,8 @@ class ProcessController:
 
         # generate numpy array in data-buffer for faster computation
         #   >> array indexing: [ Value: (1 - amplitude, 2 - phase), Parameter: (1,2,3) , frequency: (num of freq points), x_coor: (num of x steps), y_coor: (num of y steps), z_coor: (num of z steps) ]
-        #   e.g. Select S11, @20GHz, X:10, Y:20, Z:30 leads to
-        #       >> data_array[2, p, f, x, y, z] with p = find_idx('S11' in measurement_config['parameter']), f = find_idx(20e9 in freq_vector) , ...
+        #   e.g. Select phase of S11, @20GHz, X:10, Y:20, Z:30 leads to
+        #       >> data_array[1, p, f, x, y, z] with p = find_idx('S11' in measurement_config['parameter']), f = find_idx(20e9 in freq_vector) , ...
         data_array = np.zeros([2, self.read_in_measurement_data_buffer['measurement_config']['parameter'].__len__(),
                                 self.read_in_measurement_data_buffer['measurement_config']['sweep_num_points'],
                                 self.read_in_measurement_data_buffer['measurement_config']['mesh_x_steps'],
@@ -1249,8 +1249,8 @@ class ProcessController:
                         # For each list entry write all S parameter values to array in one go (this inner loop)
                         parameter_idx = 0
                         if s11_idx is not None:
-                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[0]]
-                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[1]]
+                            data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[0]]     # amplitude
+                            data_array[1, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s11_idx[1]]     # phase
                             parameter_idx += 1
                         if s12_idx is not None:
                             data_array[0, parameter_idx, f_idx, x_idx, y_idx, z_idx] = value_list[list_idx][s12_idx[0]]
