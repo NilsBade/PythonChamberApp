@@ -52,14 +52,23 @@ class UI_display_measurement_window(QWidget):
     yz_figure: Figure = None
     xy_figure: Figure = None
     xz_plot = None
+    xz_phase_plot = None
     xz_colorbar = None
+    xz_phase_colorbar = None
     xz_axes: matplotlib.axes.Axes = None
+    xz_phase_axes: matplotlib.axes.Axes = None
     yz_plot = None
+    yz_phase_plot = None
     yz_colorbar = None
+    yz_phase_colorbar = None
     yz_axes: matplotlib.axes.Axes = None
+    yz_phase_axes: matplotlib.axes.Axes = None
     xy_plot = None
+    xy_phase_plot = None
     xy_colorbar = None
+    xy_phase_colorbar = None
     xy_axes: matplotlib.axes.Axes = None
+    xy_phase_axes: matplotlib.axes.Axes = None
 
     def __init__(self):
         super().__init__()
@@ -228,16 +237,22 @@ class UI_display_measurement_window(QWidget):
         self.yz_figure = self.yz_canvas.figure
         self.xy_figure = self.xy_canvas.figure
 
-        self.xz_axes = self.xz_figure.subplots()
-        self.xz_axes.set_title("XZ-Plane")
-        self.yz_axes = self.yz_figure.subplots()
-        self.yz_axes.set_title("YZ-Plane")
-        self.xy_axes = self.xy_figure.subplots()
-        self.xy_axes.set_title("XY-Plane")
+        self.xz_axes, self.xz_phase_axes = self.xz_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.xz_axes.set_title("XZ-Plane Amplitude")
+        self.xz_phase_axes.set_title("XZ-Plane Phase")
+        self.yz_axes, self.yz_phase_axes = self.yz_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.yz_axes.set_title("YZ-Plane Amplitude")
+        self.yz_phase_axes.set_title("YZ-Plane Phase")
+        self.xy_axes, self.xy_phase_axes = self.xy_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.xy_axes.set_title("XY-Plane Amplitude")
+        self.xy_phase_axes.set_title("XY-Plane Phase")
 
         self.xz_plot = self.xz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
         self.yz_plot = self.yz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
         self.xy_plot = self.xy_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
 
         self.xz_axes.axis([x.min(), x.max(), y.min(), y.max()])
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
@@ -245,6 +260,12 @@ class UI_display_measurement_window(QWidget):
         self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
         self.xy_axes.axis([x.min(), x.max(), y.min(), y.max()])
         self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
+        self.xz_phase_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.xz_phase_colorbar = self.xz_figure.colorbar(self.xz_phase_plot, ax=self.xz_phase_axes)
+        self.yz_phase_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.yz_phase_colorbar = self.yz_figure.colorbar(self.yz_phase_plot, ax=self.yz_phase_axes)
+        self.xy_phase_axes.axis([x.min(), x.max(), y.min(), y.max()])
+        self.xy_phase_colorbar = self.xy_figure.colorbar(self.xy_phase_plot, ax=self.xy_phase_axes)
 
         main_layout.addLayout(graphs_layout, stretch=10)
 
@@ -506,7 +527,7 @@ class UI_display_measurement_window(QWidget):
         self.__update_z_select_lineEdit()
 
     # noinspection PyUnreachableCode
-    def update_xz_plane_plot(self, data_array: np.ndarray):
+    def update_xz_plane_plot(self, data_amp_array: np.ndarray, data_phase_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         X and Z Axis.
@@ -514,21 +535,23 @@ class UI_display_measurement_window(QWidget):
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
         window) and acts accordingly.
 
-        e.g. At xvec[0], zvec[0] is data_array[0,0]. At xvec[20], zvec[100] is data_array[20,100] etc.
+        e.g. At xvec[0], zvec[0] is data_amp_array[0,0]. At xvec[20], zvec[100] is data_amp_array[20,100] etc.
         """
         # delete current axis/plot
         self.xz_axes.remove()
         self.xz_colorbar.remove()
+        self.xz_phase_axes.remove()
+        self.xz_phase_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp = data_array.max()
-        min_amp = data_array.min()
+        max_amp = data_amp_array.max()
+        min_amp = data_amp_array.min()
 
         # check if display value in dBmax is selected and convert data array if necessary
         if self.unit_display_comboBox.currentText() == "dBmax":
-            data_array = 10 * np.log10(data_array/max_amp)
-            max_amp = data_array.max()
-            min_amp = data_array.min()
+            data_amp_array = 10 * np.log10(data_amp_array/max_amp)
+            max_amp = data_amp_array.max()
+            min_amp = data_amp_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
@@ -540,17 +563,20 @@ class UI_display_measurement_window(QWidget):
             # which describe the precise spot of measurement
             xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.z_vector)
 
-        self.xz_axes = self.xz_figure.subplots()
-        self.xz_axes.set_title("XZ_Plane")
-        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+        self.xz_axes, self.xz_phase_axes = self.xz_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.xz_axes.set_title("XZ-Plane Amplitude")
+        self.xz_phase_axes.set_title("XZ-Plane Phase")
+        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                             vmax=max_amp)
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
+        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.xz_phase_colorbar = self.xz_figure.colorbar(self.xz_phase_plot, ax=self.xz_phase_axes)
         self.xz_canvas.draw()
 
         return
 
     # noinspection PyUnreachableCode
-    def update_yz_plane_plot(self, data_array: np.ndarray):
+    def update_yz_plane_plot(self, data_amp_array: np.ndarray, data_phase_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         Y and Z Axis.
@@ -558,21 +584,23 @@ class UI_display_measurement_window(QWidget):
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
         window) and acts accordingly.
 
-        e.g. At yvec[0], zvec[0] is data_array[0,0]. At yvec[20], zvec[100] is data_array[20,100] etc.
+        e.g. At yvec[0], zvec[0] is data_amp_array[0,0]. At yvec[20], zvec[100] is data_amp_array[20,100] etc.
         """
         # delete current axis/plot
         self.yz_axes.remove()
         self.yz_colorbar.remove()
+        self.yz_phase_axes.remove()
+        self.yz_phase_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp = data_array.max()
-        min_amp = data_array.min()
+        max_amp = data_amp_array.max()
+        min_amp = data_amp_array.min()
 
         # check if display value in dBmax is selected and convert data array if necessary
         if self.unit_display_comboBox.currentText() == "dBmax":
-            data_array = 10 * np.log10(data_array / max_amp)
-            max_amp = data_array.max()
-            min_amp = data_array.min()
+            data_amp_array = 10 * np.log10(data_amp_array / max_amp)
+            max_amp = data_amp_array.max()
+            min_amp = data_amp_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_y_vec = self.y_vector.__sub__(self.y_zero_pos)
@@ -581,16 +609,19 @@ class UI_display_measurement_window(QWidget):
         else:
             xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.y_vector, self.z_vector)
 
-        self.yz_axes = self.yz_figure.subplots()
-        self.yz_axes.set_title("YZ_Plane")
-        self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+        self.yz_axes, self.yz_phase_axes = self.yz_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.yz_axes.set_title("YZ-Plane Amplitude")
+        self.yz_phase_axes.set_title("YZ-Plane Phase")
+        self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                vmax=max_amp)
         self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
+        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.yz_phase_colorbar = self.yz_figure.colorbar(self.yz_phase_plot, ax=self.yz_phase_axes)
         self.yz_canvas.draw()
         return
 
     # noinspection PyUnreachableCode
-    def update_xy_plane_plot(self, data_array: np.ndarray):
+    def update_xy_plane_plot(self, data_amp_array: np.ndarray, data_phase_array: np.ndarray):
         """
         Receives 2d array with amplitude values sorted so that x,y indexing of array fits to the measured points along
         X and Y Axis.
@@ -598,21 +629,23 @@ class UI_display_measurement_window(QWidget):
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
         window) and acts accordingly.
 
-        e.g. At xvec[0], yvec[0] is data_array[0,0]. At xvec[20], yvec[100] is data_array[20,100] etc.
+        e.g. At xvec[0], yvec[0] is data_amp_array[0,0]. At xvec[20], yvec[100] is data_amp_array[20,100] etc.
         """
         # delete current axis/plot
         self.xy_axes.remove()
         self.xy_colorbar.remove()
+        self.xy_phase_axes.remove()
+        self.xy_phase_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp = data_array.max()
-        min_amp = data_array.min()
+        max_amp = data_amp_array.max()
+        min_amp = data_amp_array.min()
 
         # check if display value in dBmax is selected and convert data array if necessary
         if self.unit_display_comboBox.currentText() == "dBmax":
-            data_array = 10 * np.log10(data_array / max_amp)
-            max_amp = data_array.max()
-            min_amp = data_array.min()
+            data_amp_array = 10 * np.log10(data_amp_array / max_amp)
+            max_amp = data_amp_array.max()
+            min_amp = data_amp_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
@@ -621,11 +654,14 @@ class UI_display_measurement_window(QWidget):
         else:
             xmeshv, ymeshv = self.gen_meshgrid_from_meas_points(self.x_vector, self.y_vector)
 
-        self.xy_axes = self.xy_figure.subplots()
-        self.xy_axes.set_title("XY_Plane")
-        self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+        self.xy_axes, self.xy_phase_axes = self.xy_figure.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
+        self.xy_axes.set_title("XY-Plane Amplitude")
+        self.xy_phase_axes.set_title("XY-Plane Phase")
+        self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                vmax=max_amp)
         self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
+        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.xy_phase_colorbar = self.xy_figure.colorbar(self.xy_phase_plot, ax=self.xy_phase_axes)
         self.xy_canvas.draw()
         return
 
