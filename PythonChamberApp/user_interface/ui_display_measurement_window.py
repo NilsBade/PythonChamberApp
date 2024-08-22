@@ -36,6 +36,8 @@ class UI_display_measurement_window(QWidget):
     frequency_select_slider: QSlider = None
     frequency_select_lineEdit: QLineEdit = None
     coor_AUT_checkBox: QCheckBox = None
+    unit_display_comboBox: QComboBox = None # todo
+
     xz_plot_y_select_slider: QSlider = None
     xz_plot_y_select_lineEdit: QLineEdit = None
     yz_plot_x_select_slider: QSlider = None
@@ -149,13 +151,19 @@ class UI_display_measurement_window(QWidget):
         self.frequency_select_lineEdit = QLineEdit("...")
         self.frequency_select_lineEdit.setFixedWidth(150)
         self.coor_AUT_checkBox = QCheckBox("Display AUT Coordinates")
+        self.unit_display_comboBox = QComboBox()
+        unit_label = QLabel("Display Unit: ")
+        self.unit_display_comboBox.addItems(["Linear", "dBmax"])
         upper_line_layout.addWidget(parameter_select_label)
         upper_line_layout.addWidget(self.parameter_select_comboBox)
         upper_line_layout.addSpacing(200)
         upper_line_layout.addWidget(frequency_label)
         upper_line_layout.addWidget(self.frequency_select_slider)
         upper_line_layout.addWidget(self.frequency_select_lineEdit)
-        upper_line_layout.addSpacing(200)
+        upper_line_layout.addSpacing(100)
+        upper_line_layout.addWidget(unit_label)
+        upper_line_layout.addWidget(self.unit_display_comboBox)
+        upper_line_layout.addSpacing(50)
         upper_line_layout.addWidget(self.coor_AUT_checkBox)
         upper_line_layout.addStretch()
         main_layout.addLayout(upper_line_layout)
@@ -326,6 +334,7 @@ class UI_display_measurement_window(QWidget):
         self.parameter_select_comboBox.setEnabled(True)
         self.frequency_select_slider.setEnabled(True)
         self.frequency_select_lineEdit.setEnabled(True)
+        self.unit_display_comboBox.setEnabled(True)
         self.coor_AUT_checkBox.setEnabled(True)
         self.xz_plot_y_select_slider.setEnabled(True)
         self.xz_plot_y_select_lineEdit.setEnabled(True)
@@ -342,6 +351,7 @@ class UI_display_measurement_window(QWidget):
         self.parameter_select_comboBox.setEnabled(False)
         self.frequency_select_slider.setEnabled(False)
         self.frequency_select_lineEdit.setEnabled(False)
+        self.unit_display_comboBox.setEnabled(False)
         self.coor_AUT_checkBox.setEnabled(False)
         self.xz_plot_y_select_slider.setEnabled(False)
         self.xz_plot_y_select_lineEdit.setEnabled(False)
@@ -511,8 +521,14 @@ class UI_display_measurement_window(QWidget):
         self.xz_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp_dB = data_array.max()
-        min_amp_dB = data_array.min()
+        max_amp = data_array.max()
+        min_amp = data_array.min()
+
+        # check if display value in dBmax is selected and convert data array if necessary
+        if self.unit_display_comboBox.currentText() == "dBmax":
+            data_array = 10 * np.log10(data_array/max_amp)
+            max_amp = data_array.max()
+            min_amp = data_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
@@ -526,8 +542,8 @@ class UI_display_measurement_window(QWidget):
 
         self.xz_axes = self.xz_figure.subplots()
         self.xz_axes.set_title("XZ_Plane")
-        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
-                                                            vmax=max_amp_dB)
+        self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+                                                            vmax=max_amp)
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
         self.xz_canvas.draw()
 
@@ -549,8 +565,14 @@ class UI_display_measurement_window(QWidget):
         self.yz_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp_dB = data_array.max()
-        min_amp_dB = data_array.min()
+        max_amp = data_array.max()
+        min_amp = data_array.min()
+
+        # check if display value in dBmax is selected and convert data array if necessary
+        if self.unit_display_comboBox.currentText() == "dBmax":
+            data_array = 10 * np.log10(data_array / max_amp)
+            max_amp = data_array.max()
+            min_amp = data_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_y_vec = self.y_vector.__sub__(self.y_zero_pos)
@@ -561,8 +583,8 @@ class UI_display_measurement_window(QWidget):
 
         self.yz_axes = self.yz_figure.subplots()
         self.yz_axes.set_title("YZ_Plane")
-        self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
-                                               vmax=max_amp_dB)
+        self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+                                               vmax=max_amp)
         self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
         self.yz_canvas.draw()
         return
@@ -583,8 +605,14 @@ class UI_display_measurement_window(QWidget):
         self.xy_colorbar.remove()
 
         # find min and max amplitude in given dataset to set up axis/colorbar
-        max_amp_dB = data_array.max()
-        min_amp_dB = data_array.min()
+        max_amp = data_array.max()
+        min_amp = data_array.min()
+
+        # check if display value in dBmax is selected and convert data array if necessary
+        if self.unit_display_comboBox.currentText() == "dBmax":
+            data_array = 10 * np.log10(data_array / max_amp)
+            max_amp = data_array.max()
+            min_amp = data_array.min()
 
         if self.coor_AUT_checkBox.isChecked() is True:
             aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
@@ -595,8 +623,8 @@ class UI_display_measurement_window(QWidget):
 
         self.xy_axes = self.xy_figure.subplots()
         self.xy_axes.set_title("XY_Plane")
-        self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp_dB,
-                                               vmax=max_amp_dB)
+        self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_array, cmap='Spectral_r', vmin=min_amp,
+                                               vmax=max_amp)
         self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
         self.xy_canvas.draw()
         return
