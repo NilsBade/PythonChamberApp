@@ -36,7 +36,7 @@ class UI_display_measurement_window(QWidget):
     frequency_select_slider: QSlider = None
     frequency_select_lineEdit: QLineEdit = None
     coor_AUT_checkBox: QCheckBox = None
-    unit_display_comboBox: QComboBox = None # todo
+    unit_display_comboBox: QComboBox = None
 
     xz_plot_y_select_slider: QSlider = None
     xz_plot_y_select_lineEdit: QLineEdit = None
