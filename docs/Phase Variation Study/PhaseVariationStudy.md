@@ -31,8 +31,13 @@ In the following three graphs the measured phase-value at each point (each line)
 ![Measurement_phaseDevelopment67G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0004.png)
 ![Measurement_phaseDevelopment63,5G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0004.png)
 ![Measurement_phaseDevelopment60G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004.png)  
+For the 60 GHz measurement the phase variation/drift of each point is significantly higher than for the other two frequencies. At the same time it looks 
+like the phase of all measured points, independent of their location, drifts roughly the same amount or at least in 
+the same direction. This leads to the assumption that this error is induced by the PNA e.g. by thermal effects but not 
+by the chamber and its moving cables.  
+The behaviour of the PNA's phase measurement over longer periods of time should be observed in future measurements. 
 
-The measurement was also taken with more resolution in XY-Plane but with only a few repetitions per point.  
+The same measurement was also taken with more resolution in XY-Plane but with only a few repetitions per point.  
 Thus no separate graphs about the phase-value over multiple repetitions are shown here.
 ![Measurement_0003](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0003.png)
 ![Measurement_0002](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0002.png)
