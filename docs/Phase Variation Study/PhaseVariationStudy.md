@@ -1,5 +1,5 @@
 # Phase Variation Study on Measurement Chamber
-> This document describes the approach how the phase variation error of the chamber, due to moving coax-cables, 
+> This document describes the approach how the phase (and amplitude) variation error of the chamber, due to moving coax-cables, 
 > was quantified. It also evaluates the possibility of using lookuptables to correct the error.
 
 ## Description
