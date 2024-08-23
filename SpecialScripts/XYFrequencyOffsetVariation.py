@@ -44,15 +44,15 @@ for f in range(num_freq_points):
 
             freq_offset_variation = phase_offset_max - phase_offset_min
             y_val[f].append(freq_offset_variation)
-            print("Frequency offset variation: ", freq_offset_variation)
+            print("Phase offset variation: ", freq_offset_variation)
 
 
 # Window Config
 main_fig, main_axes = plt.subplots(nrows=1, ncols=num_freq_points)
 manager_main_fig = plt.get_current_fig_manager()
 manager_main_fig.set_window_title('Maximum Phase Offset Difference in XY-Plane')
-main_fig.text(0.5, 0.975, str('Frequency Offset Variation in XY-Plane // Data drawn from ' + __filename), ha='center', fontsize=12)
-info_string = "Maximum/Minimum Frequency Offset Variation [°] at "
+main_fig.text(0.5, 0.975, str('Phase Offset Variation in XY-Plane // Data drawn from ' + __filename), ha='center', fontsize=12)
+info_string = "Maximum/Minimum measured phase difference [°] at "
 for i in range(num_freq_points):
     x = x_val
     y = y_val[i]
@@ -66,11 +66,11 @@ for i in range(num_freq_points):
     main_axes[i].grid(True)
     main_axes[i].set_ylabel('Phase offset difference [°]')
     main_axes[i].set_xlabel('XY-point number')
-    main_axes[i].legend('Phase offset [°]')
     main_axes[i].set_title('Frequency: ' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + 'GHz')
 
 main_fig.text(0.5, 0.04, info_string, ha='center', fontsize=12, bbox=dict(facecolor='yellow', alpha=0.5))
 plt.tight_layout()
+
 
 
 # Plot phase offset as line over repetitions for each point in XY plane
