@@ -26,8 +26,8 @@ Each point was measured 51 times to evaluate the drift of the phase variation er
 non-ideal movement/repetition.  
 The following graph shows the maximum phase-difference that occurred when measuring the same point multiple times.  
 ![Measurement_0004](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0004.png)  
-In the following three graphs show the measured phase-value at each point (each line) over multiple iterations 
-(along x-axis). The phase is shown in degrees.  
+In the following three graphs the measured phase-value at each point (each line) over multiple iterations 
+(along x-axis) is shown. The phase is shown in degrees.  
 ![Measurement_phaseDevelopment67G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0004.png)
 ![Measurement_phaseDevelopment63,5G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0004.png)
 ![Measurement_phaseDevelopment60G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004.png)  
