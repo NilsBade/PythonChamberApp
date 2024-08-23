@@ -23,10 +23,17 @@ The results of the taken measurements are shown in the [Measurements XY-Plane se
 ## Measurements XY-Plane
 XY-Plane Measurement with 5x5 points probed at 60 GHz; 63,5 GHz; 67 GHz.  
 Each point was measured 51 times to evaluate the drift of the phase variation error over time and due to 
-non-ideal movement/repetition.
+non-ideal movement/repetition.  
+The following graph shows the maximum phase-difference that occurred when measuring the same point multiple times.  
 ![Measurement_0004](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0004.png)  
+In the following three graphs show the measured phase-value at each point (each line) over multiple iterations 
+(along x-axis). The phase is shown in degrees.  
+![Measurement_phaseDevelopment67G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0004.png)
+![Measurement_phaseDevelopment63,5G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0004.png)
+![Measurement_phaseDevelopment60G_0004](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004.png)  
 
-The Measurement was also taken with more resolution in XY-Plane but less repitions per point.
+The measurement was also taken with more resolution in XY-Plane but with only a few repetitions per point.  
+Thus no separate graphs about the phase-value over multiple repetitions are shown here.
 ![Measurement_0003](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0003.png)
 ![Measurement_0002](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0002.png)
 ![Measurement_0001](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0001.png)
