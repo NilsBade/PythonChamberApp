@@ -5,6 +5,7 @@ Specialized Scripts are supposed to use methods defined here.
 import os
 import json
 import numpy as np
+from datetime import datetime
 
 
 def read_measurement_data_from_file(filepath: str) -> dict:
@@ -117,3 +118,37 @@ def read_measurement_data_from_file(filepath: str) -> dict:
 
     read_in_measurement_data_buffer['data_array'] = data_array
     return read_in_measurement_data_buffer
+
+def write_meas_dict_to_file(filepath: str, data_dict: dict):
+    """
+    Writes a measurement data dictionary to a file.
+    :param filepath: Path to file
+    :param data_dict: Measurement data dictionary
+    :return: None
+    """
+    # setup new dict to write to file - initialize json data storage for measurement
+    json_data_storage = {}
+    measurement_config = data_dict['measurement_config']
+    measurement_config['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # update timestamp
+    json_data_storage['measurement_config'] = measurement_config
+    json_data_storage['data'] = []
+
+    # setup dictionaries for separate parameter measurements and assign index in reduced list
+    amp_idx = 4
+    phase_idx = 5
+    if 'S11' in data_dict['measurement_config']['parameter']:
+        json_S11 = {'parameter': 'S11', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+        amp_idx += 2
+        phase_idx += 2
+    if 'S12' in data_dict['measurement_config']['parameter']:
+        json_S12 = {'parameter': 'S12', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+        amp_idx += 2
+        phase_idx += 2
+    if 'S22' in data_dict['measurement_config']['parameter']:
+        json_S22 = {'parameter': 'S22', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+
+
+
+    with open(filepath, 'w') as file:
+        file.write(json.dumps(data_dict, indent=4))
+    return None
