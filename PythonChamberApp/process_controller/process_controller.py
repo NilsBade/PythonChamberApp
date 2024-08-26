@@ -129,6 +129,12 @@ class ProcessController:
             self.display_measurement_update_yz_plot_callback)
         self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
             self.display_measurement_update_xy_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.unit_display_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_xz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.unit_display_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_yz_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.unit_display_comboBox.currentTextChanged.connect(
+            self.display_measurement_update_xy_plot_callback)
         # >> slider
         self.gui_mainWindow.ui_display_measurement_window.frequency_select_slider.valueChanged.connect(
             self.display_measurement_update_xz_plot_callback)
@@ -1289,13 +1295,20 @@ class ProcessController:
         cur_y_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][1]
         cur_z_coor = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate() - self.read_in_measurement_data_buffer['measurement_config']['zero_position'][2]
 
-        xz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, 0, :]
-        yz_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, 0, :, :]
-        xy_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, :, 0]
+        xz_amplitude_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, 0, :]
+        yz_amplitude_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, 0, :, :]
+        xy_amplitude_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][0, 0, 0, :, :, 0]
 
-        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_plane_data_from_array)
-        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(yz_plane_data_from_array)
-        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(xy_plane_data_from_array)
+        xz_phase_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][1, 0, 0, :, 0, :]
+        yz_phase_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][1, 0, 0, 0, :, :]
+        xy_phase_plane_data_from_array = self.read_in_measurement_data_buffer['data_array'][1, 0, 0, :, :, 0]
+
+        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(xz_amplitude_plane_data_from_array,
+                                                                               xz_phase_plane_data_from_array)
+        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(yz_amplitude_plane_data_from_array,
+                                                                               yz_phase_plane_data_from_array)
+        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(xy_amplitude_plane_data_from_array,
+                                                                               xy_phase_plane_data_from_array)
 
         self.gui_mainWindow.ui_display_measurement_window.enable_plot_interactions()
 
@@ -1311,13 +1324,18 @@ class ProcessController:
             AssertionError("Update requested before data loaded!")
             return
         amplitude_select = 0
+        phase_select = 1
         cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
         parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
         cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
         cur_y_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_y_coordinate_by_idx()
 
-        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, :, cur_y_coor_idx, :]
-        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(plane_data)
+        plane_amp_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx,
+                         cur_freq_idx, :, cur_y_coor_idx, :]
+        plane_phase_data = self.read_in_measurement_data_buffer['data_array'][phase_select, parameter_idx,
+                         cur_freq_idx, :, cur_y_coor_idx, :]
+
+        self.gui_mainWindow.ui_display_measurement_window.update_xz_plane_plot(plane_amp_data, plane_phase_data)
         return
 
     def display_measurement_update_yz_plot_callback(self):
@@ -1329,13 +1347,18 @@ class ProcessController:
             AssertionError("Update requested before data loaded!")
             return
         amplitude_select = 0
+        phase_select = 1
         cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
         parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
         cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
         cur_x_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_x_coordinate_by_idx()
 
-        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, cur_x_coor_idx, :, :]
-        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(plane_data)
+        plane_amp_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx,
+                     cur_x_coor_idx, :, :]
+        plane_phase_data = self.read_in_measurement_data_buffer['data_array'][phase_select, parameter_idx, cur_freq_idx,
+                     cur_x_coor_idx, :, :]
+
+        self.gui_mainWindow.ui_display_measurement_window.update_yz_plane_plot(plane_amp_data, plane_phase_data)
         return
 
     def display_measurement_update_xy_plot_callback(self):
@@ -1347,13 +1370,18 @@ class ProcessController:
             AssertionError("Update requested before data loaded!")
             return
         amplitude_select = 0
+        phase_select = 1
         cur_parameter = self.gui_mainWindow.ui_display_measurement_window.get_selected_parameter()
         parameter_idx = self.read_in_measurement_data_buffer['measurement_config']['parameter'].index(cur_parameter)
         cur_freq_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_frequency_by_idx()
         cur_z_coor_idx = self.gui_mainWindow.ui_display_measurement_window.get_selected_z_coordinate_by_idx()
 
-        plane_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx, cur_freq_idx, :, :, cur_z_coor_idx]
-        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(plane_data)
+        plane_amp_data = self.read_in_measurement_data_buffer['data_array'][amplitude_select, parameter_idx,
+                         cur_freq_idx, :, :, cur_z_coor_idx]
+        plane_phase_data = self.read_in_measurement_data_buffer['data_array'][phase_select, parameter_idx,
+                         cur_freq_idx, :, :, cur_z_coor_idx]
+
+        self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(plane_amp_data, plane_phase_data)
         return
 
 
