@@ -123,17 +123,21 @@ def write_meas_dict_to_file(filepath: str, data_dict: dict):
     """
     Writes a measurement data dictionary to a file.
     :param filepath: Path to file
-    :param data_dict: Measurement data dictionary
+    :param data_dict: Measurement data dictionary that should be stored with compensated phase-data and calibration data
     :return: None
     """
     # setup new dict to write to file - initialize json data storage for measurement
     json_data_storage = {}
     measurement_config = data_dict['measurement_config']
-    measurement_config['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # update timestamp
+    measurement_config['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")   # update timestamp
     json_data_storage['measurement_config'] = measurement_config
     json_data_storage['data'] = []
 
-    # setup dictionaries for separate parameter measurements and assign index in reduced list
+    # 0. get index values for all S-parameters
+    num_of_parameters = data_dict['measurement_config']['parameter'].__len__()
+    json_S11 = None
+    json_S12 = None
+    json_S22 = None
     amp_idx = 4
     phase_idx = 5
     if 'S11' in data_dict['measurement_config']['parameter']:
@@ -146,6 +150,44 @@ def write_meas_dict_to_file(filepath: str, data_dict: dict):
         phase_idx += 2
     if 'S22' in data_dict['measurement_config']['parameter']:
         json_S22 = {'parameter': 'S22', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
+
+    # 1. generate point_list_entry-buffer with right length to store all parameter measurements
+    point_list_entry_buffer = [0.0, 0.0, 0.0, 0.0]
+    for i in range(num_of_parameters):
+        point_list_entry_buffer.append(0.0)  # amplitude
+        point_list_entry_buffer.append(0.0)  # phase
+    # 2. find total length of list, each list should be same length //
+    # assign base-buffer to read from coor & freq
+    num_points_measured = (data_dict['measurement_config']['sweep_num_points']*
+                           data_dict['measurement_config']['mesh_x_steps']*
+                           data_dict['measurement_config']['mesh_y_steps']*
+                           data_dict['measurement_config']['mesh_z_steps'])
+    base_buffer = None
+
+    for z_idx in range(data_dict['mesh_z_steps']):
+        z_split = data_dict['data_array'][:, :, :, :, :, z_idx]
+        for y_idx in range(data_dict['mesh_y_steps']):
+            y_split = z_split[:, :, :, :, y_idx]
+            for x_idx in range(data_dict['mesh_x_steps']):
+                x_split = y_split[:, :, :, x_idx]
+                for f_idx in range(data_dict['sweep_num_points']):
+                    f_split = x_split[:, :, f_idx]
+                    json_data_storage['data'].append([data_dict['x_vec'][x_idx], data_dict['y_vec'][y_idx], data_dict['z_vec'][z_idx], data_dict['f_vec'][f_idx],f_split[0,0],f_split[1,0]])     #todo enable that a variable number of s-parameters is supported. so far only S11 is stored to datalist
+    # 3. run through base-buffer list to get all coordinates and frequencies and append the measured
+    # amplitudes and phases to the data-list as ONE list-entry for all measured S-parameters in one point
+    # at one frequency.
+    # for idx in range(num_points_measured):
+    #     point_list_entry_buffer[0] = base_buffer['values'][idx][0]  # X-coor
+    #     point_list_entry_buffer[1] = base_buffer['values'][idx][1]  # Y-coor
+    #     point_list_entry_buffer[2] = base_buffer['values'][idx][2]  # Z-coor
+    #     point_list_entry_buffer[3] = base_buffer['values'][idx][3]  # Frequency
+    #     for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
+    #         if par_dict is not None:
+    #             point_list_entry_buffer[par_dict['amp_idx']] = par_dict['values'][idx][4]
+    #             point_list_entry_buffer[par_dict['phase_idx']] = par_dict['values'][idx][5]
+    #     self.json_data_storage['data'].append(
+    #         point_list_entry_buffer.copy())  # Must use copy(), otherwise only reference handed to list!
+
 
 
 
