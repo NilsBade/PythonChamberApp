@@ -145,7 +145,11 @@ def write_meas_dict_to_file(filepath: str, data_dict: dict):
                     value_buffer = []
                     for s_idx in range(num_of_parameters):  # assemble amplitude/phase list for variable number of S-parameters
                         value_buffer.extend([f_split[0, s_idx], f_split[1, s_idx]])
-                    data_entry = [data_dict['x_vec'][x_idx], data_dict['y_vec'][y_idx], data_dict['z_vec'][z_idx], data_dict['f_vec'][f_idx]]
+                    # translate chamber coordinates into AUT coordinates by zero position
+                    x_coor = data_dict['x_vec'][x_idx] - data_dict['measurement_config']['zero_position'][0]
+                    y_coor = data_dict['y_vec'][y_idx] - data_dict['measurement_config']['zero_position'][1]
+                    z_coor = data_dict['z_vec'][z_idx] - data_dict['measurement_config']['zero_position'][2]
+                    data_entry = [x_coor, y_coor, z_coor, data_dict['f_vec'][f_idx]]
                     data_entry.extend(value_buffer)
                     json_data_storage['data'].append(data_entry)
 

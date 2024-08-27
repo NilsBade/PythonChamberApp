@@ -280,6 +280,10 @@ Secondly there is the 'data' key-value pair. The 'data' key holds the measured d
  ```
 The list behind the 'data'-key is a list of lists. Each list in the 'data'-list corresponds to one point in the volume that was probed.
 Thus, each single list holds at least x-coor, y-coor, z-coor, frequency + one time AMPLITUDE & PHASE of one S-parameter. 
+> [!NOTE]
+> The coordinates stored in the txt file are referenced to the AUT as [0,0,0]-position! Thus measurement volumes/coordinates written to the txt-file
+> should always be symmetrical (in case of standard 'rectangular' cube-volume). Check if that holds if you are not sure if data is corrupted!
+
 Dependent on the taken measurement it could be that multiple S-parameters were measured at each point in space.
 In that case, for each S-parameter, the list gets 2 entries longer to hold amplitude and phase of another S-parameter.
 Accordingly, the single lists in the 'data'-list can be 6-10 entries long.  
