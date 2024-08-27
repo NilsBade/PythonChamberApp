@@ -10,6 +10,7 @@ import os
 import numpy as np
 import json
 from DataManagementMethods import read_measurement_data_from_file
+from DataManagementMethods import write_meas_dict_to_file
 import matplotlib.pyplot as plt
 
 # Path to current working directory
@@ -36,7 +37,7 @@ Z-Coor gives the revisions of XY-plane probing.
 # set filename for compensated data ##########################################################
 __store_filename = 'PhaseMeasurementOnS11_0004_compensated.json'
 store_path = os.path.join(results_dir, __store_filename)
-store_file = open(store_path, 'w')
+meas_data_dict['measurement_config']['type'] += ' (compensated)'
 ##############################################################################################
 # generate data arrays
 phase_xy_data = meas_data_dict['data_array'][1, 0, :, :, :, :]
@@ -50,10 +51,5 @@ for f in range(phase_origin.__len__()): # find all frequency origins for each fr
 
 # generate corrected phase data
 phase_xy_data_corrected = phase_xy_data - phase_origin[:, np.newaxis, np.newaxis, np.newaxis]
-meas_data_dict['data_array'][1, 0, :, :, :, :] = phase_xy_data_corrected
-meas_data_dict['data_array'] = meas_data_dict['data_array'].tolist()
-data_array_debug = meas_data_dict['data_array']
-data_list_debug = meas_data_dict['data_array'].tolist()
-
-store_file.write(json.dumps(meas_data_dict, indent=4))
-store_file.close()
+meas_data_dict['data_array'][1, 0, :, :, :, :] = phase_xy_data_corrected.copy()
+write_meas_dict_to_file(store_path, meas_data_dict)
