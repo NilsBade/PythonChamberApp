@@ -42,6 +42,8 @@ meas_data_dict['measurement_config']['type'] += ' (compensated)'
 # generate data arrays
 phase_xy_data = meas_data_dict['data_array'][1, 0, :, :, :, :]
 phase_origin = np.zeros(meas_data_dict['f_vec'].__len__())
+phase_xy_calib_matrix = np.zeros([meas_data_dict['f_vec'].__len__(), meas_data_dict['x_vec'].__len__(), meas_data_dict['y_vec'].__len__()])
+phase_xy_data_calibrated = np.zeros([meas_data_dict['f_vec'].__len__(), meas_data_dict['x_vec'].__len__(), meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
 
 for f in range(phase_origin.__len__()): # find all frequency origins for each frequency
     phase_origin_idx = phase_xy_data[f, :, :, :].argmin()
@@ -49,7 +51,15 @@ for f in range(phase_origin.__len__()): # find all frequency origins for each fr
     phase_origin[f] = phase_xy_data[f, phase_origin_idx_unrav[0], phase_origin_idx_unrav[1], phase_origin_idx_unrav[2]]
     print("Phase origin for frequency ", round(meas_data_dict['f_vec'][f]*1e-9,1), "GHz : ", phase_origin[f], "°")
 
-# generate corrected phase data
-phase_xy_data_corrected = phase_xy_data - phase_origin[:, np.newaxis, np.newaxis, np.newaxis]
-meas_data_dict['data_array'][1, 0, :, :, :, :] = phase_xy_data_corrected.copy()
+# set "normalized" phase data (ref to origin-phase)
+phase_xy_data_referenced = phase_xy_data - phase_origin[:, np.newaxis, np.newaxis, np.newaxis]
+
+for f in range(meas_data_dict['f_vec'].__len__()):
+    for x in range(meas_data_dict['x_vec'].__len__()):
+        for y in range(meas_data_dict['y_vec'].__len__()):
+            phase_xy_calib_matrix[f, x, y] = np.mean(phase_xy_data_referenced[f, x, y, :])  # mean phase value at each XY-point
+            # subtract mean-phase-value at each XY-point (through z-axis) to bring them around 0°
+            phase_xy_data_calibrated[f, x, y, :] = phase_xy_data_referenced[f,x,y,:] - phase_xy_calib_matrix[f, x, y]
+
+meas_data_dict['data_array'][1, 0, :, :, :, :] = phase_xy_data_calibrated.copy()
 write_meas_dict_to_file(store_path, meas_data_dict)

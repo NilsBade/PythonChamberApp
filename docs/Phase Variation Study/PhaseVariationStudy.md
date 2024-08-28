@@ -42,3 +42,19 @@ Thus no separate graphs about the phase-value over multiple repetitions are show
 ![Measurement_0003](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0003.png)
 ![Measurement_0002](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0002.png)
 ![Measurement_0001](/docs/Phase%20Variation%20Study/Figures/FreqOffsetVariationStudy_0001.png)
+
+## Phase Variation Compensation
+> This compensation algorithm is realized in the [CalibrationMatrixGenerator script](/SpecialScripts/CalibrationMatrixGenerator.py)
+
+The phase variation error due to moving wire is compensated as follows:
+1. A Phase reference (=0°) is chosen for each frequency that was measured by selecting the lowest phase value measured in "the whole volume"
+2. All Phase values are offset by subtracting the chosen zero-phase-reference value (for each frequency)
+3. Now the remaining average phase value for each XY-point is calculated by taking the mean value for each frequency at each XY-point along z-axis (= over all repetitions).  
+    This average phase is assumed to be the **phase-offset** that is **linked to the position in XY-plane** and stored in the "phase_xy_calib_matrix".
+4. The calculated phase-offsets for each position are subtracted from all phase-values at the corresponding position. Thus at all XY-positions now hav a mean-phase-value of 0°.  
+
+Now the remaining phase-variation despite the compensation can be displayed with the [XYPhaseOffsetVariation script](/SpecialScripts/XYPhaseOffsetVariation.py) to conclude the achievable
+accuracy of phase measurements in the chamber-setup.
+![Measurement_phaseDevelopment67G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0004_compensated.png)
+![Measurement_phaseDevelopment63,5G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0004_compensated.png)
+![Measurement_phaseDevelopment60G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004_compensated.png)  

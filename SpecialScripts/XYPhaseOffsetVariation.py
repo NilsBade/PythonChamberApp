@@ -20,7 +20,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_0004_ZeroPhaseReferenced.json'
+__filename = 'PhaseMeasurementOnS11_0004_compensated.json'
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
