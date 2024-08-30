@@ -51,7 +51,7 @@ The phase variation error due to moving wire is compensated as follows:
 2. All Phase values are offset by subtracting the chosen zero-phase-reference value (for each frequency)
 3. Now the remaining average phase value for each XY-point is calculated by taking the mean value for each frequency at each XY-point along z-axis (= over all repetitions).  
     This average phase is assumed to be the **phase-offset** that is **linked to the position in XY-plane** and stored in the "phase_xy_calib_matrix".
-4. The calculated phase-offsets for each position are subtracted from all phase-values at the corresponding position. Thus at all XY-positions now hav a mean-phase-value of 0°.  
+4. The calculated phase-offsets for each position are subtracted from all phase-values at the corresponding position. Thus all XY-positions now have a mean-phase-value of 0°.  
 
 Now the remaining phase-variation despite the compensation can be displayed with the [XYPhaseOffsetVariation script](/SpecialScripts/XYPhaseOffsetVariation.py) to conclude the achievable
 accuracy of phase measurements in the chamber-setup.
