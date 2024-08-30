@@ -153,6 +153,10 @@ def write_meas_dict_to_file(filepath: str, data_dict: dict):
                     data_entry.extend(value_buffer)
                     json_data_storage['data'].append(data_entry)
 
+    # write calibration data to file if available
+    if 'calibration_data' in data_dict:
+        json_data_storage['calibration_data'] = data_dict['calibration_data']
+
     with open(filepath, 'w') as file:
         file.write(json.dumps(json_data_storage, indent=4))
     return None

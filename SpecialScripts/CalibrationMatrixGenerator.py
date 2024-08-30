@@ -51,7 +51,7 @@ for f in range(phase_origin.__len__()): # find all frequency origins for each fr
     phase_origin[f] = phase_xy_data[f, phase_origin_idx_unrav[0], phase_origin_idx_unrav[1], phase_origin_idx_unrav[2]]
     print("Phase origin for frequency ", round(meas_data_dict['f_vec'][f]*1e-9,1), "GHz : ", phase_origin[f], "°")
 
-# set "normalized" phase data (ref to origin-phase)
+# set "normalized" phase data (ref to origin-phase 0°)
 phase_xy_data_referenced = phase_xy_data - phase_origin[:, np.newaxis, np.newaxis, np.newaxis]
 
 for f in range(meas_data_dict['f_vec'].__len__()):
@@ -60,6 +60,9 @@ for f in range(meas_data_dict['f_vec'].__len__()):
             phase_xy_calib_matrix[f, x, y] = np.mean(phase_xy_data_referenced[f, x, y, :])  # mean phase value at each XY-point
             # subtract mean-phase-value at each XY-point (through z-axis) to bring them around 0°
             phase_xy_data_calibrated[f, x, y, :] = phase_xy_data_referenced[f,x,y,:] - phase_xy_calib_matrix[f, x, y]
+
+# stores a 3D list addressable to [f_idx][x_idx][y_idx]
+meas_data_dict['calibration_data'] = phase_xy_calib_matrix.copy().tolist()
 
 meas_data_dict['data_array'][1, 0, :, :, :, :] = phase_xy_data_calibrated.copy()
 write_meas_dict_to_file(store_path, meas_data_dict)

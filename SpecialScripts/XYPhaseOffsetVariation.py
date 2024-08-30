@@ -20,7 +20,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_0004_compensated.json'
+__filename = 'PhaseMeasurementOnS11_0002_compensated.json'
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
@@ -98,6 +98,27 @@ for i in range(num_freq_points):
                   ha='center', fontsize=12)
     new_fig.text(0.5, 0.04, 'Each line corresponds to one point in XY-Plane. Each point was probed ' + str(meas_data_dict['z_vec'].__len__()) + ' times.', ha='center', fontsize=12)
 
+# Plot calibration matrix in 3D plot if data available
+if 'calibration_data' in meas_data_dict:
+    calib_matrix = np.array(meas_data_dict['calibration_data'])
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # x = np.arange(calib_matrix.shape[1])
+    x = np.array(meas_data_dict['x_vec'])
+    # y = np.arange(calib_matrix.shape[2])
+    y = np.array(meas_data_dict['y_vec'])
+    x, y = np.meshgrid(x, y)
+    f_string = ''
+    for f in range(calib_matrix.shape[0]):
+        z = calib_matrix[f, :, :]
+        ax.plot_surface(x, y, z, cmap='viridis', label='Phase Cal @ ' + str(round(meas_data_dict['f_vec'][f] * 1e-9, 1)) + 'GHz')
+        ax.set_xlabel('X-Coordinate')
+        ax.set_ylabel('Y-Coordinate')
+        ax.set_zlabel('Phase [°]')
+        f_string += str(round(meas_data_dict['f_vec'][f] * 1e-9, 1)) + 'GHz '
+        #plt.show()
+    ax.set_title('Calibration Matrix for ' + f_string)
+    plt.legend()
 
 plt.tight_layout()
 plt.show()

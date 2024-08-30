@@ -58,3 +58,13 @@ accuracy of phase measurements in the chamber-setup.
 ![Measurement_phaseDevelopment67G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0004_compensated.png)
 ![Measurement_phaseDevelopment63,5G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0004_compensated.png)
 ![Measurement_phaseDevelopment60G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004_compensated.png)  
+
+## Comparison Compensation Matrices
+The following image shows three graphs for the measurements [0002, 0003, 0004].
+The graphs display the calculated coordinate-related phase-offset (XY axis in chamber coordinates, Z-axis the 
+associated phase-offset in degree) for each measurement.
+It can be seen, that the overall development of offsets over chamber-positions is similar for all three measurements.
+The deviation needs to be quantified by separate measurements that have the same XY-resolution/-points measured.
+However, the image suggests that the concept of constant phase offsets for each XY point across multiple measurements 
+holds true to some extent.
+![PhaseOffsetComparison](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004.png)
