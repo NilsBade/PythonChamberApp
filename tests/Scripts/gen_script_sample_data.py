@@ -4,7 +4,7 @@ from datetime import datetime
 
 data: dict = {}
 vna_info = {
-    'parameter': ['S11', 'S12', 'S22'],
+    'parameter': ['S11', 'S22'],
     'freq_start': 10,
     'freq_stop': 50,
     'sweep_num_points': 5,
@@ -19,10 +19,10 @@ data['measurement_config'] = {
                 'zero_position':    [250.0, 300.0, 40.0],
                 'mesh_x_min':       245, #[mm]
                 'mesh_x_max':       255, #[mm]
-                'mesh_x_steps':     50,
+                'mesh_x_steps':     10,
                 'mesh_y_min':       295, #[mm]
                 'mesh_y_max':       305, #[mm]
-                'mesh_y_steps':     50,
+                'mesh_y_steps':     10,
                 'mesh_z_min':       100, #[mm]
                 'mesh_z_max':       110, #[mm]
                 'mesh_z_steps':     50,

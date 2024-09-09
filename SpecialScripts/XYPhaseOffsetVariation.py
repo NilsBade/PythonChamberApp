@@ -20,7 +20,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_0002_compensated.json'
+__filename = 'reduced_script_sample_data.json'
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
@@ -47,7 +47,7 @@ for f in range(num_freq_points):
             print("Phase offset variation: ", freq_offset_variation)
 
 
-# Window Config
+### Window Config
 main_fig, main_axes = plt.subplots(nrows=1, ncols=num_freq_points)
 manager_main_fig = plt.get_current_fig_manager()
 manager_main_fig.set_window_title('Maximum Phase Offset Difference in XY-Plane')
@@ -73,32 +73,52 @@ plt.tight_layout()
 
 
 
-# Plot phase offset as line over repetitions for each point in XY plane
-phase_offsets = np.zeros([num_freq_points, meas_data_dict['x_vec'].__len__()*meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
-for f in range(num_freq_points):
-    plane_counter = 0
-    for y in range(meas_data_dict['y_vec'].__len__()):
-        for x in range(meas_data_dict['x_vec'].__len__()):
-            # min/max val of phase offset at each XY-point
-            phase_offsets[f, plane_counter, :] = meas_data_dict['data_array'][1, 0, f, x, y, :]
-            plane_counter += 1
+### Plot phase offset as line over repetitions for each point in XY plane
+num_sparam = meas_data_dict['measurement_config']['parameter'].__len__()
+phase_offsets = np.zeros([num_sparam, num_freq_points, meas_data_dict['x_vec'].__len__()*meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
+for sparam in range(num_sparam):
+    for f in range(num_freq_points):
+        plane_counter = 0
+        for y in range(meas_data_dict['y_vec'].__len__()):
+            for x in range(meas_data_dict['x_vec'].__len__()):
+                # min/max val of phase offset at each XY-point
+                phase_offsets[sparam, f, plane_counter, :] = meas_data_dict['data_array'][1, sparam, f, x, y, :]     # Select which S-Parameter to use by second index
+                plane_counter += 1
 
 x_val = range(meas_data_dict['z_vec'].__len__())
 for i in range(num_freq_points):
-    new_fig, new_axes = plt.subplots(nrows=1, ncols=1)
+    new_fig, new_axes = plt.subplots(nrows=1, ncols=num_sparam)
     manager_second_fig = plt.get_current_fig_manager()
     manager_second_fig.set_window_title('Phase measured for each XY-Point ' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + ' GHz')
-    y_val = np.transpose(phase_offsets[i, :, :])
-    new_axes.plot(x_val, y_val, marker='o', markersize=2, linestyle='-')
-    new_axes.grid(True)
-    new_axes.set_ylabel('Phase [°]')
-    new_axes.set_xlabel('Number of Probe Revisions')
-    new_axes.set_title('Frequency: ' + str(round(meas_data_dict['f_vec'][i] * 1e-9, 1)) + 'GHz')
-    new_fig.text(0.5, 0.975, str('Phase measured at each point in XY-Plane // Data drawn from ' + __filename),
-                  ha='center', fontsize=12)
-    new_fig.text(0.5, 0.04, 'Each line corresponds to one point in XY-Plane. Each point was probed ' + str(meas_data_dict['z_vec'].__len__()) + ' times.', ha='center', fontsize=12)
+    if num_sparam > 1:
+        for sparam in range(num_sparam):
+            y_val = np.transpose(phase_offsets[sparam, i, :, :])
+            new_axes[sparam].plot(x_val, y_val, marker='o', markersize=2, linestyle='-')
+            new_axes[sparam].grid(True)
+            new_axes[sparam].set_ylabel('Phase [°]')
+            new_axes[sparam].set_xlabel('Number of Probe Revisions')
+            new_axes[sparam].set_title('Frequency: ' + str(round(meas_data_dict['f_vec'][i] * 1e-9, 1)) + 'GHz, Parameter: ' + str(meas_data_dict['measurement_config']['parameter'][sparam]))
+            new_fig.text(0.5, 0.975, str('Phase measured at each point in XY-Plane // Data drawn from ' + __filename),
+                          ha='center', fontsize=12)
+            new_fig.text(0.5, 0.04, 'Each line corresponds to one point in XY-Plane. Each point was probed ' + str(meas_data_dict['z_vec'].__len__()) + ' times.', ha='center', fontsize=12)
+    else:
+        y_val = np.transpose(phase_offsets[0, i, :, :])
+        new_axes.plot(x_val, y_val, marker='o', markersize=2, linestyle='-')
+        new_axes.grid(True)
+        new_axes.set_ylabel('Phase [°]')
+        new_axes.set_xlabel('Number of Probe Revisions')
+        new_axes.set_title(
+            'Frequency: ' + str(round(meas_data_dict['f_vec'][i] * 1e-9, 1)) + 'GHz, Parameter: ' + str(
+                meas_data_dict['measurement_config']['parameter'][0]))
+        new_fig.text(0.5, 0.975, str('Phase measured at each point in XY-Plane // Data drawn from ' + __filename),
+                     ha='center', fontsize=12)
+        new_fig.text(0.5, 0.04, 'Each line corresponds to one point in XY-Plane. Each point was probed ' + str(
+            meas_data_dict['z_vec'].__len__()) + ' times.', ha='center', fontsize=12)
 
-# Plot calibration matrix in 3D plot if data available
+
+
+
+### Plot calibration matrix in 3D plot if data available
 if 'calibration_data' in meas_data_dict:
     calib_matrix = np.array(meas_data_dict['calibration_data'])
     fig = plt.figure()
@@ -116,7 +136,6 @@ if 'calibration_data' in meas_data_dict:
         ax.set_ylabel('Y-Coordinate')
         ax.set_zlabel('Phase [°]')
         f_string += str(round(meas_data_dict['f_vec'][f] * 1e-9, 1)) + 'GHz '
-        #plt.show()
     ax.set_title('Calibration Matrix for ' + f_string)
     plt.legend()
 
