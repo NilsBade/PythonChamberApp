@@ -40,7 +40,7 @@ store_path = os.path.join(results_dir, __store_filename)
 meas_data_dict['measurement_config']['type'] += ' (compensated)'
 ##############################################################################################
 # generate data arrays
-phase_xy_data = meas_data_dict['data_array'][1, 0, :, :, :, :]
+phase_xy_data = meas_data_dict['data_array'][1, 0, :, :, :, :]  # "0" Selects S11 Parameter for calibration
 phase_origin = np.zeros(meas_data_dict['f_vec'].__len__())
 phase_xy_calib_matrix = np.zeros([meas_data_dict['f_vec'].__len__(), meas_data_dict['x_vec'].__len__(), meas_data_dict['y_vec'].__len__()])
 phase_xy_data_calibrated = np.zeros([meas_data_dict['f_vec'].__len__(), meas_data_dict['x_vec'].__len__(), meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
