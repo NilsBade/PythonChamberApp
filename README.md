@@ -21,6 +21,7 @@ PythonChamberApp/
 │
 ├── docs/
 │   ├── Datasheets RatRig Electronics/...
+│   ├── Phase Variation Study/...
 │   └── Module Readme's - Not Done
 │
 ├── PythonChamberApp/
