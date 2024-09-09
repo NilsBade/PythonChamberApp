@@ -284,10 +284,10 @@ class AutoMeasurement(QRunnable):
 
                     # Timekeeping for average time per point
                     if total_point_count == 1:
-                        start_timestamp = datetime.now()
+                        meas_start_timestamp = datetime.now()
                         progress_dict['time_to_go'] = 0
                     else:
-                        self.average_time_per_point = (datetime.now() - start_timestamp).total_seconds() / (total_point_count - 1)
+                        self.average_time_per_point = (datetime.now() - meas_start_timestamp).total_seconds() / (total_point_count - 1)
                         progress_dict['time_to_go'] = round(self.average_time_per_point * (total_num_of_points - total_point_count))
 
 
