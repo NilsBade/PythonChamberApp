@@ -233,11 +233,7 @@ class AutoMeasurement(QRunnable):
                         self.signals.update.emit("Auto Measurement was interrupted")
                         progress_dict['status_flag'] = "Measurement stopped"
                         self.signals.progress.emit(progress_dict)
-                        # update measurement duration in measurement_config
-                        time_taken_sec = (datetime.now() - meas_start_timestamp).total_seconds()
-                        self.json_data_storage['measurement_config']['duration'] = str(timedelta(seconds=time_taken_sec))
-
-                        self.close_all_files()
+                        self.close_all_files(meas_start_timestamp)
                         self.signals.finished.emit({'file_location': file_locations_string})
                         return
 
@@ -303,7 +299,7 @@ class AutoMeasurement(QRunnable):
         progress_dict['status_flag'] = "Measurement finished"
         self.signals.progress.emit(progress_dict)
         self.signals.finished.emit({'file_location': file_locations_string})
-        self.close_all_files()
+        self.close_all_files(meas_start_timestamp)
         return
 
     def stop(self):
@@ -312,11 +308,16 @@ class AutoMeasurement(QRunnable):
         """
         self._is_running = False
 
-    def close_all_files(self):
+    def close_all_files(self, meas_start_timestamp: datetime = None):
         """
         Detects all open files, writes data to them if necessary and closes all files.
         This function must be called before Thread finishes.
         """
+        # update measurement duration in measurement_config
+        if meas_start_timestamp is not None:
+            time_taken_sec = (datetime.now() - meas_start_timestamp).total_seconds()
+            self.json_data_storage['measurement_config']['duration'] = str(timedelta(seconds=time_taken_sec))
+
         # close text files - data already written
         if self.measurement_file_S11 is not None:
             self.measurement_file_S11.close()
