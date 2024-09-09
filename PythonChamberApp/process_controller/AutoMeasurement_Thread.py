@@ -233,6 +233,10 @@ class AutoMeasurement(QRunnable):
                         self.signals.update.emit("Auto Measurement was interrupted")
                         progress_dict['status_flag'] = "Measurement stopped"
                         self.signals.progress.emit(progress_dict)
+                        # update measurement duration in measurement_config
+                        time_taken_sec = (datetime.now() - meas_start_timestamp).total_seconds()
+                        self.json_data_storage['measurement_config']['duration'] = str(timedelta(seconds=time_taken_sec))
+
                         self.close_all_files()
                         self.signals.finished.emit({'file_location': file_locations_string})
                         return
