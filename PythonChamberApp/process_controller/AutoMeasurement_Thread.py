@@ -298,7 +298,8 @@ class AutoMeasurement(QRunnable):
         self.signals.update.emit("AutoMeasurement is completed!")
         progress_dict['status_flag'] = "Measurement finished"
         self.signals.progress.emit(progress_dict)
-        self.signals.finished.emit({'file_location': file_locations_string})
+        self.signals.finished.emit({'file_location': file_locations_string,
+                                    'duration': str(timedelta(seconds=(datetime.now() - meas_start_timestamp).total_seconds()))})
         self.close_all_files(meas_start_timestamp)
         return
 

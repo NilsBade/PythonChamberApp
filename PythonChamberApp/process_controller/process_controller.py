@@ -1032,7 +1032,8 @@ class ProcessController:
     def auto_measurement_finished_handler(self, finished_info: dict):
         self.auto_measurement_process = None
         self.gui_mainWindow.prompt_info(
-            info_msg="Auto Measurement process completed.\nData was saved to " + finished_info['file_location'],
+            info_msg="Auto Measurement process completed.\nData was saved to " + finished_info['file_location'] +
+                     '\nMeasurement took ' + finished_info['duration'] + '.',
             window_title="Auto Measurement Completed")
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
         self.gui_mainWindow.enable_chamber_control_window()
