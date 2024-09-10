@@ -7,7 +7,9 @@ import numpy as np
 from DataManagementMethods import read_measurement_data_from_file
 import matplotlib.pyplot as plt
 
-filenames = ['PhaseMeasurementOnS11_0002_compensated.json', 'PhaseMeasurementOnS11_0003_compensated.json', 'PhaseMeasurementOnS11_0004_compensated.json']
+filenames = ['PhaseMeasurementOnS11_0002_compensated.json', 'PhaseMeasurementOnS11_0003_compensated.json',
+             'PhaseMeasurementOnS11_0004_compensated.json', 'PhaseMeasurementOnS11_S22_0005_compensated.json',
+             'PhaseMeasurementOnS11_S22_0006_compensated.json']
 file_data = []
 results_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(), os.pardir)), 'results')
 print("results directory should be at: ", results_dir)
@@ -18,9 +20,12 @@ for i in range(len(filenames)):
 # Window Config
 main_fig = plt.figure(figsize=(18, 7))
 main_axes = []
-main_axes.append(main_fig.add_subplot(1, filenames.__len__(), 1, projection='3d'))
-main_axes.append(main_fig.add_subplot(1, filenames.__len__(), 2, projection='3d'))
-main_axes.append(main_fig.add_subplot(1, filenames.__len__(), 3, projection='3d'))
+# fig layout N x 3 Graphs dependend on number of files
+rows = int(filenames.__len__()/3) + 1
+cols = filenames.__len__() % 3 + 1
+
+for idx in range(filenames.__len__()):
+    main_axes.append(main_fig.add_subplot(rows, cols, idx+1, projection='3d'))
 manager_main_fig = plt.get_current_fig_manager()
 manager_main_fig.set_window_title('Phase Calibration Matrix Values [°]')
 

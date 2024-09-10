@@ -25,7 +25,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_S22_0005.json'
+__filename = 'PhaseMeasurementOnS11_S22_0006.json'
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
@@ -35,7 +35,7 @@ Z-Coor gives the revisions of XY-plane probing.
 """
 
 # set filename for compensated data ##########################################################
-__store_filename = 'PhaseMeasurementOnS11_S22_0005_compensated.json'
+__store_filename = 'PhaseMeasurementOnS11_S22_0006_compensated.json'
 store_path = os.path.join(results_dir, __store_filename)
 meas_data_dict['measurement_config']['type'] += ' (compensated)'
 ##############################################################################################
