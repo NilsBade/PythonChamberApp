@@ -458,6 +458,8 @@ class UI_auto_measurement_window(QWidget):
         # connect signals and slots for internal callbacks
         self.file_type_json_checkbox.stateChanged.connect(self.__file_type_json_callback)
 
+        # todo add 'Hint' field to put in extra information about the measurement. The input text should be saved in the measurement file info for explanation.
+
         return measurement_data_config_frame
 
     def __file_type_json_callback(self):

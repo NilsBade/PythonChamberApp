@@ -198,7 +198,7 @@ class AutoMeasurement(QRunnable):
         if self.measurement_file_S22 is not None:
             file_locations_string += self.measurement_file_S22.name + ';\n'
         if self.measurement_file_json is not None:
-            file_locations_string += self.measurement_file_json.name + ';\n'
+            file_locations_string += self.measurement_file_json.name
         file_locations_string += ">\n"
 
         # calculate num of points and layers for progress monitoring
@@ -235,7 +235,7 @@ class AutoMeasurement(QRunnable):
                         self.signals.progress.emit(progress_dict)
                         self.close_all_files(meas_start_timestamp)
                         self.signals.finished.emit({'file_location': file_locations_string,
-                                                    'duration': str(timedelta(seconds=(datetime.now() - meas_start_timestamp).total_seconds()))}) # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
+                                                    'duration': str(timedelta(seconds=(round(datetime.now() - meas_start_timestamp).total_seconds())))}) # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
                         return
 
                     self.signals.update.emit(
@@ -300,7 +300,7 @@ class AutoMeasurement(QRunnable):
         progress_dict['status_flag'] = "Measurement finished"
         self.signals.progress.emit(progress_dict)
         self.signals.finished.emit({'file_location': file_locations_string,
-                                    'duration': str(timedelta(seconds=(datetime.now() - meas_start_timestamp).total_seconds()))}) # toDo Cleanup here as well
+                                    'duration': str(timedelta(seconds=(round(datetime.now() - meas_start_timestamp).total_seconds())))}) # toDo Cleanup here as well
         self.close_all_files(meas_start_timestamp)
         return
 
