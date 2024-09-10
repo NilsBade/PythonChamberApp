@@ -75,6 +75,7 @@ plt.tight_layout()
 
 ### Plot phase offset as line over repetitions for each point in XY plane
 num_sparam = meas_data_dict['measurement_config']['parameter'].__len__()
+num_sparam = 1
 phase_offsets = np.zeros([num_sparam, num_freq_points, meas_data_dict['x_vec'].__len__()*meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
 for sparam in range(num_sparam):
     for f in range(num_freq_points):

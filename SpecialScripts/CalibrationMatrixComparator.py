@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 filenames = ['PhaseMeasurementOnS11_0002_compensated.json', 'PhaseMeasurementOnS11_0003_compensated.json',
              'PhaseMeasurementOnS11_0004_compensated.json', 'PhaseMeasurementOnS11_S22_0005_compensated.json',
-             'PhaseMeasurementOnS11_S22_0006_compensated.json']
+             'PhaseMeasurementOnS11_S22_0006_compensated.json', 'PhaseMeasurementOnS11_S22_0007_compensated.json']
 file_data = []
 results_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(), os.pardir)), 'results')
 print("results directory should be at: ", results_dir)
@@ -21,8 +21,14 @@ for i in range(len(filenames)):
 main_fig = plt.figure(figsize=(18, 7))
 main_axes = []
 # fig layout N x 3 Graphs dependend on number of files
-rows = int(filenames.__len__()/3) + 1
-cols = filenames.__len__() % 3 + 1
+rows = int(filenames.__len__()/3)
+if filenames.__len__() % 3 != 0:
+    rows += 1
+
+if filenames.__len__() >= 3:
+    cols = 3
+else:
+    cols = filenames.__len__()
 
 for idx in range(filenames.__len__()):
     main_axes.append(main_fig.add_subplot(rows, cols, idx+1, projection='3d'))

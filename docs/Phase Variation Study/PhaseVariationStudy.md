@@ -20,7 +20,9 @@ If that is not the case, the next interesting thing is if the variation at each 
 same. Since that would mean that a correction of the error by simple subtraction of the phase- and amplitude-error is possible.  
 The results of the taken measurements are shown in the [Measurements XY-Plane section](#measurements-xy-plane).
 
-## Measurements XY-Plane
+## Measurements XY-Plane 
+> Measurements [0001-0004]
+
 XY-Plane Measurement with 5x5 points probed at 60 GHz; 63,5 GHz; 67 GHz.  
 Each point was measured 51 times to evaluate the drift of the phase variation error over time and due to 
 non-ideal movement/repetition.  
@@ -60,6 +62,8 @@ accuracy of phase measurements in the chamber-setup.
 ![Measurement_phaseDevelopment60G_0004_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0004_compensated.png)  
 
 ## Comparison Compensation Matrices
+> Measurements [0002-0004]
+
 The following image shows three graphs for the measurements [0002, 0003, 0004].
 The graphs display the calculated coordinate-related phase-offset (XY axis in chamber coordinates, Z-axis the 
 associated phase-offset in degree) for each measurement.
@@ -67,4 +71,33 @@ It can be seen, that the overall development of offsets over chamber-positions i
 The deviation needs to be quantified by separate measurements that have the same XY-resolution/-points measured.
 However, the image suggests that the concept of constant phase offsets for each XY point across multiple measurements 
 holds true to some extent.
-![PhaseOffsetComparison](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004.png)
+![PhaseOffsetComparison_0002-0004](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004.png)
+![PhaseOffsetComparison_0002-0007](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004_0005_0006_0007.png)
+
+## Longterm Measurements XY-Plane
+> Measurements [0005-0008]
+
+The following image shows the phase development over time for the measurements [0005, 0006, 0007, 0008].
+Measurements [0005-0007] took about 4 hours, measurement [0008] took about 8 hours.  
+It can be seen, that the phase drift is still dominated by effects not related to the chamber-setup/-movement.
+This can be concluded from all lines (= positions in XY-plane) drifting together by magnitudes much larger than "their own noise".
+
+Moreover, measurements that take longer seem to have spikes/larger drifts in phase in a short amount of time.
+Those can hardly be correlated to the chamber-setup as well, but are more likely to be caused by the PNA itself.
+How these spikes in phase drift are triggered and when/how often they occur must be studied by e.g. even longer measurements.
+
+Measurement [0005-0007] also measured the S22 parameter with a short connected to the fixed second PNA-cable.
+This is just for comparison of the phase drift of the PNA on its own. The phase-drifts that were measured on S11 and S22 are
+very different, which is likely caused by the separate TX/RX-stages of Port 1 and Port 2 of the PNA. They are probably
+differently compensated for thermal effects, independent of each other and therefor behave different over time.  
+Even the spikes that can be seen on the S11 parameter are not visible on the S22 parameter which leads to the conclusion,
+that also these spikes are triggered at the TX/RX-stages of the PNA right behind the Ports.
+
+![Measurement_phaseDevelopment67G_0006_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0006_compensated.png)
+![Measurement_phaseDevelopment63,5G_0006_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0006_compensated.png)
+![Measurement_phaseDevelopment60G_0006_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0006_compensated.png)  
+![Measurement_phaseDevelopment67G_0007_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0007_compensated.png)
+![Measurement_phaseDevelopment63,5G_0007_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0007_compensated.png)
+![Measurement_phaseDevelopment60G_0007_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0007_compensated.png)  
+
+- Todo: add documentation for measurement [0008]
