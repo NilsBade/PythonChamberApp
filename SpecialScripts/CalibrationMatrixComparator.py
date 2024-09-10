@@ -7,8 +7,7 @@ import numpy as np
 from DataManagementMethods import read_measurement_data_from_file
 import matplotlib.pyplot as plt
 
-filenames = ['PhaseMeasurementOnS11_0002_compensated.json', 'PhaseMeasurementOnS11_0003_compensated.json',
-             'PhaseMeasurementOnS11_0004_compensated.json', 'PhaseMeasurementOnS11_S22_0005_compensated.json',
+filenames = ['PhaseMeasurementOnS11_S22_0005_compensated.json',
              'PhaseMeasurementOnS11_S22_0006_compensated.json', 'PhaseMeasurementOnS11_S22_0007_compensated.json']
 file_data = []
 results_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(), os.pardir)), 'results')
@@ -49,6 +48,7 @@ for i in range(len(filenames)):
         main_axes[i].set_zlabel('Phase [°]')
         main_axes[i].legend()
     main_axes[i].set_title(filenames[i])
+    main_axes[i].view_init(elev=20, azim=-135)
 
 plt.tight_layout()
 plt.show()

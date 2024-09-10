@@ -72,7 +72,7 @@ The deviation needs to be quantified by separate measurements that have the same
 However, the image suggests that the concept of constant phase offsets for each XY point across multiple measurements 
 holds true to some extent.
 ![PhaseOffsetComparison_0002-0004](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004.png)
-![PhaseOffsetComparison_0002-0007](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0002_0003_0004_0005_0006_0007.png)
+![PhaseOffsetComparison_0005-0007](/docs/Phase%20Variation%20Study/Figures/Phase_Calibration_Matrix_Comparison_0005_0006_0007.png)
 
 ## Longterm Measurements XY-Plane
 > Measurements [0005-0008]
