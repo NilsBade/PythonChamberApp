@@ -330,8 +330,11 @@ value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
 ## Release History
 
 * 1.1
-  * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab [ToDo 21.8.24]
-  * Added Phase-Graphs below the amplitude graphs [ToDo 21.8.24]
+  * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
+  * Added Phase-Graphs below the amplitude graphs
+  * Added measurement-time parameter as 'duration' to measurement file 
+  * display measurement time in popup window when automeasurement finished
+  * successfully tested measurements up to 12 hours
 * 1.0
   * First Version of App 'released' 17.06.2024
   * capable of controlling an automated measurement and display measured amplitude data in split-view graphs
