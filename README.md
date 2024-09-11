@@ -328,7 +328,13 @@ Then one can get the value by
 value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
 ```
 ## Release History
+> [!NOTE] Version Numbering is changed in [PythonChamberApp's mainwindow.py](PythonChamberApp/user_interface/ui_mainwindow.py) line 33
 
+* 1.2 - development state
+  * Extra Tab 'Postprocessing'
+    * to generate calibration matrix from measurement file [To Do 11.9.24]
+    * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
+      * maybe also amplitude compensation?
 * 1.1
   * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
   * Added Phase-Graphs below the amplitude graphs
