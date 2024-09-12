@@ -78,7 +78,7 @@ holds true to some extent.
 > Measurements [0005-0008]
 
 The following image shows the phase development over time for the measurements [0005, 0006, 0007, 0008].
-Measurements [0005-0007] took about 4 hours, measurement [0008] took about 8 hours.  
+Measurements [0005-0007] took about 4 hours, measurement [0008] took 12 hours.  
 It can be seen, that the phase drift is still dominated by effects not related to the chamber-setup/-movement.
 This can be concluded from all lines (= positions in XY-plane) drifting together by magnitudes much larger than "their own noise".
 
@@ -100,4 +100,24 @@ that also these spikes are triggered at the TX/RX-stages of the PNA right behind
 ![Measurement_phaseDevelopment63,5G_0007_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0007_compensated.png)
 ![Measurement_phaseDevelopment60G_0007_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0007_compensated.png)  
 
-- Todo: add documentation for measurement [0008]
+For the longterm measurement [0008], taking 12 hours, the phase drift appears to be more stable and without spikes in
+the order of magnitude as seen in the shorter measurements. The measurement was done over night 20:00 to 8:00.  
+It may be, that the spikes in phase were less due to the longer on-time (warm-up) of the PNA or due to nobody entering
+the room or disturbing the measurement in any other way during night.
+
+![Measurement_phaseDevelopment67G_0008_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_67.0_GHz_0008_compensated.png)
+![Measurement_phaseDevelopment63,5G_0008_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_63.5_GHz_0008_compensated.png)
+![Measurement_phaseDevelopment60G_0008_compensated](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_60.0_GHz_0008_compensated.png)
+
+In Measurement [0008] also the S22 Parameter was measured and a short was attached behinde the AUT-coax-cable. The 
+short/cable was fixed to the AUT-plate by clamping it with the Horn-AUT-fixture as can be seen in the next picture.
+The S22 Parameter stands out with lower "noise", probably due to the plate not moving between XY-position-changes. Thus
+all separate line are closer to each other than for S11. Still the Phase of S22 drifts significantly over time as well.
+To be able to differentiate between a **phase-drift due to the moving AUT-plate or due to thermal reasons/time**, another 
+measurement needs to be conducted with the AUT plate moving longer distances in a short period of time. This will be 
+done by leaving the probe head in one position while running the AUT plate all the way down the chamber and taking S22-
+measurements.
+
+![Measurement_phaseDevelopment67G_0008_S22](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_S22_67.0_GHz_0008_compensated.png)
+![Measurement_phaseDevelopment63,5G_0008_S22](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_S22_63.5_GHz_0008_compensated.png)
+![Measurement_phaseDevelopment60G_0008_S22](/docs/Phase%20Variation%20Study/Figures/Phase_measured_for_each_XY-Point_S22_60.0_GHz_0008_compensated.png)
