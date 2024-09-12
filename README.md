@@ -335,6 +335,7 @@ value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
     * to generate calibration matrix from measurement file [To Do 11.9.24]
     * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
       * maybe also amplitude compensation?
+  * Enabled display of measurement-files that have just one point in any axis direction
 * 1.1
   * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
   * Added Phase-Graphs below the amplitude graphs
