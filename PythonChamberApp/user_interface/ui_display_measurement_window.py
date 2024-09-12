@@ -693,8 +693,17 @@ class UI_display_measurement_window(QWidget):
 
         with points from beginning  in center of each element.
         """
-        x_stepsize = abs(x_vec[1] - x_vec[0])
-        y_stepsize = abs(y_vec[1] - y_vec[0])
+        if x_vec.__len__() < 2:
+            x_stepsize = 1
+            print("Warning @gen_meshgrid_from_meas_points:\nx vector too short to calculate meshgrid. Using default stepsize of 1 in XY-Plane.")
+        else:
+            x_stepsize = abs(x_vec[1] - x_vec[0])
+
+        if y_vec.__len__() < 2:
+            y_stepsize = 1
+            print("Warning @gen_meshgrid_from_meas_points:\ny vector too short to calculate meshgrid. Using default stepsize of 1 in XY-Plane.")
+        else:
+            y_stepsize = abs(y_vec[1] - y_vec[0])
 
         new_x_vec = np.append(x_vec, x_vec[-1] + x_stepsize)
         new_y_vec = np.append(y_vec, y_vec[-1] + y_stepsize)
