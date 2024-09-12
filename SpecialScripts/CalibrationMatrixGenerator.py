@@ -12,6 +12,7 @@ import json
 from DataManagementMethods import read_measurement_data_from_file
 from DataManagementMethods import write_meas_dict_to_file
 import matplotlib.pyplot as plt
+from tkinter import filedialog
 
 # Path to current working directory
 print("current working directory: ", os.getcwd())
@@ -25,7 +26,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_S22_0007.json'
+__filename = filedialog.askopenfilename(initialdir=results_dir, title="Select a measurement file", filetypes=(("JSON files", "*.json"), ("All files", "*.*")))
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
@@ -35,7 +36,7 @@ Z-Coor gives the revisions of XY-plane probing.
 """
 
 # set filename for compensated data ##########################################################
-__store_filename = 'PhaseMeasurementOnS11_S22_0007_compensated.json'
+__store_filename = __filename.split('.')[0] + '_compensated.json'
 store_path = os.path.join(results_dir, __store_filename)
 meas_data_dict['measurement_config']['type'] += ' (compensated)'
 ##############################################################################################

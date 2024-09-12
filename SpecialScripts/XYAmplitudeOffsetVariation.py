@@ -20,7 +20,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_0004.json'
+__filename = filedialog.askopenfilename(initialdir=results_dir, title="Select a measurement file", filetypes=(("JSON files", "*.json"), ("All files", "*.*")))
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)

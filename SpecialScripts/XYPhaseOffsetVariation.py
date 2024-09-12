@@ -7,6 +7,7 @@ import numpy as np
 import json
 from DataManagementMethods import read_measurement_data_from_file
 import matplotlib.pyplot as plt
+from tkinter import filedialog
 
 # Path to current working directory
 print("current working directory: ", os.getcwd())
@@ -20,7 +21,7 @@ print("results directory: ", results_dir)
 print("contents: ", os.listdir(results_dir))
 
 # set path to desired measurement file #######################################################
-__filename = 'PhaseMeasurementOnS11_S22_0006_compensated.json'
+__filename = filedialog.askopenfilename(initialdir=results_dir, title="Select a measurement file", filetypes=(("JSON files", "*.json"), ("All files", "*.*")))
 file_path = os.path.join(results_dir, __filename)
 ##############################################################################################
 meas_data_dict = read_measurement_data_from_file(file_path)
@@ -75,7 +76,7 @@ plt.tight_layout()
 
 ### Plot phase offset as line over repetitions for each point in XY plane
 num_sparam = meas_data_dict['measurement_config']['parameter'].__len__()
-num_sparam = 1
+#num_sparam = 1
 phase_offsets = np.zeros([num_sparam, num_freq_points, meas_data_dict['x_vec'].__len__()*meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
 for sparam in range(num_sparam):
     for f in range(num_freq_points):
