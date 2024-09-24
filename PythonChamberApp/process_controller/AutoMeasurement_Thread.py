@@ -7,6 +7,7 @@ import cmath
 import math
 from datetime import datetime, timedelta
 import json
+import os
 
 
 class AutoMeasurementSignals(QObject):
@@ -81,6 +82,8 @@ class AutoMeasurement(QRunnable):
     json_S22: dict = None
 
     average_time_per_point: float = 0  # unit [s], calculated from all points that were measured so far
+    measurement_iteration_success: bool = False     # flag to indicate if measurement done and to redo measurement if error occured (in Try-block)
+    error_log_path: str = None
 
 
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
@@ -113,6 +116,11 @@ class AutoMeasurement(QRunnable):
         self.json_S11 = None
         self.json_S12 = None
         self.json_S22 = None
+
+        # setup path to error log
+        self.error_log_path = os.path.join(os.path.dirname(os.path.dirname(file_location)), "error_log.txt")
+        with open(self.error_log_path, "a") as file:
+            file.write(f"\n\n#### Started new AutoMeasurement - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ####\n")
 
         if self.store_as_json:
             # open ONE measurement file
@@ -232,52 +240,66 @@ class AutoMeasurement(QRunnable):
                             {'error_code': 0, 'error_msg': "Thread was interrupted by process controller"})
                         self.signals.update.emit("Auto Measurement was interrupted")
                         progress_dict['status_flag'] = "Measurement stopped"
+                        self.__append_to_error_log(f"AutoMeasurement was stopped at [{x_coor}, {y_coor}, {z_coor}] by User (ProcessController).")
                         self.signals.progress.emit(progress_dict)
                         self.close_all_files(meas_start_timestamp)
                         self.signals.finished.emit({'file_location': file_locations_string,
                                                     'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))}) # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
                         return
 
-                    self.signals.update.emit(
-                        'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
-                    self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # Comment here when testing without chamber
-                    self.signals.update.emit("Movement done!")
+                    # START TRY BLOCK & WHILE LOOP HERE
+                    self.measurement_iteration_success = False
+                    while not self.measurement_iteration_success:
+                        try:
+                            self.signals.update.emit(
+                                'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
+                            self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # Comment here when testing without chamber
+                            self.signals.update.emit("Movement done!")
 
-                    # Routine to do vna measurement and store data somewhere put here...
-                    self.signals.update.emit("Trigger measurement...")
-                    self.vna.pna_trigger_measurement('AutoMeasurement')
-                    self.signals.update.emit("Measurement done! Read data from VNA and write to file...")
+                            # Routine to do vna measurement and store data somewhere put here...
+                            self.signals.update.emit("Trigger measurement...")
+                            self.vna.pna_trigger_measurement('AutoMeasurement')
+                            self.signals.update.emit("Measurement done! Read data from VNA and write to file...")
 
-                    x_coor_antennas = x_coor - self.zero_position[0]
-                    y_coor_antennas = y_coor - self.zero_position[1]
-                    z_coor_antennas = z_coor - self.zero_position[2]
+                            x_coor_antennas = x_coor - self.zero_position[0]
+                            y_coor_antennas = y_coor - self.zero_position[1]
+                            z_coor_antennas = z_coor - self.zero_position[2]
 
-                    if self.store_as_json:
-                        for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
-                            if json_dic is not None:
-                                # read data to buffer property
-                                self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
-                                data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
-                                for freq_point in data:
-                                    pointer = complex(real=freq_point[1], imag=freq_point[2])
-                                    json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
-                                self.signals.update.emit(f"{json_dic['parameter']} data appended.")
-                    else:
-                        # Routine to read all configured parameters from VNA and write each result to each file.txt
-                        possible_parameters = ['S11', 'S12', 'S22']
-                        counter = 0
-                        for file in [self.measurement_file_S11, self.measurement_file_S12, self.measurement_file_S22]:
-                            if file is not None:  # not None for all parameters that were introduced by __init__ function
-                                self.signals.update.emit(f"Reading {possible_parameters[counter]}-Parameter Values...")
-                                data = self.vna.pna_read_meas_data('AutoMeasurement', possible_parameters[counter])
-                                for freq_point in data:
-                                    pointer = complex(real=freq_point[1], imag=freq_point[2])
-                                    # write measured data to file
-                                    file.write(
-                                        f"{x_coor_antennas};{y_coor_antennas};{z_coor_antennas};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
-                                self.signals.update.emit(f"Written {possible_parameters[counter]} values to file.")
-                            counter += 1
-                        self.signals.update.emit("All data written to txt-file(s)!")
+                            if self.store_as_json:
+                                for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
+                                    if json_dic is not None:
+                                        # read data to buffer property
+                                        self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
+                                        data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
+                                        for freq_point in data:
+                                            pointer = complex(real=freq_point[1], imag=freq_point[2])
+                                            json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
+                                        self.signals.update.emit(f"{json_dic['parameter']} data appended.")
+                            else:
+                                # Routine to read all configured parameters from VNA and write each result to each file.txt
+                                possible_parameters = ['S11', 'S12', 'S22']
+                                counter = 0
+                                for file in [self.measurement_file_S11, self.measurement_file_S12, self.measurement_file_S22]:
+                                    if file is not None:  # not None for all parameters that were introduced by __init__ function
+                                        self.signals.update.emit(f"Reading {possible_parameters[counter]}-Parameter Values...")
+                                        data = self.vna.pna_read_meas_data('AutoMeasurement', possible_parameters[counter])
+                                        for freq_point in data:
+                                            pointer = complex(real=freq_point[1], imag=freq_point[2])
+                                            # write measured data to file
+                                            file.write(
+                                                f"{x_coor_antennas};{y_coor_antennas};{z_coor_antennas};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
+                                        self.signals.update.emit(f"Written {possible_parameters[counter]} values to file.")
+                                    counter += 1
+                                self.signals.update.emit("All data written to txt-file(s)!")
+
+                            # flag success of measurement
+                            self.measurement_iteration_success = True
+
+                        except Exception as e:
+                            self.signals.update.emit(f"Error occurred at [{x_coor}, {y_coor}, {z_coor}]")
+                            self.__append_to_error_log(f"Error occurred at [{x_coor}, {y_coor}, {z_coor}]: {e}")
+                            self.signals.update.emit(f"Error Log updated. Restarting measurement at [{x_coor}, {y_coor}, {z_coor}]...")
+                    # END TRY BLOCK & WHILE LOOP HERE
 
                     # Timekeeping for average time per point
                     if total_point_count == 1:
@@ -374,4 +396,12 @@ class AutoMeasurement(QRunnable):
             self.signals.update.emit(f"Data written to {self.measurement_file_json.name}")
             self.measurement_file_json.close()
 
+        return
+
+    def __append_to_error_log(self, error_msg: str):
+        """
+        Appends an error message to the error log file with timestamp.
+        """
+        with open(self.error_log_path, 'a') as file:
+            file.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
         return
