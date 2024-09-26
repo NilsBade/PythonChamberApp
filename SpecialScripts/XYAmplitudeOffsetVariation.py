@@ -7,6 +7,7 @@ import numpy as np
 import json
 from DataManagementMethods import read_measurement_data_from_file
 import matplotlib.pyplot as plt
+from tkinter import filedialog
 
 # Path to current working directory
 print("current working directory: ", os.getcwd())
