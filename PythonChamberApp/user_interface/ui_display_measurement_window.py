@@ -313,7 +313,11 @@ class UI_display_measurement_window(QWidget):
         updates x value lineEdit according to slider position. Must be connected to slider value changed signal.
         """
         slider_val = self.yz_plot_x_select_slider.value()
-        self.yz_plot_x_select_lineEdit.setText(f"{round(self.x_vector[slider_val],3)} mm")
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_x_vec = self.x_vector.__sub__(self.x_zero_pos)
+            self.yz_plot_x_select_lineEdit.setText(f"{round(aut_x_vec[slider_val],3)} mm")
+        else:
+            self.yz_plot_x_select_lineEdit.setText(f"{round(self.x_vector[slider_val],3)} mm")
         return
 
     def __update_y_select_lineEdit(self):
@@ -321,7 +325,11 @@ class UI_display_measurement_window(QWidget):
         updates y value lineEdit according to slider position. Must be connected to slider value changed signal.
         """
         slider_val = self.xz_plot_y_select_slider.value()
-        self.xz_plot_y_select_lineEdit.setText(f"{round(self.y_vector[slider_val],3)} mm")
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_y_vec = self.y_vector.__sub__(self.y_zero_pos)
+            self.xz_plot_y_select_lineEdit.setText(f"{round(aut_y_vec[slider_val],3)} mm")
+        else:
+            self.xz_plot_y_select_lineEdit.setText(f"{round(self.y_vector[slider_val],3)} mm")
         return
 
     def __update_z_select_lineEdit(self):
@@ -329,7 +337,11 @@ class UI_display_measurement_window(QWidget):
         updates z value lineEdit according to slider position. Must be connected to slider value changed signal.
         """
         slider_val = self.xy_plot_z_select_slider.value()
-        self.xy_plot_z_select_lineEdit.setText(f"{round(self.z_vector[slider_val],3)} mm")
+        if self.coor_AUT_checkBox.isChecked() is True:
+            aut_z_vec = self.z_vector.__sub__(self.z_zero_pos)
+            self.xy_plot_z_select_lineEdit.setText(f"{round(aut_z_vec[slider_val],3)} mm")
+        else:
+            self.xy_plot_z_select_lineEdit.setText(f"{round(self.z_vector[slider_val],3)} mm")
         return
 
     @staticmethod
@@ -525,6 +537,15 @@ class UI_display_measurement_window(QWidget):
         self.__set_slider_values_noSignals(self.xy_plot_z_select_slider, z_vec)
         self.z_vector = z_vec
         self.__update_z_select_lineEdit()
+
+    def update_coordinate_lineEdits(self):
+        """
+        Updates all lineEdits for x,y,z coordinates of all planes according to current slider positions
+        """
+        self.__update_x_select_lineEdit()
+        self.__update_y_select_lineEdit()
+        self.__update_z_select_lineEdit()
+        return
 
     # noinspection PyUnreachableCode
     def update_xz_plane_plot(self, data_amp_array: np.ndarray, data_phase_array: np.ndarray):

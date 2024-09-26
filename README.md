@@ -336,8 +336,9 @@ value_atX50Z100 = xz_plane_data_from_array[ idx_of_50_in_X, idx_of_100_in_Z ]
     * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
       * maybe also amplitude compensation?
   * Enabled display of measurement-files that have just one point in any axis direction
-  * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber) [To Do 24.9.24]
+  * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber) [To be tested 26.9.24]
     * Stores error log in 'GIT/PythonChamberApp/error_log.txt' directory
+  * Display coordinate values next to X,Y,Z sliders in AUT-referred-coordinates if AUT-coordinates are selected
 * 1.1
   * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
   * Added Phase-Graphs below the amplitude graphs

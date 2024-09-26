@@ -129,6 +129,8 @@ class ProcessController:
             self.display_measurement_update_yz_plot_callback)
         self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
             self.display_measurement_update_xy_plot_callback)
+        self.gui_mainWindow.ui_display_measurement_window.coor_AUT_checkBox.checkStateChanged.connect(
+            self.display_measurement_update_coordinate_lineEdits)
         self.gui_mainWindow.ui_display_measurement_window.unit_display_comboBox.currentTextChanged.connect(
             self.display_measurement_update_xz_plot_callback)
         self.gui_mainWindow.ui_display_measurement_window.unit_display_comboBox.currentTextChanged.connect(
@@ -1383,6 +1385,13 @@ class ProcessController:
                          cur_freq_idx, :, :, cur_z_coor_idx]
 
         self.gui_mainWindow.ui_display_measurement_window.update_xy_plane_plot(plane_amp_data, plane_phase_data)
+        return
+
+    def display_measurement_update_coordinate_lineEdits(self):
+        """
+        Updates all values of lineEdits next to XYZ sliders
+        """
+        self.gui_mainWindow.ui_display_measurement_window.update_coordinate_lineEdits()
         return
 
 
