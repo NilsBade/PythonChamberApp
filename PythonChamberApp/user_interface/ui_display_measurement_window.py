@@ -554,7 +554,7 @@ class UI_display_measurement_window(QWidget):
         X and Z Axis.
 
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
-        window) and acts accordingly.
+        window) and acts accordingly. As well if linear values or dBmax-reference should be displayed.
 
         e.g. At xvec[0], zvec[0] is data_amp_array[0,0]. At xvec[20], zvec[100] is data_amp_array[20,100] etc.
         """
@@ -603,7 +603,7 @@ class UI_display_measurement_window(QWidget):
         Y and Z Axis.
 
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
-        window) and acts accordingly.
+        window) and acts accordingly. As well if linear values or dBmax-reference should be displayed.
 
         e.g. At yvec[0], zvec[0] is data_amp_array[0,0]. At yvec[20], zvec[100] is data_amp_array[20,100] etc.
         """
@@ -648,7 +648,7 @@ class UI_display_measurement_window(QWidget):
         X and Y Axis.
 
         Evaluates itself if chamber coordinates should be displayed or AUT coordinates (internal checkbox in display
-        window) and acts accordingly.
+        window) and acts accordingly. As well if linear values or dBmax-reference should be displayed.
 
         e.g. At xvec[0], yvec[0] is data_amp_array[0,0]. At xvec[20], yvec[100] is data_amp_array[20,100] etc.
         """
