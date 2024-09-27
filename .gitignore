@@ -236,3 +236,6 @@ results/*
 results/script_sample_data.json
 error_log.txt
 
+# dont upload idea at all
+.idea
+
