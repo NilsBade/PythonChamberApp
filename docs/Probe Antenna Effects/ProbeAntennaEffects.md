@@ -21,23 +21,13 @@ over the ideal power-distribution was calculated. It can be seen, that once the 
 ## Effect of Probe Antenna
 > AUT: 60GHz Horn, Probe: OERWG V2
 
-It is not clear which effect the probe antenna has on the measured field distribution so far.
-From probing an area of 100x100mm in Z-distance of 200mm in the real Measurement Setup and comparing the ideal 
-power-density distribution (from CST) as well as the simulated S21 parameter for each position of the probe antenna 
-calculated in CST, it can be seen that the probe antenna has a significant effect on the measured field distribution.
-Even though there should be close to no reflections in the simulation with both antennas in space, the S21 results are
-very close to the measured S21 parameters already.  
-Thus the effect is likely by the probe antenna itself or its interaction with the AUT but not by the rest of the 
-measurement setup.  
+To conclude the effect of the probe antenna on the measured field (power distribution), three paths are run in parallel.
+Firstly a field simulation was done in CST and the poynting-vector was calculated in each point to get the power-density.
+Secondly The Probe antenna model was moved over the same area in CST and all S21 parameters were calculated and saved --
+the same procedure that is done in the MeasurementChamber.  
+Thirdly the measurement was done in the real chamber with the same probe antenna and the same AUT.
 
-![Sim1000_Meas0014_FieldZ200_Heatmaps_over_available_Planes.png](/docs/Probe%20Antenna%20Effects/Figures/Sim1000_Meas0014_FieldZ200_Heatmaps_over_available_Planes.png)
+To compare the measured S-parameters and the calculated power-density distribution exported from CST, the 
+S-parameter value has to be squared before translating it to dB-scale since S-parameters are signal-ampplitude referred
+while power are squared-proportional to the field-strength.
 
-![Sim1000_Meas0014_FieldZ200_Lineplots_Along_X_and_Y_axis.png](/docs/Probe%20Antenna%20Effects/Figures/Sim1000_Meas0014_FieldZ200_Lineplots_Along_X_and_Y_axis.png)
-
-More closeup on the 100x100 plane:
-
-![Sim1000_Meas0014_FieldZ200_Closeup_Heatmaps_over_available_Planes.png](/docs/Probe%20Antenna%20Effects/Figures/Sim1000_Meas0014_FieldZ200_Closeup_Heatmaps_over_available_Planes.png)
-![Sim1000_Meas0014_FieldZ200_Closeup_Lineplots_Along_X_and_Y_axis.png](/docs/Probe%20Antenna%20Effects/Figures/Sim1000_Meas0014_FieldZ200_Closeup_Lineplots_Along_X_and_Y_axis.png)
-
-This effect becomes more interesting when the probe is moved longer distances along X- and Y-axis and closer or even 
-further away from the AUT.
