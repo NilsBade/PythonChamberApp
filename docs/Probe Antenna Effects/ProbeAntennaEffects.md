@@ -31,3 +31,28 @@ To compare the measured S-parameters and the calculated power-density distributi
 S-parameter value has to be squared before translating it to dB-scale since S-parameters are signal-ampplitude referred
 while power are squared-proportional to the field-strength.
 
+## Effect of probing-mesh
+> AUT: 60GHz Horn, Probe: OERWG V2
+
+Especially in cases where the phase of the field is important, the probing-mesh-density has to be considered.
+In case of too dense meshes the measurement just takes very long time.  
+In case of a too low mesh-density phase, as well as amplitude display get worse. If fields are measured, that have 
+features (e.g. lobes or similar) in the same order of size as the steps of the probing mesh, it is likely that the
+the lobes deform or disappear completely.  
+For valid phase information it is important to choose the mesh-density (probe steps) in every direction significantly 
+smaller than the wavelength of the frquencies that are measured. Otherwise the displayed phase distribution can
+fastly become totally invalid as shown below.  
+__Figures: 1. Sim1003, 2. Meas0020, 3. Meas0021__
+
+![ProbingMeshEffect1_Sim1003](/docs/Probe%20Antenna%20Effects/Figures/Sim1003_YZ_Plane_Measurement.png)
+![ProbingMeshEffect2_Meas0020](/docs/Probe%20Antenna%20Effects/Figures/Meas0020_XZ_Plane_Measurement.png)
+![ProbingMeshEffect3_Meas0021](/docs/Probe%20Antenna%20Effects/Figures/Meas0021_YZ_Plane_Measurement.png)
+
+Here a measurement of the YZ-Plane was taken with Z-steps of 5mm. The measured frequencies were 60, 63.5 and 67 GHz.
+It can be seen that the phase distribution at 60GHz looks totally different in the mid section compared to the 67GHz plot.
+This is due to the probe movement of exactly or pretty close to one wavelength at 60GHz, which lead to measuring the 
+same phase at each point along z-direction. Of course there can not be a constant phase along z-direction since the 
+wave travels this direction. To validate this effect, the same measurement was done in CST with relatively moved antennas,
+which lead to the same effect at 60GHz.  
+This example should show the importance of choosing the right probing-mesh-density.
+
