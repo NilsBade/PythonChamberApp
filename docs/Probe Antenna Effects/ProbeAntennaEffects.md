@@ -31,6 +31,16 @@ To compare the measured S-parameters and the calculated power-density distributi
 S-parameter value has to be squared before translating it to dB-scale since S-parameters are signal-ampplitude referred
 while power are squared-proportional to the field-strength.
 
+### Comparison Chamber Measurements to poyntig vector at different heights
+![Comparison_Z50](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=50.0_mm.png)
+![Comparison_Z100](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=100.0_mm.png)
+![Comparison_Z150](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=150.0_mm.png)
+![Comparison_Z200](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=200.0_mm.png)
+![Comparison_Z250](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=250.0_mm.png)
+![Comparison_Z300](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=300.0_mm.png)
+![Comparison_Z350](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=350.0_mm.png)
+![Comparison_Z400](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Comparison_at_Z=400.0_mm.png)
+
 ## Effect of probing-mesh
 > AUT: 60GHz Horn, Probe: OERWG V2
 
