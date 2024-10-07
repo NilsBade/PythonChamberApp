@@ -37,6 +37,25 @@ while power are squared-proportional to the field-strength.
 > * CST 'measurement' files per simulation: 10xx_MPSim_...
 > * CST poynting vector files per simulation: Pow_f60_...
 
+Details about data-files:
+* 0020 / 0021 Measurement files
+  * Mesh steps: 2.5mm
+  * IF-Bandwidth: 100 Hz
+  * no averaging
+  * frequencies: 60, 63.5, 67 GHz
+* 0022 / 0023 Measurement files
+  * Mesh steps: 1mm
+  * IF-Bandwidth: 10 Hz
+  * Average number: 10
+  * frequencies: 60, 63.5, 67 GHz
+* 1006 / 1007 Simulation measurement files
+  * Mesh steps: 1mm
+  * frequency: 60 GHz
+* Pow_f60_... CST poynting vector files (ideal power density distribution)
+  * Mesh steps: 1mm
+  * frequency: 60 GHz
+  * source project: CST_60G_Horn_FieldMonitors.cst
+
 ![Power_comparison_Z50](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Power_comparison_at_Z=50.0_mm.png)
 ![Phase_comparison_Z50](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Phase_comparison_at_Z=50.0_mm.png)
 ![Power_comparison_Z100](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Power_comparison_at_Z=100.0_mm.png)
