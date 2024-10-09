@@ -1,7 +1,7 @@
 # Probe Antenna Effects in Measurement
 > This directory and file is meant to document all thoughts and findings about the effects of the probe antenna 
 > on the measurement results. The plots/pictures are generated with scripts from [another repository](https://github.com/NilsBade/Projektarbeit-E3/tree/master/CST%20Python%20Sim)
-> and compare real measurement data to simulation results.
+> to compare real measurement data to simulation results.
 
 ## Effect of Aperture Size
 The aperture size of the probe antenna is the first straight forward effect that can be observed.
@@ -23,13 +23,13 @@ over the ideal power-distribution was calculated. It can be seen, that once the 
 
 To conclude the effect of the probe antenna on the measured field (power distribution), three paths are run in parallel.
 Firstly a field simulation was done in CST and the poynting-vector was calculated in each point to get the power-density.
-Secondly The Probe antenna model was moved over the same area in CST and all S21 parameters were calculated and saved --
+Secondly The Probe antenna model was moved over the same area as in the real measurements in CST and all S21 (S12) parameters were calculated and saved --
 the same procedure that is done in the MeasurementChamber.  
 Thirdly the measurement was done in the real chamber with the same probe antenna and the same AUT.
 
 To compare the measured S-parameters and the calculated power-density distribution exported from CST, the 
 S-parameter value has to be squared before translating it to dB-scale since S-parameters are signal-amplitude referred
-while power are squared-proportional to the field-strength.
+while power is squared-proportional to the field-strength.
 
 ### Comparison Chamber Measurements to poyntig vector at different heights
 > **Data:** 
@@ -48,7 +48,7 @@ Details about data-files:
   * IF-Bandwidth: 10 Hz
   * Average number: 10
   * frequencies: 60, 63.5, 67 GHz
-* 1006 / 1007 Simulation measurement files
+* 1004 - 1010 Simulation measurement files
   * Mesh steps: 1mm
   * frequency: 60 GHz
 * Pow_f60_... CST poynting vector files (ideal power density distribution)
