@@ -90,6 +90,12 @@ __Figures: 1. Sim1003, 2. Meas0020, 3. Meas0021__
 ![ProbingMeshEffect2_Meas0020](/docs/Probe%20Antenna%20Effects/Figures/Meas0020_XZ_Plane_Measurement.png)
 ![ProbingMeshEffect3_Meas0021](/docs/Probe%20Antenna%20Effects/Figures/Meas0021_YZ_Plane_Measurement.png)
 
+__Figures: 4. Meas0017 YZ @60 GHz, 5. Meas0017 YZ @67 GHz__
+
+![ProbingMeshEffect4_Meas0017_YZ_60GHz](/docs/Probe%20Antenna%20Effects/Figures/Meas0017_YZ_Plane_Measurement_60GHz.png)
+![ProbingMeshEffect5_Meas0017_YZ_67GHz](/docs/Probe%20Antenna%20Effects/Figures/Meas0017_YZ_Plane_Measurement_67GHz.png)
+
+
 Here a measurement of the YZ-Plane was taken with Z-steps of 5mm. The measured frequencies were 60, 63.5 and 67 GHz.
 It can be seen that the phase distribution at 60GHz looks totally different in the mid section compared to the 67GHz plot.
 This is due to the probe movement of exactly or pretty close to one wavelength at 60GHz, which lead to measuring the 
