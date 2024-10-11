@@ -104,3 +104,87 @@ wave travels this direction. To validate this effect, the same measurement was d
 which lead to the same effect at 60GHz.  
 This example should show the importance of choosing the right probing-mesh-density.
 
+## Effect of Reflections and Interference
+### Noise level
+During the first measurements (000, no absorbers were 0013-0025 (at least)), no absorbers were attached to the chamber setup.
+For the measurements 0022-0025 one can look at the 50mm distance measurement's phaseplot to get an idea where the measurement-
+range of the setup is exhausted and major noise appears.
+
+![Powerdens_at_Z50_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=50.0_mm_with_Noiselevel.png)
+![Phase_at_Z50_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=50.0_mm_with_Noiselevel.png)
+
+At the point where the phase of the real measurement starts to deviate from the phase measured in the simulated probing/measurement,
+one can expect that the measurement range of the real setup was reached. Therefor the amplitude plot gets saturated and noise and the phase plot just drifts away.  
+Cross-referencing the point where the phase plot starts to drift to the measured amplitude at that point, one can see a dBmax value at 
+x = +/- 65mm of -46dB / -41dB and y = +125 / -114 of -39.5dB / -39dB. One can conclude that the measurement range, referenced to the maximum power density at z=50mm in the center,
+is about -39dB.
+
+From there, one can compare the maximum amplitues (power densities) measured at the XY center at each z-height to translate 
+this noise-floor into an expected noise-floor on the other heights.
+
+![Powerdens_at_multZ_dBmax](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Powerdens_at_different_heights_dBmax_Meas0022.png)
+
+This leads to assumed noise levels of roughly:
+  * -39dB @ 50mm
+  * -37dB @ 100mm
+  * -34.5dB @ 150mm
+  * -32.5dB @ 200mm
+  * -30.8dB @ 250mm
+  * -29.4dB @ 300mm
+  * -28.1dB @ 350mm
+  * -27.0dB @ 400mm
+
+Plotting those levels into each amplitude-plots looks as follows:  
+(In the phase plots multiple noise-levels are plotted since they are calculated from the first crossing of the noise-level looking from the middle XY=[0,0].
+Since the measurements are not ideally symmetric, the noise-levels occur multiple times.)
+
+![Powerdens_at_Z100_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=100.0_mm_with_Noiselevel.png)
+![Phase_at_Z100_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=100.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z150_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=150.0_mm_with_Noiselevel.png)
+![Phase_at_Z150_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=150.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z200_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=200.0_mm_with_Noiselevel.png)
+![Phase_at_Z200_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=200.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z250_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=250.0_mm_with_Noiselevel.png)
+![Phase_at_Z250_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=250.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z300_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=300.0_mm_with_Noiselevel.png)
+![Phase_at_Z300_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=300.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z350_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=350.0_mm_with_Noiselevel.png)
+![Phase_at_Z350_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=350.0_mm_with_Noiselevel.png)
+![Powerdens_at_Z400_dBmax_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Power_comparison_at_Z=400.0_mm_with_Noiselevel.png)
+![Phase_at_Z400_Meas0022_withNoise](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Phase_comparison_at_Z=400.0_mm_with_Noiselevel.png)
+
+### Reflections and Interference
+Looking at the plots from last section, one can notice that the measured power-densities 'oscilllate' once coordinates
+are reached several millimeters away from the center and main-lobe of the horn.  
+But those oscillations (amplitude) stays above the assumed noise-level and the measured phase still follows the phase of the simulated field.
+Also when comparing different measurements 0022/0023 and 0024/0025, which had the chamber-sides open in the first two and 
+closed in the second two measurements, the power-densities and phases are pretty similar.
+All four measurements were configured with low IF Bandwidth of 10Hz and averaging of 10.  
+Still, both measurements agree in the kind of oscillation pattern of the powerdensity moving further away from the XY center.
+
+Therefor it is likely that this up- and down-behaviour must be associated with the real measurement-setup and is pretty independent of the side-panels.
+It is probable that the oscillation is caused by (multiple) reflections on the chamber floor and ceiling as well as the probehead itself.
+Those reflections interfere with the direct signal and each other and lead to a distributed interference pattern (of the powerdensity) in space.
+
+> insert plot of Horn powerdens in YZ plane in chamber and alone from CST HEATMAPS
+
+This interference pattern is dynamic and changes with every point that is probed, since the main distributors for 
+reflections - the probehead, X-gantry and ceiling - change there relative position to the horn inbetween each coordinate.
+Consequently, the interference pattern is not (totally) static and can not be simulated for the probehead in one position 
+and compared along the whole X or Y axis. Instead, one would have to simulate the whole setup with the probehead in each
+position separately and compose the resulting powerdensity distribution from each simulation for each single point.
+
+Simulating the whole setup for each point separately is not feasible - at least with the integration-solver - since one 
+simulation already takes 5h (2 sym planes), 10h (1 sym plane) or 20h (no sym) dependent if there are symmetries left or not.
+Thus only a qualitative comparison can be done by comparing the general behaviour of the powerdensity distribution in the
+chamber to the one of the horn alone.
+
+> insert plot of ideal Horn power dens, Horn in chamber power dens and measurement along Y axis (Show1D_PowerDifference.py)
+
+It appears that the real measurement looks generally closer to the ideal distribution of the powerdensity by the horn 
+alone (data from CST) than the simulated distribution with the reflecting parts in the model. 
+
+This could be due to the probehead model affecting the power distribution more outside its XY-center due to bending 
+the fields than it influences the distribution right underneath it in the center. This accounts at least for the case 
+when probeantenna and AUT are exactly aligned XY-wise like in the first simulations.
+
