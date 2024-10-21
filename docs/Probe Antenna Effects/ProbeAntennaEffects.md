@@ -166,25 +166,49 @@ Therefor it is likely that this up- and down-behaviour must be associated with t
 It is probable that the oscillation is caused by (multiple) reflections on the chamber floor and ceiling as well as the probehead itself.
 Those reflections interfere with the direct signal and each other and lead to a distributed interference pattern (of the powerdensity) in space.
 
-> insert plot of Horn powerdens in YZ plane in chamber and alone from CST HEATMAPS
+> Picture of how power-distribution changes with and without the chamber in simulation
 
-This interference pattern is dynamic and changes with every point that is probed, since the main distributors for 
-reflections - the probehead, X-gantry and ceiling - change there relative position to the horn inbetween each coordinate.
-Consequently, the interference pattern is not (totally) static and can not be simulated for the probehead in one position 
-and compared along the whole X or Y axis. Instead, one would have to simulate the whole setup with the probehead in each
-position separately and compose the resulting powerdensity distribution from each simulation for each single point.
+![YZ_Powerdens_WithAndWithoutChamber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/YZ-plane_heatmaps_Comparison.png)
+![XZ_Powerdens_WithAndWithoutChamber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/XZ-plane_heatmaps_Comparison.png)
 
-Simulating the whole setup for each point separately is not feasible - at least with the integration-solver - since one 
-simulation already takes 5h (2 sym planes), 10h (1 sym plane) or 20h (no sym) dependent if there are symmetries left or not.
+> Closeup of interference pattern in power-distribution due to reflections on probehead from simulation
+
+![XZ_Powerdens_CloseUp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/XZ-plane_heatmaps_Comparison-Closeup.png)
+
+Simulating the whole setup for each point separately to compare the results to real measurements is not feasible - 
+at least with the integration-solver - since one simulation already takes 5h (2 sym planes), 10h (1 sym plane) or 
+20h (no sym) dependent if there are symmetries left or not. 
 Thus only a qualitative comparison can be done by comparing the general behaviour of the powerdensity distribution in the
-chamber to the one of the horn alone.
+chamber to the one of the horn alone. Those plots can be seen above as heatmaps.
 
-> insert plot of ideal Horn power dens, Horn in chamber power dens and measurement along Y axis (Show1D_PowerDifference.py)
+Still it is possible to compare the ideal power distribution (Horn alone in simulation) to some probehead positions in simulation
+and to the real measurements along X- and Y-axis.
+Care must be taken when comparing the amplitude values far away from the probehead position in simulation to the values 
+from the real measurement along the whole axis.
 
-It appears that the real measurement looks generally closer to the ideal distribution of the powerdensity by the horn 
-alone (data from CST) than the simulated distribution with the reflecting parts in the model. 
+It appears that dependent on the head-position in the simulation, the resulting interference pattern along the whole X-/Y-axis
+is strongly varying amplitude-wise.
+Thus care must be taken when comparing the amplitude values far away from a simulation's probehead position to the values 
+from the real measurement along a whole axis. Even though they might seem to be very similar in some places, the real 
+and the simulated surroundings (head and x-gantry position) might be totally different and similarities are more 
+"lucky" than being any proof of correctness.
+The interference pattern is very dynamic and changes with every point that is probed, since the main distributors for 
+reflections - the probehead, X-gantry and ceiling - change there relative position to the horn inbetween each coordinate.
+Consequently, the interference pattern can not be simulated for the probehead in one position 
+and compared along the whole X or Y axis. 
 
-This could be due to the probehead model affecting the power distribution more outside its XY-center due to bending 
-the fields than it influences the distribution right underneath it in the center. This accounts at least for the case 
-when probeantenna and AUT are exactly aligned XY-wise like in the first simulations.
+> Plots that show the difference between ideal power-density distribution, simulated power-distribution pattern with reflections 
+> and real measurement results along X- and Y-axis
+
+![LineplotXY_z200_HeadCenter](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z200_HeadCenter.png)
+![LineplotXY_z200_HeadX100](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z200_HeadX100.png)
+![LineplotXY_z200_HeadY100](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z200_HeadY100.png)
+![LineplotXY_z400_HeadCenter](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z400_HeadCenter.png)
+![LineplotXY_z400_HeadX100](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z400_HeadX100.png)
+![LineplotXY_z400_HeadX150](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z400_HeadX150.png)
+![LineplotXY_z400_HeadX200](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z400_HeadX200.png)
+![LineplotXY_z400_HeadY100](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/Lineplots_XY_at_Z400_HeadY100.png)
+
+#todo what can be seen from the above plots? is the interfernece amplitude comparable to the measured amplitudes? 
+or why is it not?!
 
