@@ -73,6 +73,28 @@ Details about data-files:
 ![Power_comparison_Z400](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Power_comparison_at_Z=400.0_mm.png)
 ![Phase_comparison_Z400](/docs/Probe%20Antenna%20Effects/Figures/AxisComparisons_02.10.24/Phase_comparison_at_Z=400.0_mm.png)
 
+## Double Ridge Waveguide Probe antenna
+> AUT: 60GHz Horn, Probe: DRWG (??)
+
+As alternative to the regular RWG probe, one can think of a double ridged waveguide to use as probe antenna.
+* Benefits:
+  * smaller aperture size theoretically leads to better resolution (as long as mesh density is high enough)
+* Drawbacks:
+  * more complex to build, silver(?)
+  * less efficient / more losses(?!)
+
+To compare the achievable results, a DRWG was optimized in CST to have minimum aperture size while achieving maximum transmission.
+> do CST model and optimization
+
+![CST DRWG parameter](/docs/Probe%20Antenna%20Effects/Figures/DoubleRidgeRWG/DRWG_CST_parameter.png)
+
+Then the DRWG probe was moved across the same lines as the RWG probe in the MPSims 1004-1010 and 'achievable results' were compared.
+> how does the DRWG probe perform compared to the RWG probe?
+
+> Sources:
+> https://www.microwaves101.com/encyclopedias/double-ridged-waveguide  
+> ?
+
 ## Effect of probing-mesh
 > AUT: 60GHz Horn, Probe: OERWG V2
 
