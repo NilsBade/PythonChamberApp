@@ -2,4 +2,5 @@
 _summary_
 """
 
-from PythonChamberApp.process_controller.process_controller import ProcessController
+from .process_controller import ProcessController
+from .multithread_worker import Worker

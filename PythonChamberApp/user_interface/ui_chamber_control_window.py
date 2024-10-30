@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 import numpy
-from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
+from .ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
 
 class UI_chamber_control_window(QWidget):
 

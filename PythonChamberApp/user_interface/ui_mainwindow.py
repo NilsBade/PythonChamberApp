@@ -4,11 +4,11 @@ This file stores the mainwindow class and all necessary PyQt6 classes to constru
 
 import sys
 from PyQt6.QtWidgets import QMainWindow, QWidget, QStatusBar, QTabWidget, QMessageBox
-from PythonChamberApp.user_interface.ui_config_window import UI_config_window
-from PythonChamberApp.user_interface.ui_chamber_control_window import UI_chamber_control_window
-from PythonChamberApp.user_interface.ui_vna_control_window import UI_vna_control_window
-from PythonChamberApp.user_interface.ui_auto_measurement import UI_auto_measurement_window
-from PythonChamberApp.user_interface.ui_display_measurement_window import UI_display_measurement_window
+from .ui_config_window import UI_config_window
+from .ui_chamber_control_window import UI_chamber_control_window
+from .ui_vna_control_window import UI_vna_control_window
+from .ui_auto_measurement import UI_auto_measurement_window
+from .ui_display_measurement_window import UI_display_measurement_window
 
 
 class MainWindow(QMainWindow):

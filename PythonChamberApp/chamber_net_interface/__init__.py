@@ -11,4 +11,4 @@ Class ChamberNetworkCommands
     ... To Do ...
 """
 
-from PythonChamberApp.chamber_net_interface.chamber_net_interface import ChamberNetworkCommands
+from .chamber_net_interface import ChamberNetworkCommands

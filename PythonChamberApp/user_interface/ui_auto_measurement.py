@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout
     QFrame, QComboBox, QStackedWidget, QProgressBar, QCheckBox
 from PyQt6.QtCore import QCoreApplication, Qt
 from datetime import timedelta
-from PythonChamberApp.user_interface.ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
+from .ui_3d_visualizer import VisualizerPyqtGraph as Visualizer
 import pyqtgraph as pg
 import numpy as np
 import pyqtgraph.opengl as gl

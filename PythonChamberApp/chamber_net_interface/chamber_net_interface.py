@@ -10,7 +10,7 @@ Server response status codes:
 409 -   Conflict
 """
 
-import PythonChamberApp.connection_handler as connection_handler
+import connection_handler
 import json
 import requests
 import time

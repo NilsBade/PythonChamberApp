@@ -4,16 +4,15 @@ operates as interface between GUI and Network commands.
 """
 import os.path
 
-from PythonChamberApp.chamber_net_interface import ChamberNetworkCommands
-import PythonChamberApp.user_interface as ui_pkg
+from chamber_net_interface import ChamberNetworkCommands
+import user_interface as ui_pkg
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
-from PythonChamberApp.process_controller.AutoMeasurement_Thread import AutoMeasurement
-from PythonChamberApp.process_controller.multithread_worker import Worker
-from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
+from .AutoMeasurement_Thread import AutoMeasurement
+from .multithread_worker import Worker
+from vna_net_interface import E8361RemoteGPIB
 import numpy as np
 import json
-from datetime import datetime
 
 
 class ProcessController:
@@ -946,7 +945,8 @@ class ProcessController:
             return
 
         #   Setup results directory
-        path_workdirectory = os.getcwd()
+        # todo check correct path handling on erazer laptop!
+        path_workdirectory = os.path.dirname(os.getcwd())
         if not os.path.exists(os.path.join(path_workdirectory + '/results')):
             os.makedirs(os.path.join(path_workdirectory + '/results'))
         path_results_folder = os.path.join(os.getcwd() + '/results')

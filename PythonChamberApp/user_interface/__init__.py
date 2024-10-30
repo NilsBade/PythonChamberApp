@@ -1,2 +1,2 @@
 
-from PythonChamberApp.user_interface.ui_mainwindow import MainWindow
+from user_interface.ui_mainwindow import MainWindow

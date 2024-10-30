@@ -2,4 +2,4 @@
 _summary_
 """
 
-from PythonChamberApp.connection_handler.network_device import NetworkDevice
+from connection_handler.network_device import NetworkDevice

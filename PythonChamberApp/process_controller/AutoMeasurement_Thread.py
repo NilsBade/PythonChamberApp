@@ -1,8 +1,8 @@
 import random
 
 from PyQt6.QtCore import *  # QObject, pyqtSignal, pyqtSlot, QRunnable
-from PythonChamberApp.chamber_net_interface.chamber_net_interface import ChamberNetworkCommands
-from PythonChamberApp.vna_net_interface.vna_net_interface import E8361RemoteGPIB
+from chamber_net_interface import ChamberNetworkCommands
+from vna_net_interface.vna_net_interface import E8361RemoteGPIB
 import cmath
 import math
 from datetime import datetime, timedelta
