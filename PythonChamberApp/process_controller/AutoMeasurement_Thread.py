@@ -3,7 +3,7 @@ import time
 
 from PyQt6.QtCore import *  # QObject, pyqtSignal, pyqtSlot, QRunnable
 from chamber_net_interface import ChamberNetworkCommands
-from vna_net_interface.vna_net_interface import E8361RemoteGPIB
+from vna_net_interface import E8361RemoteGPIB
 import cmath
 import math
 from datetime import datetime, timedelta
