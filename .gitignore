@@ -234,7 +234,7 @@ fabric.properties
 # Python Chamber App specific -> no results pushed to git
 results/*
 results/script_sample_data.json
-error_log.txt
+error_log*
 
 # dont upload idea at all
 .idea
