@@ -135,6 +135,12 @@ or the [National Instruments Visa](https://www.ni.com/de/support/downloads/drive
 Your hardware and software should be from the same company to be sure everything works properly.
 Otherwise, pyvisa will throw errors trying to import the module.
 
+> [!CAUTION]
+> The keysight visa implementation seems to have various bugs working with pyvisa/windows. 
+> Errors occur that are also dependent on the computer the app is executed on! e.g. one error was: 'error_not_cic = -1073807264: The Interface associated with this session is not currently the Controller-In-Charge'. 
+> It was solved by installing the NI-visa implementation as well/on top even though this is not recommended.
+> So dependent if the AutoMeasurement-Threads run in some kind of weird error - consider installing the NI Visa package as well and try again...
+
 7. Execute the 'runner.py' script in './PythonChamberApp/PythonChamberApp/runner.py' (in your virtual environment).
 
 ## Usage example
