@@ -10,7 +10,7 @@ class E8361RemoteGPIB:
     """
     # private properties
     resource_manager: pyvisa.ResourceManager = None
-    pna_device: pyvisa.Resource = None
+    pna_device: pyvisa.resources.gpib.GPIBInstrument = None
     running_measurements: list = None   # stores all configured measurements as dict with measurement infos
 
     def __init__(self, use_keysight: bool = False):
