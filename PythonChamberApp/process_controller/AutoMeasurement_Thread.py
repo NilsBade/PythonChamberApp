@@ -309,7 +309,16 @@ class AutoMeasurement(QRunnable):
 
                             if "-1073807264" in str(e):  # 'VI_ERROR_NCIC (-1073807264): The interface associated with this session is not currently the controller in charge.'
                                 print("AutoMeasurement thrown controller error -1073807264 - Resetting the PNA...")
-                                self.__reconfigure_pna()
+                                vna_resource_name = self.vna.pna_device.resource_name
+                                interface_str = vna_resource_name.split('::')[0]
+                                self.vna.disconnect_pna()   #close GPIBx interface
+                                interface = self.vna.resource_manager.open_resource(interface_str + '::INTFC')
+                                interface.send_ifc()    #Set GPIBx as controller in charge
+                                interface.close()       #close GPIBx again
+                                self.vna.connect_pna(vna_resource_name)     #Reopen pna connection on GPIBx (now in charge!)
+                                self.__reconfigure_pna()    # reset whole pna and reconfigure measurement as before
+
+
 
                             if "-1073807339" in str(e):  # 'VI_ERROR_TMO (-1073807339): Timeout expired before operation completed.'
                                 print("AutoMeasurement thrown Visa Timeout error -1073807339")
