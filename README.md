@@ -139,6 +139,7 @@ Otherwise, pyvisa will throw errors trying to import the module.
 > The keysight visa implementation seems to have various bugs working with pyvisa/windows. 
 > Errors occur that are also dependent on the computer the app is executed on! e.g. one error was: 'error_not_cic = -1073807264: The Interface associated with this session is not currently the Controller-In-Charge'. 
 > It was solved by installing the NI-visa implementation as well/on top even though this is not recommended.
+> Other error that may was correlated to using keysight-visa was the python kernel completely crashing with a 'segmentation fault' - this error did not occur again once NI-visa was installed.
 > So dependent if the AutoMeasurement-Threads run in some kind of weird error - consider installing the NI Visa package as well and try again...
 
 7. Execute the 'runner.py' script in './PythonChamberApp/PythonChamberApp/runner.py' (in your virtual environment).
@@ -343,8 +344,10 @@ The only part that is meant to be frequently attached and detached from the cham
     * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
       * maybe also amplitude compensation?
   * Enabled display of measurement-files that have just one point in any axis direction
-  * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber) [To be tested 26.9.24]
+  * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber)
     * Stores error log in 'GIT/PythonChamberApp/error_log.txt' directory
+    * Reacts to pyvisa-CIC error (current session not controller-in-charge)
+    * Resets PNA after various number (=3) of timeouts in a row 
   * Display coordinate values next to X,Y,Z sliders in AUT-referred-coordinates if AUT-coordinates are selected
 * 1.1
   * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
