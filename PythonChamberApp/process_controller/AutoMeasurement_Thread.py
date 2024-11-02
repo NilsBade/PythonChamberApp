@@ -1,4 +1,5 @@
 import random
+import time
 
 from PyQt6.QtCore import *  # QObject, pyqtSignal, pyqtSlot, QRunnable
 from chamber_net_interface import ChamberNetworkCommands
@@ -63,6 +64,7 @@ class AutoMeasurement(QRunnable):
     signals: AutoMeasurementSignals = None
     _is_running: bool = None
     vna: E8361RemoteGPIB = None
+    vna_info_buffer: dict = None
     measurement_file_S11 = None
     measurement_file_S12 = None
     measurement_file_S22 = None
@@ -95,6 +97,7 @@ class AutoMeasurement(QRunnable):
         self.chamber = chamber  # Comment here when testing without chamber
         self.vna = vna
         self.vna.pna_preset()
+        self.vna_info_buffer = vna_info     # to enable re-configuration of PNA in exception handling
         self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
                                               freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
                                               if_bw=vna_info['if_bw'], sweep_num_points=vna_info['sweep_num_points'],
@@ -225,6 +228,8 @@ class AutoMeasurement(QRunnable):
         layer_count = 0
         point_in_layer_count = 0
         total_point_count = 0
+        visa_timeout_error_counter = 0
+        VISA_TIMEOUTS_BEFORE_RESET = 3
 
         for z_coor in self.mesh_z_vector:
             layer_count += 1
@@ -234,22 +239,23 @@ class AutoMeasurement(QRunnable):
                     point_in_layer_count += 1
                     total_point_count += 1
 
-                    # check for interruption
-                    if self._is_running is False:
-                        self.signals.error.emit(
-                            {'error_code': 0, 'error_msg': "Thread was interrupted by process controller"})
-                        self.signals.update.emit("Auto Measurement was interrupted")
-                        progress_dict['status_flag'] = "Measurement stopped"
-                        self.__append_to_error_log(f"AutoMeasurement was stopped at [{x_coor}, {y_coor}, {z_coor}] by User (ProcessController).")
-                        self.signals.progress.emit(progress_dict)
-                        self.close_all_files(meas_start_timestamp)
-                        self.signals.finished.emit({'file_location': file_locations_string,
-                                                    'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))}) # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
-                        return
-
                     # START TRY BLOCK & WHILE LOOP HERE
                     self.measurement_iteration_success = False
                     while not self.measurement_iteration_success:
+
+                        # check for interruption
+                        if self._is_running is False:
+                            self.signals.error.emit(
+                                {'error_code': 0, 'error_msg': "Thread was interrupted by process controller"})
+                            self.signals.update.emit("Auto Measurement was interrupted")
+                            progress_dict['status_flag'] = "Measurement stopped"
+                            self.__append_to_error_log(
+                                f"AutoMeasurement was stopped at [{x_coor}, {y_coor}, {z_coor}] by User (ProcessController).")
+                            self.signals.progress.emit(progress_dict)
+                            self.close_all_files(meas_start_timestamp)
+                            self.signals.finished.emit({'file_location': file_locations_string,
+                                                        'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))})  # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
+                            return
                         try:
                             self.signals.update.emit(
                                 'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
@@ -299,6 +305,19 @@ class AutoMeasurement(QRunnable):
                             self.signals.update.emit(f"Error occurred at [{x_coor}, {y_coor}, {z_coor}]")
                             self.__append_to_error_log(f"Error occurred at [{x_coor}, {y_coor}, {z_coor}]: {e}")
                             self.signals.update.emit(f"Error Log updated. Restarting measurement at [{x_coor}, {y_coor}, {z_coor}]...")
+                            time.sleep(1) # sleeptime to slow down for PNA
+
+                            if "-1073807264" in str(e):  # 'VI_ERROR_NCIC (-1073807264): The interface associated with this session is not currently the controller in charge.'
+                                print("AutoMeasurement thrown controller error -1073807264 - Resetting the PNA...")
+                                self.__reconfigure_pna()
+
+                            if "-1073807339" in str(e):  # 'VI_ERROR_TMO (-1073807339): Timeout expired before operation completed.'
+                                print("AutoMeasurement thrown Visa Timeout error -1073807339")
+                                visa_timeout_error_counter += 1
+                                if visa_timeout_error_counter >= VISA_TIMEOUTS_BEFORE_RESET:
+                                    print(f"Reset VNA because too many timeouts (>{VISA_TIMEOUTS_BEFORE_RESET})")
+                                    self.__reconfigure_pna()
+
                     # END TRY BLOCK & WHILE LOOP HERE
 
                     # Timekeeping for average time per point
@@ -405,3 +424,16 @@ class AutoMeasurement(QRunnable):
         with open(self.error_log_path, 'a') as file:
             file.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
         return
+
+    def __reconfigure_pna(self):
+        """
+        Presets PNA and reconfigures measurement as throughout init-routine.
+        """
+        self.vna.pna_preset()
+        self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=self.vna_info_buffer['parameter'],
+                                              freq_start=self.vna_info_buffer['freq_start'],
+                                              freq_stop=self.vna_info_buffer['freq_stop'],
+                                              if_bw=self.vna_info_buffer['if_bw'],
+                                              sweep_num_points=self.vna_info_buffer['sweep_num_points'],
+                                              output_power=self.vna_info_buffer['output_power'], trigger_manual=True,
+                                              average_number=self.vna_info_buffer['average_number'])
