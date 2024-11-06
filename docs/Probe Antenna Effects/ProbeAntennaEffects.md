@@ -248,16 +248,27 @@ when attaching or detaching the side-panels.
 Coming from that observation, we can conclude that the main-impact on the measurement result comes from the reflections
 on the top panel, x-gantry and probehead. Therefor the absorbers were attached to those parts of the setup.  
 Between every different absorber-setup the measurement was repeated to see the effect of the newly attached absorbers on the results.
+The impact can be seen easily looking at the probed XY plane, since the interference pattern is most visible there.
+> Below can be seen a comparison of the simulated power density distribution (left), a real measurement without absorbers 
+> attached to the chamber setup (middle) and finally with the main-absorbers attached to the top-panel, x-gantry and probehead (right).
 
-> Pictures and plots of the measurement in different absorber-setups
+![Heatsmaps_Powerdens_XY_Plane_Z200](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Comparison_PowerdensZ200_Sim_noAbsorb_FullAbsorb.png)
 
-1. Setup: No absorbers with long probe antenna-- every result above, measurements 0013-0026
-> Plot and Pic
-2. Setup: Absorbers on top-panel -- measurements ????-????
-> Plot and Pic
-3. Setup: Absorbers on x-gantry -- measurements ????-????
-> Plot and Pic
-4. Setup: Absorbers on probehead -- measurements ????-????
-> Plot and Pic
+On the way to the resulted Heatmaps above, the X- and Y-axis were probed at different heights for different absorber configurations.
+To give more detailed insights about each absorber's impact, following are the measured amplitude and phase plots in different absorber configs 
+(no, top/bot only, top/bot + xgantry/probehead) compared to the simulated power and phase distribution/measurement.
 
-> ToDo: What can be concluded from the plots/results?
+1. Setup: No absorbers with long probe antenna-- every result above, measurements 0027-0029
+![ChamberSetup_noAbsorber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-NoAbsorber/Chamber_noAbsorberCfg.JPG)
+
+2. Setup: Absorbers on top/bot-panel -- measurements 0030-0031
+![ChamberSetup_Absorb1_overall](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber1/Chamber_AbsorberCfg1_Overall.JPG)
+![ChamberSetup_Absorb1_closeup](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber1/Chamber_AbsorberCfg1_Closeup.JPG)
+
+3. Setup: Absorbers on top/bot-panel + x-gantry and ProbeHead  -- measurements 0032-0034
+![ChamberSetup_Absorb2_overall](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber2/Chamber_AbsorberCfg2_Overall1.JPG)
+![ChamberSetup_Absorb2_closeup](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber2/Chamber_AbsorberCfg2_Closeup.JPG)
+
+Measurement Results:
+
+
