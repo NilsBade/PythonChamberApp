@@ -31,6 +31,18 @@ To compare the measured S-parameters and the calculated power-density distributi
 S-parameter value has to be squared before translating it to dB-scale since S-parameters are signal-amplitude referred
 while power is squared-proportional to the field-strength.
 
+### Angle of Incidence to probeantenna
+
+The angle of incidence of the (AUT-)field to the probeantenna likely has an impact on the measured power-density.
+This can already be concluded from the difference in the simulated power-density distribution of the horn antenna alone
+compared to the simulated probing with a probe antenna and calculating the effective power-density distribution from the simulated S-parameters.  
+
+> todo put in plot comparing simulated powerdens from poyntingvector / fieldmonitor to simulated powerdens from S-parameters
+
+An idea is to investigate the far-field pattern of the probing antenna 
+> todo explain the idea from comparing farfield-pattern to the powerdensity differences seen in plot. Is the gain difference the same as the plot difference?
+> conclude that the gain difference is not equal to the seen difference in the powerdensity distribution. Maybe a combination of area-integration effect and gain?!
+
 ### Comparison Chamber Measurements to poyntig vector at different heights
 > **Data:** 
 > * Real measurement files namingscheme: 00xx_...
