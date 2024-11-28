@@ -281,6 +281,26 @@ To give more detailed insights about each absorber's impact, following are the m
 ![ChamberSetup_Absorb2_overall](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber2/Chamber_AbsorberCfg2_Overall1.JPG)
 ![ChamberSetup_Absorb2_closeup](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Config-Absorber2/Chamber_AbsorberCfg2_Closeup.JPG)
 
-Measurement Results:
+Below given are lineplots for phase and powerdensity along X and Y axis for the different absorber configurations at heights 50, 100, 150, 200, 250, 300, 350, 400.
+All of them are probed with the regular OERWG V3 probe antenna./docs
+
+![LineplotXY_z50_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=50.0_mm.png)
+![LineplotXY_z50_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=50.0_mm.png)
+![LineplotXY_z100_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=100.0_mm.png)
+![LineplotXY_z100_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=100.0_mm.png)
+![LineplotXY_z150_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=150.0_mm.png)
+![LineplotXY_z150_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=150.0_mm.png)
+![LineplotXY_z200_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=200.0_mm.png)
+![LineplotXY_z200_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=200.0_mm.png)
+![LineplotXY_z250_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=250.0_mm.png)
+![LineplotXY_z250_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=250.0_mm.png)
+![LineplotXY_z300_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=300.0_mm.png)
+![LineplotXY_z300_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=300.0_mm.png)
+![LineplotXY_z350_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=350.0_mm.png)
+![LineplotXY_z350_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=350.0_mm.png)
+![LineplotXY_z400_pow_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Power_comparison_at_Z=400.0_mm.png)
+![LineplotXY_z400_phase_absorbComp](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Absorber-Strategy/Absorber-LinePlot-Comparison/Phase_comparison_at_Z=400.0_mm.png)
+
+
 
 
