@@ -39,9 +39,68 @@ compared to the simulated probing with a probe antenna and calculating the effec
 
 > todo put in plot comparing simulated powerdens from poyntingvector / fieldmonitor to simulated powerdens from S-parameters
 
-An idea is to investigate the far-field pattern of the probing antenna 
-> todo explain the idea from comparing farfield-pattern to the powerdensity differences seen in plot. Is the gain difference the same as the plot difference?
-> conclude that the gain difference is not equal to the seen difference in the powerdensity distribution. Maybe a combination of area-integration effect and gain?!
+One approach to investigate the impact of the changing angle of incidence on the measurement results is to plot the 
+power density difference between the simulated field/power-distrubution and the simulated probing with the probe antenna.
+When probing along the X- and Y-axis at different heights, the angle of incidence on the probing antenna changes for each height at different rate.
+Thus the effect is supposed to be stronger for low heights with larger angles of incidence than at higher distances (z-wise).
+
+To quantify the effect of the changing angle of incidence to the probe antenna, the farfield pattern was simulated for each probe antenna
+and its gain was used to look for a compensation method.
+Since in the measurement approach, only relative powerdensities are compared, always using the maximum measured powerdensity somewhere in a plane as reference point,
+this 0dB-point must be the reference for the angle-compensation as well. For Probing the 60 GHz horn, this position is always at XY = (0,0) in the middle of the horn.
+The angle of incidence at this position is 0° for phi and theta.
+Moving away from the center, the angle of incidence starts to change and the power-density measured, based on the S12 parameter, starts to deviate from the ideal simulated distribution.
+To check if the farfield gain pattern of the used probe antenna is a valid measure to look for a compensation, the difference between the simulated powerdensity and 
+the calculated powerdensity based on the measured/simulated S12 parameter was plotted together with the gain pattern of the used probe antenna.
+For each point probed, the angle of incidence was calculated and the gain at this angle was looked up from the simulated farfield pattern.
+Using the maximum dBi gain of the probeantenna at phi = theta = 0° as reference point, the gain at each point was subtracted from the reference gain and the difference was plotted at each coordinate.
+The results can be seen below for a real measurement with an OERWG probe and a simulated measurement with a horn-probe and a DRWG-probe.
+The important difference between these probe antennas is the gain pattern which features a significant main-lobe for the horn antenna with a relatively small opening angle and 
+a very wide main-lobe for the OERWG and the DRWG probe antenna.
+
+![DRWG_sim_AngleCompensation](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_DRWG_sim/Z_200.0.png)
+![OERWG_sim_AngleCompensation](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_sim/Z_200.0.png)
+![Horn_sim_AngleCompensation](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_HornV1_sim/Z_200.0.png)
+
+It can be seen, that for higher focussing probe antennas, an angle compensation based on the farfield pattern is a valid approach to correct (largely) deviating powerdensities.
+Since for small angles the antenna gain deviates significantly already, this impact needs to be taken into account when measuring a power-density distribution in space.  
+For the OERWG and DRWG probe antennas, the gain pattern is very wide and the main-lobe is very flat. Therefor the angle of incidence has a much smaller impact 
+on the measured power-density distribution and occuring deviation.  
+Looking at the real measurement results with the OERWG probe antenna, the deviations are pretty small already and the angle compensation that would be applied is very small as well.
+For low heights, where the angle changes significantly, the angle compensation seems to fit (at Z=50mm) more or less.
+But for larger heights, where the angle only changes a little, the compensation seems to have no relation to the measured difference. In other words, the angle of 
+incidence to the probe antenna has no significant impact on the measurement result. Other effects seem to dominate those scenarios.
+
+![OERWGv3_meas_AngleCompensation_z50](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_50.0.png)
+![OERWGv3_meas_AngleCompensation_z100](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_100.0.png)
+![OERWGv3_meas_AngleCompensation_z150](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_150.0.png)
+![OERWGv3_meas_AngleCompensation_z200](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_200.0.png)
+![OERWGv3_meas_AngleCompensation_z250](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_250.0.png)
+![OERWGv3_meas_AngleCompensation_z300](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_300.0.png)
+![OERWGv3_meas_AngleCompensation_z350](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_350.0.png)
+![OERWGv3_meas_AngleCompensation_z400](/docs/Probe%20Antenna%20Effects/Figures/Effect%20of%20Probe%20Antenna/PowerdensDiff_angle_OERWG_realMeas/Z_400.0.png)
+
+What stands out for larger heights is the fact that the measured power-density distribution deviates 'the same way' for different heights.
+e.g. along X-axis for X < 0, the powerdensity is always overestimated and for X > 0 underestimated. This effect can not be related to the angle of incidence to the probe antenna because of its asymmetry.
+
+One approach to explain this deviation is by investigating the impact of the moving wiring of the probe antenna on the measurement.
+So far only its influence on the phase-measurement was studied, but the measured power-density amplitude might be affected as well.
+The wiring would be a valid source for the asymmetric deviation in the measured power-density distribution.
+To investigate this effect, instead of the oerwg probe a short was screwed to the probehead and the S11 parameter was measured while probing the same mesh
+along X- and Y-axis as before. Ideally, the S11 parameter should not change throughout the measurement at each position. But in the real measurement, 
+one might be able to see the same asymmetric behaviour around XY = (0,0) as in the power-density measurement-deviations.
+
+> todo put in plot of S11 parameter along X and Y axis. reference to XY = (0,0) position and plot difference to 0dB in lower plot. -> same asymmetric relation as in deviations?!
+
+One note worth mentioning, is that it can be seen that for lower heights, e.g. shorter distances, the measured power-density-difference seems to become more noisy / oscillating and simply larger amplitude-wise.
+This can likely be related to reflections inside the chamber that occur despite the absorber-attachment and still have a noticeable impact when the measurement distance and 
+consequently the free-space-path-loss are low enough. To reduce those differences, one would probably have to improve the absorber setup further. A compensation approach for these
+error-effects is hardly possible since the reflections are ~~not deterministic~~ difficult to calculate and quantify and the interference pattern changes with each point probed.
+ 
+> conclude: 
+> 1. angle compensation for high focussing antennas important. Thus low focussing probe antennas are better suited for power-density measurements.
+> 2. asymmetric deviation in range of +- 1dB for large distances can be related to the wiring of the probe antenna(?!)
+> 2.2 wire deviation can be compensated by measureing S11 parameter at same positions and comparing to 0dB reference 
 
 ### Comparison Chamber Measurements to poyntig vector at different heights
 > **Data:** 
