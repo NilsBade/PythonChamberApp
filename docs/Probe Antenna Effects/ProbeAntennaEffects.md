@@ -265,6 +265,7 @@ Those reflections interfere with the direct signal and each other and lead to a 
 
 ![YZ_Powerdens_WithAndWithoutChamber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/YZ-plane_heatmaps_Comparison.png)
 ![XZ_Powerdens_WithAndWithoutChamber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/XZ-plane_heatmaps_Comparison.png)
+![XY_Powerdens_WithAndWithoutChamber](/docs/Probe%20Antenna%20Effects/Figures/EffectOfReflectionsAndInterference/Comparison%20-%20InterferencePoewDens%20and%20Measurements%20to%20ideal%20powerdens-distribution/2DHeatmaps_CompareInterferenzSimAndMeas.png)
 
 > Closeup of interference pattern in power-distribution due to reflections on probehead from simulation
 
