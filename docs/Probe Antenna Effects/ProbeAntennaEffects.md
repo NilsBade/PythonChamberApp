@@ -83,19 +83,53 @@ incidence to the probe antenna has no significant impact on the measurement resu
 What stands out for larger heights is the fact that the measured power-density distribution deviates 'the same way' for different heights.
 e.g. along X-axis for X < 0, the powerdensity is always overestimated and for X > 0 underestimated. This effect can not be related to the angle of incidence to the probe antenna because of its asymmetry.
 
-One approach to explain this deviation is by investigating the impact of the moving wiring of the probe antenna on the measurement.
+*One note worth mentioning, is that it can be seen that for lower heights, e.g. shorter distances, the measured power-density-difference seems to become more noisy / oscillating and simply larger amplitude-wise.
+This can likely be related to reflections inside the chamber that occur despite the absorber-attachment and still have a noticeable impact when the measurement distance and
+consequently the free-space-path-loss are low enough. To reduce those differences, one would probably have to improve the absorber setup further. A compensation approach for these
+error-effects is hardly possible since the reflections are ~~not deterministic~~ difficult to calculate and quantify and the interference pattern changes with each point probed.*
+
+
+#### Wire Error
+One approach to explain the asymmetric deviation is by investigating the impact of the moving wiring of the probe antenna on the measurement.
 So far only its influence on the phase-measurement was studied, but the measured power-density amplitude might be affected as well.
 The wiring would be a valid source for the asymmetric deviation in the measured power-density distribution.
 To investigate this effect, instead of the oerwg probe a short was screwed to the probehead and the S11 parameter was measured while probing the same mesh
 along X- and Y-axis as before. Ideally, the S11 parameter should not change throughout the measurement at each position. But in the real measurement, 
 one might be able to see the same asymmetric behaviour around XY = (0,0) as in the power-density measurement-deviations.
 
-> todo put in plot of S11 parameter along X and Y axis. reference to XY = (0,0) position and plot difference to 0dB in lower plot. -> same asymmetric relation as in deviations?!
+![WireErrorS11_alongXYaxis](/docs/Probe%20Antenna%20Effects/Figures/WireError/Wire_error_along_X_and_Y_axis_300.png)
 
-One note worth mentioning, is that it can be seen that for lower heights, e.g. shorter distances, the measured power-density-difference seems to become more noisy / oscillating and simply larger amplitude-wise.
-This can likely be related to reflections inside the chamber that occur despite the absorber-attachment and still have a noticeable impact when the measurement distance and 
-consequently the free-space-path-loss are low enough. To reduce those differences, one would probably have to improve the absorber setup further. A compensation approach for these
-error-effects is hardly possible since the reflections are ~~not deterministic~~ difficult to calculate and quantify and the interference pattern changes with each point probed.
+From the plots we can conclude, that the effect of the moving wire on the amplitude and phase is very small and can be neglected considering the accuracy of the measurement so far.
+The deviation from the ideal value as plotted in the above chapter, deals with differences in the range of +- 1dB. The wire deviation is in the range of +- 0.1dB.  
+For the phase value the same can be concluded. The wire deviation is in the range of +- 1° (over 300mm axis) while the deviation of the measured to the simulated phase values grows much quicker towards the sides.  
+
+Analyzing the plots in more detail it stands out that sometimes the maximal measured powerdensity (0dB reference) is not at XY = (0,0) but at some other point.
+Thus also powerdensities occur that are larger than zero / than the reference point. This misalignment of the antennas can be related to the asymmetric deviation in the powerdensity distribution as well.
+To evaluate the effect, in the figure below a real measurement with an OERWG probe in the absorber-equipped chamber is compared to the simulated probing with the OERWG probe.
+The given measurements 0032 and 0033 seem to be a little bit off center, having their maximum value at about XY = (-1, 1).
+Below given are plots comparing the measured phase and power from the measurement and the simulation, but with different zero-position offsets/corrections.
+The effect on the occuring deviations can easily be seen.
+
+> Plots comparing the measured power-density and phase to the simulated (probed) power-density and phase with different zero-position offsets.
+> 
+> Plots with original measurement zero position at XY = (0, 0)
+
+![Powerdens_compare_noOffset](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Powerdensity.png)
+![Phase_compare_noOffset](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Phase.png)
+
+> Plots with position-compensation zero at XY = (-1, 1)
+
+![Powerdens_compare_offset1](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Powerdensity_CORRECTED_POSITION.png)
+![Phase_compare_offset1](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Phase_CORRECTED_POSITION.png)
+
+> Plots with position-compensation zero at XY = (-2, 2) >> Over-compensation! Asymmetric deviation now other way around.
+
+![Powerdens_compare_offset2](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Powerdensity_OVER_CORRECTED_POSITION.png)
+![Phase_compare_offset2](/docs/Probe%20Antenna%20Effects/Figures/WireError/Comparison_Simulated_Probing_vs._Real_Probing_Z=200mm_-_Phase_OVER_CORRECTED_POSITION.png)
+
+From these plots can be concluded, that the asymmetric deviation in the power-density distribution and phase can be related to the misalignment of the probe antenna to the AUT.
+This is the biggest source of error in the measurement setup up to this point (05.12.2024). 
+It could be reduced by improving the alignment-method of the probe antenna to the AUT in some way.
  
 > conclude: 
 > 1. angle compensation for high focussing antennas important. Thus low focussing probe antennas are better suited for power-density measurements.
