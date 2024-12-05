@@ -19,7 +19,7 @@ over the ideal power-distribution was calculated. It can be seen, that once the 
 ![ApertureSizeEffect-VirtualAntenna](/docs/Probe%20Antenna%20Effects/Figures/Math_Integral_Probe_effect_at_Z200.png)
 
 ## Effect of Probe Antenna
-> AUT: 60GHz Horn, Probe: OERWG V2
+> AUT: 60GHz Horn, Probe: OERWG V3
 
 To conclude the effect of the probe antenna on the measured field (power distribution), three paths are run in parallel.
 Firstly a field simulation was done in CST and the poynting-vector was calculated in each point to get the power-density.
