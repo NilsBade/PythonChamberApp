@@ -44,6 +44,7 @@ class AutoMeasurementSignals(QObject):
     result = pyqtSignal()
     progress = pyqtSignal(dict)
     update = pyqtSignal(str)
+    position_update = pyqtSignal(dict)
 
 
 class AutoMeasurement(QRunnable):
@@ -260,6 +261,7 @@ class AutoMeasurement(QRunnable):
                             self.signals.update.emit(
                                 'Request movement to X: ' + str(x_coor) + ' Y: ' + str(y_coor) + ' Z: ' + str(z_coor))
                             self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=z_coor, speed=self.chamber_mov_speed) # Comment here when testing without chamber
+                            self.signals.position_update.emit({'abs_x': x_coor, 'abs_y': y_coor, 'abs_z': z_coor})
                             self.signals.update.emit("Movement done!")
 
                             # Routine to do vna measurement and store data somewhere put here...

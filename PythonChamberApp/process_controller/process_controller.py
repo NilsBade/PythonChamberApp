@@ -1070,6 +1070,8 @@ class ProcessController:
                 self.gui_mainWindow.ui_config_window.append_message2console)
             self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
+            self.auto_measurement_process.signals.position_update.connect(self.chamber_control_update_live_position)
+
             self.auto_measurement_process.signals.progress.connect(
                 self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
 
