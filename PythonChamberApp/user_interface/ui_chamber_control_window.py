@@ -17,6 +17,7 @@ class UI_chamber_control_window(QWidget):
     # control_buttons_widget - Button Menu
     home_all_axis_button: QPushButton = None
     z_tilt_adjust_button: QPushButton = None
+    calibration_routine_button: QPushButton = None
     button_move_x_inc: QPushButton = None
     button_move_x_dec: QPushButton = None
     button_move_y_inc: QPushButton = None
@@ -78,14 +79,23 @@ class UI_chamber_control_window(QWidget):
         self.home_all_axis_button = QPushButton()
         self.home_all_axis_button.setText("Home all axis")
         self.home_all_axis_button.setFixedSize(200,30)
+        self.home_all_axis_button.setToolTip("Homes XYZ axis, moves to center position and enables \nall subsequent chamber controls when finished.")
         main_layout.addWidget(self.home_all_axis_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.z_tilt_adjust_button = QPushButton()
         self.z_tilt_adjust_button.setText("Z-Tilt-Adjustment")
         self.z_tilt_adjust_button.setFixedSize(200,30)
         self.z_tilt_adjust_button.setEnabled(False)
+        self.z_tilt_adjust_button.setToolTip("Starts the Klipper Z-Tilt-Adjustment routine.\nBefore starting make sure the BL-Touch sensor is attached and\ncorrectly wired to the chamber.")
         main_layout.addWidget(self.z_tilt_adjust_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        self.calibration_routine_button = QPushButton()
+        self.calibration_routine_button.setText("Calibration Routine")
+        self.calibration_routine_button.setFixedSize(200,30)
+        self.calibration_routine_button.setEnabled(False)
+        self.calibration_routine_button.setToolTip("Starts a hardcoded calibration routine that marks the center \nwith a cross and draws multiple squares around it.\n"
+                                                   "This routine should only be started after attaching the pen-holder \nto the probehead and navigating the tip of the pen to the print-bed (paper).")
+        main_layout.addWidget(self.calibration_routine_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.control_buttons_widget = QWidget()     # Summed up widget to enable/disable all together
         buttons_layout = QGridLayout()
