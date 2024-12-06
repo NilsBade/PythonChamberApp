@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from .AutoMeasurement_Thread import AutoMeasurement
 from .multithread_worker import Worker
+from .CalibrationRoutine_Thread import CalibrationRoutine
 from vna_net_interface import E8361RemoteGPIB
 import numpy as np
 import json
@@ -26,6 +27,7 @@ class ProcessController:
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
     ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
     ui_vna_control_process: Worker = None   # Assure that only one GPIB command/request is sent to VNA at a time
+    ui_chamber_control_calibration_process: CalibrationRoutine = None  # Stores the calibration routine thread for convenience
 
     # Position logging & validity check
     __x_live: float = None
@@ -69,6 +71,8 @@ class ProcessController:
             self.chamber_control_home_all_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.pressed.connect(
             self.chamber_control_z_tilt_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.pressed.connect(
+            self.chamber_control_calibration_routine_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.button_move_home_xy.pressed.connect(
             self.chamber_control_home_xy_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.button_move_home_z.pressed.connect(
@@ -413,6 +417,7 @@ class ProcessController:
             # disable all chamber buttons until routine finished
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(False)
             self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(False)
+            self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.setEnabled(False)
 
             self.ui_chamber_control_process = Worker(self.chamber_control_home_all_routine, self.chamber)
 
@@ -440,6 +445,7 @@ class ProcessController:
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
             self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(True)
+            self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.setEnabled(True)
             self.gui_mainWindow.ui_auto_measurement_window.enable_chamber_move_interaction()
             self.gui_mainWindow.prompt_info(
                 "Homing seems to be finished.\nCoordinates will be logged from now on and manual control is enabled.",
@@ -555,6 +561,65 @@ class ProcessController:
                 "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
                     'content'])
         return
+
+    def chamber_control_calibration_routine_button_handler(self):
+        """
+        This button handler prompts a dialog if the calibration routine should really be started.
+        It explains that a pen must be mounted and the current position must be at the correct height (z-wise) to draw on the print-bed.
+
+        Cancels whole process if canceled and starts calibraton routine if accepted.
+
+        Creates a CalibrationRoutine thread object and connects its callbacks to log in the chamber_control_tab console.
+        Also disables chamber control utilities by disabling buttons.
+        It re-enables the utilities via the calibration_routine_finished_handler.
+        """
+        if self.ui_chamber_control_calibration_process is not None:
+            self.gui_mainWindow.prompt_warning("Another calibration process is running at the moment!\n", "Too many Requests")
+            return
+        # reassure start of routine
+        start_flag = self.gui_mainWindow.prompt_question("Are you sure you want to start the calibration routine?\n"
+                                           "If yes, make sure the pen is attached to the probehead and is currently positioned so that it just touches the print-bed to draw lines on it!\n\n"
+                                           "The Calibration routine is a hardcoded procedure that draws squares on the print-bed to evaluate the chamber's position-accuracy.\n"
+                                           "A pen-holder is already designed and should be available. It fits for 'Copic Multiliner' fine-liner pens for technical drawings.\n",
+                                           "Start Calibration Routine")
+        if start_flag == False:
+            # Cancel routine
+            return
+
+        # Disable all chamber control buttons until routine finished
+        self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.setEnabled(False)
+        self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(False)
+        self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(False)
+        self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.setEnabled(False)
+
+        # Start calibration routine
+        self.ui_chamber_control_calibration_process = CalibrationRoutine(self.chamber, self.__z_live)
+
+        self.ui_chamber_control_calibration_process.signals.update.connect(
+            self.gui_mainWindow.ui_chamber_control_window.append_message2console)
+        self.ui_chamber_control_calibration_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+
+        self.ui_chamber_control_calibration_process.signals.position_update.connect(
+            self.chamber_control_update_live_position)
+
+        self.ui_chamber_control_calibration_process.signals.finished.connect(
+            self.chamber_control_calibration_routine_finished_handler)
+
+        self.threadpool.start(self.ui_chamber_control_calibration_process)
+        return
+
+    def chamber_control_calibration_routine_finished_handler(self):
+        """
+        Re-enables all chamber control buttons after calibration routine finished.
+        """
+        self.gui_mainWindow.ui_chamber_control_window.home_all_axis_button.setEnabled(True)
+        self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+        self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(True)
+        self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.setEnabled(True)
+        self.ui_chamber_control_calibration_process = None
+        return
+
+
 
     def chamber_control_x_inc_button_handler(self):
         if self.ui_chamber_control_process is None:

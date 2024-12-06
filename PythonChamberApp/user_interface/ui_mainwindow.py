@@ -91,6 +91,18 @@ class MainWindow(QMainWindow):
         dlg.exec()
         return
 
+    def prompt_question(self, question_msg: str, window_title: str):
+        """
+        Opens a Question Window with Question mark in front of the main window.
+        Displays given question_msg and blocks rest of the application until accepted.
+        Returns True if 'Yes' was clicked, False if 'No' was clicked.
+        """
+        button = QMessageBox.question(self, window_title, question_msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if button == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
+
     def update_status_bar(self, status_msg: str):
         self.main_status_bar.showMessage(status_msg)
         return
