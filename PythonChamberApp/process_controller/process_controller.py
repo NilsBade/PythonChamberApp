@@ -593,7 +593,8 @@ class ProcessController:
         self.gui_mainWindow.ui_chamber_control_window.calibration_routine_button.setEnabled(False)
 
         # Start calibration routine
-        self.ui_chamber_control_calibration_process = CalibrationRoutine(self.chamber, self.__z_live)
+        current_position = [self.__x_live, self.__y_live, self.__z_live]
+        self.ui_chamber_control_calibration_process = CalibrationRoutine(self.chamber, current_position=current_position)
 
         self.ui_chamber_control_calibration_process.signals.update.connect(
             self.gui_mainWindow.ui_chamber_control_window.append_message2console)

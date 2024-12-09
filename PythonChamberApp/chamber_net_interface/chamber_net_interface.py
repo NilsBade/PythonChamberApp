@@ -302,3 +302,23 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         }
         response = requests.post(url=self.api_printer_tool_endpoint, headers=self.header_tjson, json=payload)
         return {'status_code': response.status_code, 'content': response.content}
+
+    def chamber_send_custom_GCode_with_flag(self, g_code_list: list):
+        """
+        Sends custom G-Code list via http to chamber.
+        :param g_code_list: list of G-Code commands
+        :return: dict {'status code' : str, 'content' : str} of server response
+        """
+        send_list = [self.gcode_set_flag]
+        send_list.extend(g_code_list)
+        g_code_list.append(self.gcode_reset_flag)
+
+        payload = {
+            "commands": g_code_list
+        }
+        response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
+
+        while self.chamber_isflagset():
+            time.sleep(0.5)
+
+        return {'status_code': response.status_code, 'content': response.content}
