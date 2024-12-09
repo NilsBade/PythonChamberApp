@@ -1,0 +1,35 @@
+### Movement LOG der händisch abgefahrenen Linien ###
+
+>>> Start große Rechtecke zeichnen!
+[12:11:18]: Request Jog Y by 100.0 mm with 50.0 mm/s
+[12:11:32]: Request Jog Z by -0.1 mm with 50.0 mm/s	-'einmalige Höhenkorrektur und erste Linie nachgezeichnet'
+[12:11:40]: Request Jog Y by -100.0 mm with 50.0 mm/s
+[12:11:47]: Request Jog X by 100.0 mm with 50.0 mm/s
+[12:11:52]: Request Jog Y by 100.0 mm with 50.0 mm/s
+[12:11:56]: Request Jog X by -100.0 mm with 50.0 mm/s
+[12:12:00]: Request Jog Y by -100.0 mm with 50.0 mm/s
+[12:12:04]: Request Jog X by 100.0 mm with 50.0 mm/s
+[12:12:09]: Request Jog Y by 100.0 mm with 50.0 mm/s
+[12:12:15]: Request Jog X by -100.0 mm with 50.0 mm/s
+[12:12:20]: Request Jog Y by -100.0 mm with 50.0 mm/s
+[12:12:47]: Request Jog X by 180.0 mm with 50.0 mm/s
+[12:12:55]: Request Jog Y by 180.0 mm with 50.0 mm/s
+[12:13:09]: Request Jog X by -180.0 mm with 50.0 mm/s
+[12:13:17]: Request Jog Y by -180.0 mm with 50.0 mm/s
+[12:13:23]: Request Jog X by 180.0 mm with 50.0 mm/s
+[12:13:29]: Request Jog Y by 180.0 mm with 50.0 mm/s
+[12:13:35]: Request Jog X by -180.0 mm with 50.0 mm/s
+[12:13:41]: Request Jog Y by -180.0 mm with 50.0 mm/s
+[12:13:48]: Request Jog X by 180.0 mm with 50.0 mm/s
+[12:13:57]: Request Jog Y by 180.0 mm with 50.0 mm/s
+[12:14:02]: Request Jog X by -180.0 mm with 50.0 mm/s
+[12:14:14]: Request Jog Y by -180.0 mm with 50.0 mm/s
+[12:14:27]: Request Jog X by 90.0 mm with 50.0 mm/s
+[12:14:49]: Request Jog Y by 220.0 mm with 50.0 mm/s
+[12:15:02]: Request Jog X by -90.0 mm with 50.0 mm/s
+[12:15:09]: Request Jog X by 90.0 mm with 50.0 mm/s
+[12:15:13]: Request Jog X by 90.0 mm with 50.0 mm/s
+[12:15:35]: Request Jog Y by -35.0 mm with 50.0 mm/s
+[12:16:05]: Request Jog X by -180.0 mm with 50.0 mm/s
+[12:16:26]: Request Jog Y by 35.0 mm with 50.0 mm/s
+[12:16:38]: Request Jog Z by 10.0 mm with 50.0 mm/s
