@@ -70,6 +70,8 @@ the angular error could be reduced from 0.3° to ?°.
 ## Precise XY-movement measurement
 Lastly with an orthographic camera setup, the movement accuracy of the chamber was measured.  
 The orthographic camera was fixed to the printhed, looking straight down on the print-bed.
+The camera used was the *'UI-1640LE-C-HQ'* from IDS Imaging Development Systems GmbH with a resolution of 1280x1024 pixels. [SpecSheet here](/docs/MovementAccuracy/Datasheets/UI-1640LE-C-HQ.pdf).
+The field of sight of the camera is 4,608 mm x 3,686 mm, leading to a size of 3.6 um per pixel.
 On the bed precise distance measures from a milling machine were placed and the camera was moved over their known length.
 From the pictures taken, measurements can be made to determine the movement accuracy of the chamber below the 1mm range precisely.
 
