@@ -29,22 +29,24 @@ This way the relative movement precision as well as the repeatability can be mea
 precision allows.  
 The results are collected in a table below:
 
-> [!Note] The used Laser sensor was the '...' with a given precision of ... in a range of ... mm.
+> [!Note] The used Laser sensor was the 'STABILA LD520' with a given precision of +-1mm in a range of 0,05-200m.
 
-| Target Z | Measured Z - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Measured Z - Run 4 | Measured Z - Run 5 | Average Z | Standard Deviation Z |
-|:--------:|:------------------:|:------------------:|:------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
-|   100    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   105    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   110    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   150    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   200    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   250    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   300    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   400    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   500    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   600    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   700    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
-|   800    |         ?          |         ?          |         ?          |         ?          |         ?          |     ?     |          ?           |
+| Target Z | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Measured Z - Run 4 | Measured Z - Run 5 | Average Z | Standard Deviation Z |
+|:--------:|:----------------------:|:------------------:|:------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
+|    0     |         1.381          |       1,380        |       1,380        |       1,380        |       1,380        |     ?     |          ?           |
+|    5     |         1,375          |       1,376        |       1,376        |       1,375        |       1,374        |     ?     |          ?           |
+|    10    |         1,371          |       1,371        |       1,371        |       1,370        |       1,370        |     ?     |          ?           |
+|   100    |         1,281          |       1,281        |       1,281        |       1,281        |       1,281        |     ?     |          ?           |
+|   150    |         1,231          |       1,230        |       1,231        |       1,231        |       1,231        |     ?     |          ?           |
+|   200    |         1,181          |       1,180        |       1,181        |       1,181        |       1,180        |     ?     |          ?           |
+|   250    |         1,130          |       1,130        |       1,130        |       1,130        |       1,130        |     ?     |          ?           |
+|   300    |         1,081          |       1,080        |       1,081        |       1,080        |       1,080        |     ?     |          ?           |
+|   400    |         0,980          |       0,980        |       0,980        |       0,980        |       0,980        |     ?     |          ?           |
+|   500    |         0,881          |       0,881        |       0,880        |       0,880        |       0,880        |     ?     |          ?           |
+|   600    |         0,781          |       0,781        |       0,780        |       0,780        |       0,780        |     ?     |          ?           |
+|   700    |         0,680          |       0,680        |       0,680        |       0,679        |       0,680        |     ?     |          ?           |
+|   800    |         0,580          |       0,580        |       0,580        |       0,580        |       0,580        |     ?     |          ?           |
+|   900    |         0,480          |       0,480        |       0,480        |       0,479        |       0,479        |     ?     |          ?           |
 
 The second method to validate the movement accuracy in Z-direction by mounting a dial gauge to the probehead.
 In the same manner as used to align axes in a manual milling machine, the dial gauge will be used to measure the firstly
