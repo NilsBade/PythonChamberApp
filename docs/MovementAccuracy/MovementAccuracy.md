@@ -22,6 +22,26 @@ Considering the orthogonality of the XY-axis one can conclude an imperfect align
 Therefor instead of a perfect square shaped mesh, the probed meshes were slight stretched into a parallelogram shape. 
 
 ## Movement accuracy in Z-direction
+> [!Note] The chamber is equipped with an BL-Touch sensor for z-leveling. The repeatability check from Klipper returned the following log:
+
+``` 
+Send: PROBE_ACCURACY
+Recv: // PROBE_ACCURACY at X:358.000 Y:25.500 Z:150.000 (samples=10 retract=10.000 speed=7.0 lift_speed=7.0)
+Recv: // probe at 358.000,25.500 is z=-0.011174
+Recv: // probe at 358.000,25.500 is z=-0.011799
+Recv: // probe at 358.000,25.500 is z=-0.011174
+Recv: // probe at 358.000,25.500 is z=-0.012424
+Recv: // probe at 358.000,25.500 is z=-0.011174
+Recv: // probe at 358.000,25.500 is z=-0.012424
+Recv: // probe at 358.000,25.500 is z=-0.012424
+Recv: // probe at 358.000,25.500 is z=-0.010549
+Recv: // probe at 358.000,25.500 is z=-0.008674
+Recv: // probe at 358.000,25.500 is z=-0.010549
+Recv: // probe accuracy results: maximum -0.008674, minimum -0.012424, range 0.003750, average -0.011237, median -0.011174, standard deviation 0.001099
+```
+
+> So the accuracy of the sensor is in a range of ~0.005mm judged from sampling the same point 10 times.
+
 The movement accuracy of the print-bed z-wise was not possible to validate with the pen-drawing method.
 Instead, two other methods will be used.
 Firstly, a laser distance sensor will be placed on the print-bed and measure its distance to the ground underneath.
@@ -54,7 +74,66 @@ the distance to the print bed while hovering the probehead over it. Secondly, th
 within the measurement range of the dial gauge and the distance will be measured again.  
 This way also high precision measurements of the achievable z-accuracy can be made.
 
-> todo put in pictures of dial gauge setup and results
+> Along Y axis
+
+| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
+|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
+| [358;425.5;7.3]  |    0.0 (reference)     |        0.01        |        0.01        |           |                      |
+|   [.;375.5;.]    |          0.02          |        0.02        |        0.03        |           |                      |
+|      325.5       |          0.03          |        0.03        |        0.04        |           |                      |
+|      275.5       |          0.03          |        0.03        |        0.04        |           |                      |
+|      225.5       |          0.05          |        0.05        |        0.06        |           |                      |
+|      175.5       |          0.07          |        0.07        |        0.08        |           |                      |
+|      125.5       |          0.11          |        0.11        |        0.12        |           |                      |
+|       75.5       |          0.14          |        0.14        |        0.14        |           |                      |
+|       25.5       |          0.14          |        0.14        |        0.14        |           |                      |
+|       0.5        |          0.14          |        0.14        |        0.14        |           |                      |
+
+
+> Along X axis
+
+| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
+|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
+|  [458;80;7.35]   |    0.0 (reference)     |        0.01        |        0.0         |           |                      |
+|    [408;.;.]     |         -0.01          |       -0.02        |       -0.02        |           |                      |
+|       358        |          0.0           |       -0.01        |       -0.02        |           |                      |
+|       308        |          0.01          |        0.01        |        0.0         |           |                      |
+|       258        |         -0.01          |       -0.02        |       -0.03        |           |                      |
+|       208        |         -0.03          |       -0.03        |       -0.04        |           |                      |
+|       158        |         -0.02          |       -0.02        |       -0.03        |           |                      |
+|       108        |          0.0           |        0.0         |       -0.01        |           |                      |
+|        58        |          0.01          |        0.02        |        0.01        |           |                      |
+|        8         |          0.04          |        0.05        |        0.04        |           |                      |
+|        0         |          0.04          |        0.05        |        0.04        |           |                      |
+
+> Along Z axis, small steps elevation at Position XY [225;80]
+
+| Z-Coordinate |     Measured Z [m] - Run 1     | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
+|:------------:|:------------------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
+|     7.54     | 0.0 (reference, came from top) |    0.0-(-0.01)     |      Upwards       |           |                      |
+|     7.53     |              0.0               |        0.0         |        0.0         |           |                      |
+|     7.52     |              0.0               |        0.01        |        0.0         |           |                      |
+|     7.51     |              0.01              |        0.02        |        0.01        |           |                      |
+|     7.5      |              0.02              |        0.03        |        0.02        |           |                      |
+|     7.49     |              0.03              |        0.04        |        0.03        |           |                      |
+|     7.48     |              0.04              |        0.06        |        0.04        |           |                      |
+|     7.47     |              0.05              |        0.07        |        0.05        |           |                      |
+|     7.46     |              0.06              |        0.08        |        0.06        |           |                      |
+|     7.45     |              0.07              |        0.09        |        0.07        |           |                      |
+|     6.95     |              0.58              |        0.59        |        0.58        |           |                      |
+|     6.45     |              1.08              |        1.09        |        1.08        |           |                      |
+|     5.95     |              1.58              |        1.59        |        1.58        |           |                      |
+|     5.45     |              2.08              |        2.09        |        2.08        |           |                      |
+|     4.95     |              2.58              |        2.60        |        2.58        |           |                      |
+|     4.45     |              3.08              |    ^Backwards^     |        3.08        |           |                      |
+
+One observation that stood out, was that the movement in Z-direction does not react directly once one changes direction!
+After going down, going up follows about 0.02 mm later than meant to. The other way aroung after going up, going down 
+lacks about 0.02mm height compared to the values measured when going up. Those can likely be attributed to the use of 
+[decouplers](https://ratrig.com/catalog/product/view/id/1439/s/rat-rig-bi-material-lead-screw-decoupler/category/45/) in
+the z-actuation system. Combined with the tolerance in the lead-screw threading, those probably add up to the observed error.
+
+
 
 ## XY-orthogonality
 To measure the angular error of the X and Y axis precisely, a dial gauge was mounted to the probehead.  
