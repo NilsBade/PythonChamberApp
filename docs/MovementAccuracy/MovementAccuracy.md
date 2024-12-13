@@ -294,8 +294,54 @@ $$\phi_{error, XY} \approx +0.2°$$
 Lastly with an orthographic camera setup, the movement accuracy of the chamber was measured.  
 The orthographic camera was fixed to the printhed, looking straight down on the print-bed.
 The camera used was the *'UI-1640LE-C-HQ'* from IDS Imaging Development Systems GmbH with a resolution of 1280x1024 pixels. [SpecSheet here](/docs/MovementAccuracy/Datasheets/UI-1640LE-C-HQ.pdf).
-The field of sight of the camera is 4,608 mm x 3,686 mm, leading to a size of 3.6 um per pixel.
-On the bed precise distance measures from a milling machine were placed and the camera was moved over their known length.
+
+On the bed precise distance measures from a milling machine were placed as known reference and the camera was moved over them.
 From the pictures taken, measurements can be made to determine the movement accuracy of the chamber below the 1mm range precisely.
 
-> todo add documentation about measurement and results with orthographic camera!
+Two measurements made with a $1.5 mm$ reference were done to evaluate movement precision in X- and Y-direction.
+The pictures can be seen below:
+
+> X-Movement Measurement
+
+![X-MovementMeasurement](/docs/MovementAccuracy/Annotated_Leeren/Annotated_Leere1.5mm_X.png)
+
+> Y-Movement Measurement
+
+![Y-MovementMeasurement](/docs/MovementAccuracy/Annotated_Leeren/Annotated_Leere1.5mm_Y.png)
+
+For each picture the probehead was moved small steps multiple times.
+Here are compared and measured the movements of $[+0.1 mm, +0.2 mm, +0.3 mm, +0.4 mm, +0.5 mm, +1 mm, +1.5mm]$ in each direction.
+The measured values by pixels can be taken from the pictures. It must be noted that the enlightenment of the scene was not perfect for the camera,
+which is why the measurements are not as precise as they could be. Furthermore, only a sample number of the pictures was used
+to validate the movement accuracy instead of all taken pictures.
+Still, the results are shown in the table below:
+
+> For X-Movement
+
+| Relative Movement [mm] | Measured Distance [px] > [mm] | Position Error [mm] |
+|:----------------------:|:-----------------------------:|:-------------------:|
+|          +0.1          |                               |                     |
+|          +0.1          |                               |                     |
+|          +0.1          |                               |                     |
+|          +0.1          |                               |                     |
+|          +0.1          |                               |                     |
+|          +0.5          |                               |                     |
+|          +0.5          |                               |                     |
+
+> For Y-Movement
+
+| Movement from Reference [mm] | Measured Distance [px] > [mm] | Position Error [mm] |
+|:----------------------------:|:-----------------------------:|:-------------------:|
+|             0.2              |                               |                     |
+|             0.4              |                               |                     |
+|             0.5              |                               |                     |
+|             1.0              |                               |                     |
+|             1.5              |                               |                     |
+
+For the repitition accuracy, the probehead was moved multiple times along a $60 mm$ reference.
+To evaluate the repeatability of the chamber's movement, the pictures of the corner positions can be overlayed and 
+compared to each other. The result can be seen below:
+
+> todo: overlay 60mm reference pictures at corners! deviation?
+
+Conclusion of repetition accuracy?4
