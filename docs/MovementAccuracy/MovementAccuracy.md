@@ -49,7 +49,7 @@ This way the relative movement precision as well as the repeatability can be mea
 precision allows.  
 The results are collected in a table below:
 
-> [!Note] The used Laser sensor was the 'STABILA LD520' with a given precision of +-1mm in a range of 0,05-200m.
+> [!Note] The used Laser sensor was the 'STABILA LD520' with a given precision of $\pm 1mm$ in a range of 0,05-200m.
 
 | Target Z | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Measured Z - Run 4 | Measured Z - Run 5 | Average Z | Standard Deviation Z |
 |:--------:|:----------------------:|:------------------:|:------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
@@ -74,74 +74,99 @@ the distance to the print bed while hovering the probehead over it. Secondly, th
 within the measurement range of the dial gauge and the distance will be measured again.  
 This way also high precision measurements of the achievable z-accuracy can be made.
 
-> Along Y axis
+> Sketch of probed lines with dial gauge
 
-| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
-|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
-| [358;425.5;7.3]  |    0.0 (reference)     |        0.01        |        0.01        |           |                      |
-|   [.;375.5;.]    |          0.02          |        0.02        |        0.03        |           |                      |
-|      325.5       |          0.03          |        0.03        |        0.04        |           |                      |
-|      275.5       |          0.03          |        0.03        |        0.04        |           |                      |
-|      225.5       |          0.05          |        0.05        |        0.06        |           |                      |
-|      175.5       |          0.07          |        0.07        |        0.08        |           |                      |
-|      125.5       |          0.11          |        0.11        |        0.12        |           |                      |
-|       75.5       |          0.14          |        0.14        |        0.14        |           |                      |
-|       25.5       |          0.14          |        0.14        |        0.14        |           |                      |
-|       0.5        |          0.14          |        0.14        |        0.14        |           |                      |
+![DialGaugeSketch](/docs/MovementAccuracy/Figures/Z_Measurements_on_bed_WB.png)
+
+The used dial gauge introduced an accuracy of $0.01 mm$ for the z-measurements.
+To calculate the angular error of the bed-plane to the probehead movement plane, the measured z-offset can be used by
+$\phi_{error} = arctan(\frac{|z_{min}|}{distance})$ with the distance being the maximum distance between the first and 
+the last point measured along each axis.  
+Having measured $425 mm$ along Y-axis and $458 mm$ along X-axis, the angular errors that can be estimated are accurate to
+$\Delta\phi_{error,Y} = \arctan(\frac{0.01 mm}{425 mm}) \approx 0.0014°$ and 
+$\Delta\phi_{error,X} = \arctan(\frac{0.01 mm}{458 mm}) \approx 0.0013°$.
+
+> Probe along Y axis, error around X-axis
+
+| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z |
+|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|
+| [358;425.5;7.3]  |    0.0 (reference)     |        0.01        |        0.01        |   0.01    |
+|   [.;375.5;.]    |          0.02          |        0.02        |        0.03        |   0.02    |
+|      325.5       |          0.03          |        0.03        |        0.04        |   0.03    |
+|      275.5       |          0.03          |        0.03        |        0.04        |   0.03    |
+|      225.5       |          0.05          |        0.05        |        0.06        |   0.05    |
+|      175.5       |          0.07          |        0.07        |        0.08        |   0.07    |
+|      125.5       |          0.11          |        0.11        |        0.12        |   0.11    |
+|       75.5       |          0.14          |        0.14        |        0.14        |   0.14    |
+|       25.5       |          0.14          |        0.14        |        0.14        |   0.14    |
+|       0.5        |          0.14          |        0.14        |        0.14        |   0.14    |
+
+From the averaged values one can estimate **an angular error around X-axis of 
+$arctan(\frac{0.13 mm}{425 mm}) = 0.0175° \approx 0.018°$** 
+for the bed referenced to the plane in which the probehead moves.
 
 
-> Along X axis
+> Probe along X axis, error around Y-axis
 
-| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
-|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
-|  [458;80;7.35]   |    0.0 (reference)     |        0.01        |        0.0         |           |                      |
-|    [408;.;.]     |         -0.01          |       -0.02        |       -0.02        |           |                      |
-|       358        |          0.0           |       -0.01        |       -0.02        |           |                      |
-|       308        |          0.01          |        0.01        |        0.0         |           |                      |
-|       258        |         -0.01          |       -0.02        |       -0.03        |           |                      |
-|       208        |         -0.03          |       -0.03        |       -0.04        |           |                      |
-|       158        |         -0.02          |       -0.02        |       -0.03        |           |                      |
-|       108        |          0.0           |        0.0         |       -0.01        |           |                      |
-|        58        |          0.01          |        0.02        |        0.01        |           |                      |
-|        8         |          0.04          |        0.05        |        0.04        |           |                      |
-|        0         |          0.04          |        0.05        |        0.04        |           |                      |
+| Position [X,Y,Z] | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Average Z |
+|:----------------:|:----------------------:|:------------------:|:------------------:|:---------:|
+|  [458;80;7.35]   |    0.0 (reference)     |        0.01        |        0.0         |    0.0    |
+|    [408;.;.]     |         -0.01          |       -0.02        |       -0.02        |   -0.02   |
+|       358        |          0.0           |       -0.01        |       -0.02        |   -0.01   |
+|       308        |          0.01          |        0.01        |        0.0         |   0.01    |
+|       258        |         -0.01          |       -0.02        |       -0.03        |   -0.02   |
+|       208        |         -0.03          |       -0.03        |       -0.04        |   -0.03   |
+|       158        |         -0.02          |       -0.02        |       -0.03        |   -0.02   |
+|       108        |          0.0           |        0.0         |       -0.01        |    0.0    |
+|        58        |          0.01          |        0.02        |        0.01        |   0.01    |
+|        8         |          0.04          |        0.05        |        0.04        |   0.04    |
+|        0         |          0.04          |        0.05        |        0.04        |   0.04    |
+
+From the averaged Z-offsets measured along X-axis one can not reliably estimate the angular error around Y-axis.
+Since the measured Z-offset shows no steady trend moved along axis-direction over a long path of $X=458$ to $X=108$ and then 
+suddenly deviates by a comparably large number, it is more likely that this offset originates from an imperfect bed-surface
+than from a misaligned bed-plane. Therefor the **angular error around Y-axis is estimated to be below $\pm0.005°$** which is
+the angular error calculated from the maximum averaged z-offset that occurred in the measurement.
 
 > Along Z axis, small steps elevation at Position XY [225;80]
 
-| Z-Coordinate |     Measured Z [m] - Run 1     | Measured Z - Run 2 | Measured Z - Run 3 | Average Z | Standard Deviation Z |
-|:------------:|:------------------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
-|     7.54     | 0.0 (reference, came from top) |    0.0-(-0.01)     |      Upwards       |           |                      |
-|     7.53     |              0.0               |        0.0         |        0.0         |           |                      |
-|     7.52     |              0.0               |        0.01        |        0.0         |           |                      |
-|     7.51     |              0.01              |        0.02        |        0.01        |           |                      |
-|     7.5      |              0.02              |        0.03        |        0.02        |           |                      |
-|     7.49     |              0.03              |        0.04        |        0.03        |           |                      |
-|     7.48     |              0.04              |        0.06        |        0.04        |           |                      |
-|     7.47     |              0.05              |        0.07        |        0.05        |           |                      |
-|     7.46     |              0.06              |        0.08        |        0.06        |           |                      |
-|     7.45     |              0.07              |        0.09        |        0.07        |           |                      |
-|     6.95     |              0.58              |        0.59        |        0.58        |           |                      |
-|     6.45     |              1.08              |        1.09        |        1.08        |           |                      |
-|     5.95     |              1.58              |        1.59        |        1.58        |           |                      |
-|     5.45     |              2.08              |        2.09        |        2.08        |           |                      |
-|     4.95     |              2.58              |        2.60        |        2.58        |           |                      |
-|     4.45     |              3.08              |    ^Backwards^     |        3.08        |           |                      |
+| Z-Coordinate |     Measured Z [m] - Run 1     | Measured Z - Run 2 | Measured Z - Run 3 |
+|:------------:|:------------------------------:|:------------------:|:------------------:|
+|     7.54     | 0.0 (reference, came from top) |    0.0-(-0.01)     |      Upwards       |
+|     7.53     |              0.0               |        0.0         |        0.0         |
+|     7.52     |              0.0               |        0.01        |        0.0         |
+|     7.51     |              0.01              |        0.02        |        0.01        |
+|     7.5      |              0.02              |        0.03        |        0.02        |
+|     7.49     |              0.03              |        0.04        |        0.03        |
+|     7.48     |              0.04              |        0.06        |        0.04        |
+|     7.47     |              0.05              |        0.07        |        0.05        |
+|     7.46     |              0.06              |        0.08        |        0.06        |
+|     7.45     |              0.07              |        0.09        |        0.07        |
+|     6.95     |              0.58              |        0.59        |        0.58        |
+|     6.45     |              1.08              |        1.09        |        1.08        |
+|     5.95     |              1.58              |        1.59        |        1.58        |
+|     5.45     |              2.08              |        2.09        |        2.08        |
+|     4.95     |              2.58              |        2.60        |        2.58        |
+|     4.45     |              3.08              |    ^Backwards^     |        3.08        |
 
 One observation that stood out, was that the movement in Z-direction does not react directly once one changes direction!
-After going down, going up follows about 0.02 mm later than meant to. The other way aroung after going up, going down 
-lacks about 0.02mm height compared to the values measured when going up. Those can likely be attributed to the use of 
-[decouplers](https://ratrig.com/catalog/product/view/id/1439/s/rat-rig-bi-material-lead-screw-decoupler/category/45/) in
-the z-actuation system. Combined with the tolerance in the lead-screw threading, those probably add up to the observed error.
+After going down, going up follows about $0.02 mm$ later than meant to. The other way around after going up, going down 
+lacks about $0.02mm$ height compared to the values measured when going up. Those can likely be attributed to the use of 
+[decouplers](https://ratrig.com/catalog/product/view/id/1439/s/rat-rig-bi-material-lead-screw-decoupler/category/45/) in the z-actuation system.  
+Combined with the tolerance in the lead-screw threading, those probably add up to the observed error.
+**Thus, an error estimation of $\pm0.02mm$ is made for the z-accuracy of the chamber.**
 
 
 
 ## XY-orthogonality
-To measure the angular error of the X and Y axis precisely, a dial gauge was mounted to the probehead.  
-A stop angle was placed on the printbed and the dial gauge was positioned to measure the distance to the stop angle horizontally.
-Then the stop angle was repositioned until one side of it was precisly aligned with the X-Axis of the chamber.  
-Now the dial gauge was turned 90° and the second side of the stop angle was probed with the dial gauge. From the distance change
-while moving along Y-axis along the stop angle, one can precisely calculate the andular error between x and y axis.
-The results are collected below:
+To measure the angular error of the X and Y axis precisely, a dial gauge is mounted to the probehead.  
+A stop angle is placed on the printbed and the dial gauge is positioned to measure the distance to the stop angle horizontally.
+Then the stop angle is (roughly) repositioned until one side of it is closely aligned with the X-Axis of the chamber.  
+Now the dial gauge is rotated by $90°$ and the second side of the stop angle is probed with the dial gauge. From the distance change
+while moving along Y-axis along the stop angle, one can precisely calculate the angular error between X- and Y-axis.
+The results are collected below. The notes taken while the measurements were made can be found [here](/docs/MovementAccuracy/XY_Winkel_Fehler_Masterarbeit.pdf).
+
+
 
 > todo add documentation about measurement and results with dial gauge!
 

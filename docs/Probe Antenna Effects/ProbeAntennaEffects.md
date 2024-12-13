@@ -100,8 +100,8 @@ one might be able to see the same asymmetric behaviour around XY = (0,0) as in t
 ![WireErrorS11_alongXYaxis](/docs/Probe%20Antenna%20Effects/Figures/WireError/Wire_error_along_X_and_Y_axis_300.png)
 
 From the plots we can conclude, that the effect of the moving wire on the amplitude and phase is very small and can be neglected considering the accuracy of the measurement so far.
-The deviation from the ideal value as plotted in the above chapter, deals with differences in the range of +- 1dB. The wire deviation is in a range below +- 0.1dB.  
-For the phase value the same can be concluded. The wire deviation is in the range of +- 1° (over 300mm axis) while the deviation of the measured to the simulated phase values grows much quicker towards the sides.  
+The deviation from the ideal value as plotted in the above chapter, deals with differences in the range of $\pm 1dB$. The wire deviation is in a range below $\pm 0.1dB$.  
+For the phase value the same can be concluded. The wire deviation is in the range of $\pm 1°$ (over 300mm axis) while the deviation of the measured to the simulated phase values grows much quicker towards the sides.  
 
 Analyzing the plots in more detail it stands out that sometimes the maximal measured powerdensity (0dB reference) is not at XY = (0,0) but at some other point.
 Thus also powerdensities occur that are larger than zero / than the reference point. This lack of symmetry / missposition of the 0dB reference can be related to a misalignment of the probe antenna to the AUT.
