@@ -40,16 +40,16 @@ Recv: // probe at 358.000,25.500 is z=-0.010549
 Recv: // probe accuracy results: maximum -0.008674, minimum -0.012424, range 0.003750, average -0.011237, median -0.011174, standard deviation 0.001099
 ```
 
-> So the accuracy of the sensor is in a range of ~0.005mm judged from sampling the same point 10 times.
+> So the accuracy of the sensor is in a range of $$\Delta Z_{error} ≤ |\pm 0.002mm|$$ judged from sampling the same point 10 times.
 
 The movement accuracy of the print-bed z-wise was not possible to validate with the pen-drawing method.
-Instead, two other methods will be used.
-Firstly, a laser distance sensor will be placed on the print-bed and measure its distance to the ground underneath.
-This way the relative movement precision as well as the repeatability can be measured in ranges that the laser-sensor's 
-precision allows.  
+Instead, two other methods are used.  
+Firstly, a laser distance sensor is placed on the print-bed and measures its distance to the ground underneath.
+This way the relative movement precision as well as the repeatability can be measured in the range of the laser-sensor's 
+precision.  
 The results are collected in a table below:
 
-> [!Note] The used Laser sensor was the 'STABILA LD520' with a given precision of $\pm 1mm$ in a range of 0,05-200m.
+> [!Note] The used Laser sensor is the 'STABILA LD520' with a given precision of $\pm 1mm$ in a range of 0,05-200m.
 
 | Target Z | Measured Z [m] - Run 1 | Measured Z - Run 2 | Measured Z - Run 3 | Measured Z - Run 4 | Measured Z - Run 5 | Average Z | Standard Deviation Z |
 |:--------:|:----------------------:|:------------------:|:------------------:|:------------------:|:------------------:|:---------:|:--------------------:|
@@ -68,23 +68,29 @@ The results are collected in a table below:
 |   800    |         0,580          |       0,580        |       0,580        |       0,580        |       0,580        |     ?     |          ?           |
 |   900    |         0,480          |       0,480        |       0,480        |       0,479        |       0,479        |     ?     |          ?           |
 
-The second method to validate the movement accuracy in Z-direction by mounting a dial gauge to the probehead.
-In the same manner as used to align axes in a manual milling machine, the dial gauge will be used to measure the firstly
+It can be seen, that the error that should be measured is below the precision of the laser sensor since over all repetitions
+the measured value just 'toggles' $1mm$ which is also given as its accuracy. Therefor to quantify the chamber's positioning 
+error in Z-direction, the second method needs to be used.
+
+The second method to validate the movement accuracy in Z-direction is by mounting a dial gauge to the probehead.
+In the same manner as used to align axes in a manual milling machine, the dial gauge is used to measure 
 the distance to the print bed while hovering the probehead over it. Secondly, the whole bed will be moved in Z-direction
-within the measurement range of the dial gauge and the distance will be measured again.  
-This way also high precision measurements of the achievable z-accuracy can be made.
+within the measurement range of the dial gauge and the distance to the probehead is measured.  
+This way high precision measurements of the Z-movement can be made with the accuracy of the dial gauge.
 
 > Sketch of probed lines with dial gauge
 
 ![DialGaugeSketch](/docs/MovementAccuracy/Figures/Z_Measurements_on_bed_WB.png)
 
-The used dial gauge introduced an accuracy of $0.01 mm$ for the z-measurements.
+The used dial gauge introduces an accuracy of $0.01 mm$ for the Z-measurements.
 To calculate the angular error of the bed-plane to the probehead movement plane, the measured z-offset can be used by
 $\phi_{error} = arctan(\frac{|z_{min}|}{distance})$ with the distance being the maximum distance between the first and 
 the last point measured along each axis.  
 Having measured $425 mm$ along Y-axis and $458 mm$ along X-axis, the angular errors that can be estimated are accurate to
 $\Delta\phi_{error,Y} = \arctan(\frac{0.01 mm}{425 mm}) \approx 0.0014°$ and 
 $\Delta\phi_{error,X} = \arctan(\frac{0.01 mm}{458 mm}) \approx 0.0013°$.
+
+![BedAngleErrors](/docs/MovementAccuracy/Figures/Bed-Misalignment_AngleErrors_WB.png)
 
 > Probe along Y axis, error around X-axis
 
@@ -102,8 +108,8 @@ $\Delta\phi_{error,X} = \arctan(\frac{0.01 mm}{458 mm}) \approx 0.0013°$.
 |       0.5        |          0.14          |        0.14        |        0.14        |   0.14    |
 
 From the averaged values one can estimate **an angular error around X-axis of 
-$arctan(\frac{0.13 mm}{425 mm}) = 0.0175° \approx 0.018°$** 
-for the bed referenced to the plane in which the probehead moves.
+$\phi_{error,X} = arctan(\frac{0.13 mm}{425 mm}) = 0.0175° \approx 0.018°$** 
+for the bed referenced to the plane in which the probehead moves ($\phi$ positive around chamber-X-axis).
 
 
 > Probe along X axis, error around Y-axis
@@ -125,7 +131,7 @@ for the bed referenced to the plane in which the probehead moves.
 From the averaged Z-offsets measured along X-axis one can not reliably estimate the angular error around Y-axis.
 Since the measured Z-offset shows no steady trend moved along axis-direction over a long path of $X=458$ to $X=108$ and then 
 suddenly deviates by a comparably large number, it is more likely that this offset originates from an imperfect bed-surface
-than from a misaligned bed-plane. Therefor the **angular error around Y-axis is estimated to be below $\pm0.005°$** which is
+than from a misaligned bed-plane. Therefor the **angular error around Y-axis is estimated to be $\phi_{error,Y} ≤ |\pm0.005°|$** which is
 the angular error calculated from the maximum averaged z-offset that occurred in the measurement.
 
 > Along Z axis, small steps elevation at Position XY [225;80]
@@ -149,7 +155,8 @@ the angular error calculated from the maximum averaged z-offset that occurred in
 |     4.95     |              2.58              |        2.60        |        2.58        |
 |     4.45     |              3.08              |    ^Backwards^     |        3.08        |
 
-One observation that stood out, was that the movement in Z-direction does not react directly once one changes direction!
+One observation that stood out probing the same point at different heights, was that the movement in Z-direction does 
+not change instantly once one changes direction!
 After going down, going up follows about $0.02 mm$ later than meant to. The other way around after going up, going down 
 lacks about $0.02mm$ height compared to the values measured when going up. Those can likely be attributed to the use of 
 [decouplers](https://ratrig.com/catalog/product/view/id/1439/s/rat-rig-bi-material-lead-screw-decoupler/category/45/) in the z-actuation system.  
