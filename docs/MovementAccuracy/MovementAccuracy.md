@@ -167,18 +167,128 @@ Combined with the tolerance in the lead-screw threading, those probably add up t
 
 ## XY-orthogonality
 To measure the angular error of the X and Y axis precisely, a dial gauge is mounted to the probehead.  
-A stop angle is placed on the printbed and the dial gauge is positioned to measure the distance to the stop angle horizontally.
+A stop angle is placed on the printbed and the dial gauge is positioned to measure the distance of the probehead to the stop angle horizontally.
 Then the stop angle is (roughly) repositioned until one side of it is closely aligned with the X-Axis of the chamber.  
 Now the dial gauge is rotated by $90°$ and the second side of the stop angle is probed with the dial gauge. From the distance change
-while moving along Y-axis along the stop angle, one can precisely calculate the angular error between X- and Y-axis.
-The results are collected below. The notes taken while the measurements were made can be found [here](/docs/MovementAccuracy/XY_Winkel_Fehler_Masterarbeit.pdf).
+while moving along the edges of the stop angle, one can precisely calculate the angle between the reference-edge and
+the chamber's movement-axis.
+
+The Setup is pictured in the figure below:
+![XY-OrthogonalitySetup](/docs/MovementAccuracy/Figures/Bed-Misalignment_XYOrthogonality_WB.png)
+
+Once $\varphi_{X}$ anf $\varphi_{Y}$ are calculated from the measurements, one can add (or subtract) them from the 90°
+reference angle to get the total angle between the X- and Y-axis of the chamber's XY-actuation.
+To get more confidence in the measurement results, the same measurement was conducted three times with the reference positioned
+in different places and angles on the print-bed. The notes taken while the measurements were made can be 
+found [here](/docs/MovementAccuracy/XY_Winkel_Fehler_Masterarbeit.pdf).    
+The measured distances of each run are collected in the tables below for overview:
+
+> [!Note] In the tables below, negative measured distances mean that the distance lowered compared to the starting-/reference-point.
+> Positive values mean that the distance increased compared to the starting-/reference-point. This is important to know
+> when calculating the total angle between XY because one must decide if one subtracts or adds the $\varphi$ values.
+
+### 1. Measurement Run
+1. Measurement along x-axis
+
+| X-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          0.00          |            0.00            |     -     |
+|      50.0       |           -            |             -              |     -     |
+|      100.0      |           -            |             -              |     -     |
+|      110.0      |         -0.09          |           -0.09            |   0.047   |
+
+Here the distance to the reference grows by $0.09 mm$ moving 110 mm in positive X-direction.
+Thus, the chamber's x-axis is rotated by $\varphi_{X} = arctan(\frac{0.09 mm}{110 mm}) = 0.047°$ 'away' from the 
+reference edge.
 
 
+2. Measurement along y-axis
 
-> todo add documentation about measurement and results with dial gauge!
+| Y-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          0.01          |            0.00            |     -     |
+|      50.0       |         -0.09          |           -0.10            |   0.115   |
+|      100.0      |         -0.12          |           -0.13            |   0.075   |
+|      110.0      |         -0.14          |           -0.15            |   0.078   |
 
-These measurements were used to calibrate and improve the chamber setup. By readjusting the X-Gantry via the dial gauge,
-the angular error could be reduced from 0.3° to ?°.
+Here the distance to the reference grows as well by $0.15 mm$ moving 110 mm in positive Y-direction.
+Thus, the chamber's y-axis is rotated by $\varphi_{Y} = arctan(\frac{0.15 mm}{110 mm}) = 0.078°$ 'away' from the 
+reference edge.
+
+3. Calculation of $\phi_{XY}$  
+Assuming the reference has an ideal 90° angle, the total angle between the X- and Y-axis of the chamber's XY-actuation is
+$$\phi_{XY} = 90° + (\varphi_{X} + \varphi_{Y}) = 90° + (0.047° + 0.078°) = 90.125°$$ which is an angular error of 
+$$\phi_{error, XY} = +0.125°$$.
+
+### 2. Measurement Run
+1. Measurement along x-axis
+
+| X-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          0.07          |            0.00            |     -     |
+|      50.0       |          0.08          |            0.01            |   0.011   |
+|      100.0      |          0.08          |            0.01            |   0.011   |
+|      110.0      |          0.09          |            0.02            |   0.010   |
+
+Here the distance to the reference grows by very little, almost not measurable by the dial gauge.
+Still there is a constant trend in the distance (growing), which is why it makes sense to calculate an angle between 
+reference edge and chamber axis. $\varphi_{X} = arctan(\frac{0.02 mm}{110 mm}) = 0.010°$ is the angle with which the 
+chamber's x-axis is rotated 'into' the reference edge.
+
+2. Measurement along y-axis
+
+| Y-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          0.34          |            0.00            |     -     |
+|      50.0       |          0.33          |           -0.01            |   0.011   |
+|      100.0      |          0.18          |           -0.16            |   0.092   |
+|      110.0      |          0.05          |           -0.29            |   0.151   |
+
+Here the distance to the reference grows by $0.29 mm$ moving 110 mm in positive Y-direction.
+Thus, the chamber's y-axis is rotated by $\varphi_{Y} = arctan(\frac{0.29 mm}{110 mm}) = 0.151°$ 'away' from the 
+reference edge.
+
+3. Calculation of $\phi_{XY}$
+Assuming the ideal 90° angle of the reference, the total angle between the X- and Y-axis of the chamber's XY-actuation is
+$$\phi_{XY} = 90° + (-\varphi_{X} + \varphi_{Y}) = 90° + (-0.010° + 0.151°) = 90.141°$$ which is an angular error of
+$$\phi_{error, XY} = +0.141°$$.
+
+### 3. Measurement Run
+1. Measurement along x-axis
+
+| X-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          2.02          |            0.00            |     -     |
+|      50.0       |          3.37          |            1.35            |   1.547   |
+|      100.0      |          4.81          |            2.79            |   1.598   |
+|      110.0      |          5.08          |            3.06            |   1.593   |
+
+Here the reference comes closer to the probehead by $3.06 mm$ moving 110 mm in positive X-direction.
+Thus, the chamber's x-axis is rotated by $\varphi_{X} = arctan(\frac{3.06 mm}{110 mm}) = 1.593°$ 'into' the
+reference edge.
+
+2. Measurement along y-axis
+
+| Y-position [mm] | Measured Distance [mm] | Referenced Start/Stop [mm] | Angle [°] |
+|:---------------:|:----------------------:|:--------------------------:|:---------:|
+|       0.0       |          4.36          |            0.00            |     -     |
+|      50.0       |          2.75          |           -2.61            |   2.988   |
+|      100.0      |          1.15          |           -3.21            |   1.838   |
+|      110.0      |          0.84          |           -3.52            |   1.832   |
+
+Here the distance to the reference grows by $3.52 mm$ moving 110 mm in positive Y-direction.
+Thus, the chamber's y-axis is rotated by $\varphi_{Y} = arctan(\frac{3.52 mm}{110 mm}) = 1.832°$ 'away' from the
+reference edge.
+
+3. Calculation of $\phi_{XY}$
+Assuming the ideal 90° angle of the reference, the total angle between the X- and Y-axis of the chamber's XY-actuation is
+$$\phi_{XY} = 90° + (-\varphi_{X} + \varphi_{Y}) = 90° + (-1.593° + 1.832°) = 90.239°$$ which is an angular error of
+$$\phi_{error, XY} = +0.239°$$
+
+### Conclusion  
+Averaging over the three conducted measurements, the total angular error between the X- and Y-axis of the chamber's XY-actuation
+is estimated to be $\phi_{error, XY} = +0.168°$ with a standard deviation of $\sigma_{\phi_{error, XY}} = 0.057°$ or in other words 
+$$\phi_{error, XY} \approx +0.2°$$
 
 ## Precise XY-movement measurement
 Lastly with an orthographic camera setup, the movement accuracy of the chamber was measured.  
