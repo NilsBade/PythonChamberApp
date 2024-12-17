@@ -322,6 +322,6 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
         while self.chamber_isflagset():
-            time.sleep(0.5)
+            time.sleep(self.__checkFlagTimeout)
 
         return {'status_code': response.status_code, 'content': response.content}
