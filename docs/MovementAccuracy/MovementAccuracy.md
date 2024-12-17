@@ -303,7 +303,7 @@ The pictures can be seen below:
 
 > X-Movement Measurement
 
-![X-MovementMeasurement](/docs/MovementAccuracy/Annotated_Leeren/Annotated_Leere1.5mm_X.png)
+![X-MovementMeasurement](/docs/MovementAccuracy/Annotated_Leeren/Annotated_Leere1.5mm_X_2.png)
 
 > Y-Movement Measurement
 
@@ -320,28 +320,37 @@ Still, the results are shown in the table below:
 
 | Relative Movement [mm] | Measured Distance [px] > [mm] | Position Error [mm] |
 |:----------------------:|:-----------------------------:|:-------------------:|
-|          +0.1          |                               |                     |
-|          +0.1          |                               |                     |
-|          +0.1          |                               |                     |
-|          +0.1          |                               |                     |
-|          +0.1          |                               |                     |
-|          +0.5          |                               |                     |
-|          +0.5          |                               |                     |
+|          0.1           |            0.0868             |       0.0132        |
+|          0.2           |            0.1857             |       0.0143        |
+|          0.3           |            0.2865             |       0.0135        |
+|          0.4           |            0.3850             |       0.0150        |
+|          0.5           |            0.4854             |       0.0146        |
+|          1.0           |            0.9885             |       0.0115        |
+|          1.5           |            1.4989             |       0.0011        |
+
+average positional error: $\Delta x_{error} = 0.0118 mm \approx 12 \mu m$
 
 > For Y-Movement
 
 | Movement from Reference [mm] | Measured Distance [px] > [mm] | Position Error [mm] |
 |:----------------------------:|:-----------------------------:|:-------------------:|
-|             0.2              |                               |                     |
-|             0.4              |                               |                     |
-|             0.5              |                               |                     |
-|             1.0              |                               |                     |
-|             1.5              |                               |                     |
+|             0.1              |            0.0956             |       0.0044        |
+|             0.2              |            0.1856             |       0.0144        |
+|             0.3              |            0.2969             |       0.0031        |
+|             0.4              |            0.3927             |       0.0073        |
+|             0.5              |            0.5025             |       0.0025        |
+|             1.0              |            0.9941             |       0.0059        |
+|             1.5              |            1.5030             |       0.0030        |
+
+average positional error: $\Delta y_{error} = 0.0058 mm \approx 6 \mu m$
 
 For the repitition accuracy, the probehead was moved multiple times along a $60 mm$ reference.
 To evaluate the repeatability of the chamber's movement, the pictures of the corner positions can be overlayed and 
 compared to each other. The result can be seen below:
 
-> todo: overlay 60mm reference pictures at corners! deviation?
+![RepetitionAccuracy](/docs/MovementAccuracy/Annotated_Leeren/Annotated_Leere60mm_repetition_X.png)
 
-Conclusion of repetition accuracy?4
+Trying to point out 'the same pixel' on each picture, one can conclude that the chamber's movement is repeatable within a range
+of $\Delta x_{repeatability} = 0.0114 mm \approx 11 \mu m$ over 5 iterations in this case. 
+But also, these measurements are not perfect due to the enlightenment.
+
