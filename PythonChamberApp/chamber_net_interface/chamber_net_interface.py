@@ -31,6 +31,8 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     gcode_wait_for_moves_to_finish = 'M400'
     __debug_gcode_sleep_5s = 'G4 P5000'
 
+    __checkFlagTimeout = 0.3    # timeout for checking flag in seconds. Compromise between speed of measurement (low timeout, frequent checking) and responsiveness of chamber (do not overload chamber with requests)
+
     def __init__(self, ip_address: str = None, api_key: str = None):
         """
         Stores ip address of chamber and initializes private standard headers and addresses.
@@ -136,7 +138,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
         while self.chamber_isflagset():
-            time.sleep(0.5)
+            time.sleep(self.__checkFlagTimeout)
 
         return {'status_code': response.status_code, 'content': response.content}
 
@@ -207,7 +209,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
         while self.chamber_isflagset():
-            time.sleep(0.5)
+            time.sleep(self.__checkFlagTimeout)
 
         return {'status_code': response.status_code, 'content': response.content}
 
@@ -237,7 +239,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         response = requests.post(url=self.api_printer_cmd_endpoint, headers=self.header_tjson, json=payload)
 
         while self.chamber_isflagset():
-            time.sleep(0.5)
+            time.sleep(self.__checkFlagTimeout)
         return {'status_code': response.status_code, 'content': response.content}
 
     def chamber_isflagset(self):
@@ -253,12 +255,13 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         str_found_position = -1
         flag_position_offset = 10
         info_str = ""
-        while str_found_position < 0:
+        while str_found_position < 0:   # ask chamber multiple times until valid response is received
             response = requests.get(url=self.api_printer_tool_endpoint, headers=self.header_tjson)
             info = response.content
             info_str = str(info, encoding='utf-8')
             str_found_position = info_str.find('"target": ')
-            time.sleep(0.5)
+            if str_found_position < 0:
+                time.sleep(self.__checkFlagTimeout)   # wait a little to not overload chamber with requests
 
         flag_position = str_found_position + flag_position_offset
 
