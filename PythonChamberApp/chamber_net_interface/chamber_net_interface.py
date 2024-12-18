@@ -31,7 +31,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     gcode_wait_for_moves_to_finish = 'M400'
     __debug_gcode_sleep_5s = 'G4 P5000'
 
-    __checkFlagTimeout = 0.3    # timeout for checking flag in seconds. Compromise between speed of measurement (low timeout, frequent checking) and responsiveness of chamber (do not overload chamber with requests)
+    __checkFlagTimeout = 0.05    # timeout for checking flag in seconds. Compromise between speed of measurement (low timeout, frequent checking) and responsiveness of chamber (do not overload chamber with requests)
 
     def __init__(self, ip_address: str = None, api_key: str = None):
         """
@@ -261,6 +261,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
             info_str = str(info, encoding='utf-8')
             str_found_position = info_str.find('"target": ')
             if str_found_position < 0:
+                print("Chamber Error: Flag not found in octoprint response. Trying again...") # debug - never triggered with 0.05s timeout - 18.12.2024
                 time.sleep(self.__checkFlagTimeout)   # wait a little to not overload chamber with requests
 
         flag_position = str_found_position + flag_position_offset
