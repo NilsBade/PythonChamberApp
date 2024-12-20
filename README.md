@@ -349,6 +349,8 @@ The only part that is meant to be frequently attached and detached from the cham
     * Reacts to pyvisa-CIC error (current session not controller-in-charge)
     * Resets PNA after various number (=3) of timeouts in a row 
   * Display coordinate values next to X,Y,Z sliders in AUT-referred-coordinates if AUT-coordinates are selected
+  * Accelerated measurement process by reducing http-requests timeouts and bug fix
+  * Added VNA configuration option to Automeasurement-tab to select a stored PNA config file on the PNA instead configuring measurement in app (enables use of calibrations in automeasurement) [todo 20.12.24]
 * 1.1
   * Added linear- or dB-Max-display dropdown to select in Display Measurements Tab
   * Added Phase-Graphs below the amplitude graphs
