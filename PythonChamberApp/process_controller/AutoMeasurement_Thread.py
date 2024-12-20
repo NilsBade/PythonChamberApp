@@ -97,13 +97,27 @@ class AutoMeasurement(QRunnable):
         self.signals = AutoMeasurementSignals()
         self.chamber = chamber  # Comment here when testing without chamber
         self.vna = vna
-        self.vna.pna_preset()
         self.vna_info_buffer = vna_info     # to enable re-configuration of PNA in exception handling
-        self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
-                                              freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
-                                              if_bw=vna_info['if_bw'], sweep_num_points=vna_info['sweep_num_points'],
-                                              output_power=vna_info['output_power'], trigger_manual=True,
-                                              average_number=vna_info['average_number'])
+        if 'VNA_preset_from_file' in vna_info:
+            extra_info = self.vna.pna_preset_from_file(vna_info['VNA_preset_from_file'])
+            vna_info['parameter'] = extra_info['parameter']
+            vna_info['freq_start'] = extra_info['freq_start']
+            vna_info['freq_stop'] = extra_info['freq_stop']
+            vna_info['if_bw'] = extra_info['if_bw']
+            vna_info['sweep_num_points'] = extra_info['sweep_num_points']
+            vna_info['output_power'] = extra_info['output_power']
+            vna_info['average_number'] = extra_info['average_number']
+
+        else:
+            self.vna.pna_preset() #todo watchout
+            self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
+                                                  freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
+                                                  if_bw=vna_info['if_bw'],
+                                                  sweep_num_points=vna_info['sweep_num_points'],
+                                                  output_power=vna_info['output_power'], trigger_manual=True,
+                                                  average_number=vna_info['average_number'])
+
+        # todo modify this section / routine, so that it can handle if the pna is preset before the thread is started
 
         self.mesh_x_vector = x_vec
         self.mesh_y_vector = y_vec
@@ -446,5 +460,6 @@ class AutoMeasurement(QRunnable):
                                               freq_stop=self.vna_info_buffer['freq_stop'],
                                               if_bw=self.vna_info_buffer['if_bw'],
                                               sweep_num_points=self.vna_info_buffer['sweep_num_points'],
-                                              output_power=self.vna_info_buffer['output_power'], trigger_manual=True,
+                                              output_power=self.vna_info_buffer['output_power'],
+                                              trigger_manual=True,
                                               average_number=self.vna_info_buffer['average_number'])

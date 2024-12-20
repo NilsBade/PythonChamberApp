@@ -1019,7 +1019,7 @@ class ProcessController:
 
         #   Check if filename(s) are valid, avoid override
         meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
-        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration()
+        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration() # todo get vna info must hand over dict with 'VNA_preset_from_file' attribute
         file_type_json_flag = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json()
         file_type_json_readable = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json_readable()
         if file_type_json_flag:

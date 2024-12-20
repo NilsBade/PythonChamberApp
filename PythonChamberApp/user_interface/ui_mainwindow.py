@@ -57,9 +57,9 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_auto_measurement_window, 'Auto Measurement')   # Tab 3
         self.tabs.addTab(self.ui_display_measurement_window, 'Display Measurements')
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, False)       # Modify here when testing GUI elements without valid app config
-        self.tabs.setTabEnabled(2, False)
-        self.tabs.setTabEnabled(3, False)
+        self.tabs.setTabEnabled(1, True)       # Modify here when testing GUI elements without valid app config
+        self.tabs.setTabEnabled(2, True)
+        self.tabs.setTabEnabled(3, True)
         self.tabs.setTabEnabled(4, True)        # always enable!
 
         self.setCentralWidget(self.tabs)

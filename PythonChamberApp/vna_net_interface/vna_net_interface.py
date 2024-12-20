@@ -1,5 +1,7 @@
 import importlib
 import os
+
+import numpy as np
 import pyvisa
 import time
 
@@ -11,7 +13,8 @@ class E8361RemoteGPIB:
     # private properties
     resource_manager: pyvisa.ResourceManager = None
     pna_device: pyvisa.resources.gpib.GPIBInstrument = None
-    running_measurements: list = None   # stores all configured measurements as dict with measurement infos
+    running_measurements: list = None   # stores all configured measurements as dict with measurement infos {'meas_name', 'cnum', 'parameter' (S-param), 'avg_num', 'trigger': 'continuous'}
+    __busy_wait_timeout = 0.3
 
     def __init__(self, use_keysight: bool = False):
         if use_keysight:
@@ -120,13 +123,13 @@ class E8361RemoteGPIB:
         new_cnum = self.running_measurements.__len__() + 1  # returns next available index - PNA starts count at 1, thus '+1' offset
         self.running_measurements.append({'meas_name': meas_name, 'cnum': new_cnum, 'parameter': parameter, 'avg_num': 1, 'trigger': 'continuous'})
 
-        self.pna_device.write(f"DISPlay:WINDow{new_cnum}:STATE ON")
+        self.pna_device.write(f"DISPlay:WINDow{new_cnum}:STATE ON") # creates window with cnum as identifier
         tnum = 0
         for param in parameter:
             tnum +=1
             new_meas_name = meas_name + '_' + param
-            self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{new_meas_name}',{param}")
-            self.pna_device.write(f"DISPlay:WINDow{new_cnum}:TRACe{tnum}:FEED '{new_meas_name}'")
+            self.pna_device.write(f"CALC{new_cnum}:PAR:DEF:EXT '{new_meas_name}',{param}") # Calculate:Parameter:Define:Extended - creates new measurement
+            self.pna_device.write(f"DISPlay:WINDow{new_cnum}:TRACe{tnum}:FEED '{new_meas_name}'") # creates measurement trace to window (for each S-param)
 
     def get_idx_of_meas(self, meas_name: str):
         """
@@ -163,6 +166,24 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENS{meas_cnum}:FREQ:STAR {freq_start}")
         return True
 
+    def pna_get_freq_start(self, meas_name: str):
+        """
+        Reads start frequency from PNA and returns it as float.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: start frequency in Hz as float, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        response = self.pna_device.query(f"SENS{meas_cnum}:FREQ:STAR?")
+        return float(response)
+
     def pna_set_freq_stop(self, meas_name: str, freq_stop: float):
         """
         Stores given stop frequency in measurement-dict in running_measurements-list as 'freq_stop'
@@ -183,6 +204,24 @@ class E8361RemoteGPIB:
         self.running_measurements[meas_idx]['freq_stop'] = freq_stop
         self.pna_device.write(f"SENS{meas_cnum}:FREQ:STOP {freq_stop}")
         return True
+
+    def pna_get_freq_stop(self, meas_name: str):
+        """
+        Reads stop frequency from PNA and returns it as float.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: stop frequency in Hz as float, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        response = self.pna_device.query(f"SENS{meas_cnum}:FREQ:STOP?")
+        return float(response)
 
     def pna_set_IF_BW(self, meas_name: str, if_bw: float):
         """
@@ -205,6 +244,24 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENSe{meas_cnum}:BAND:RES {if_bw}")
         return True
 
+    def pna_get_IF_BW(self, meas_name: str):
+        """
+        Reads IF Bandwidth from PNA and returns it as float.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: IF Bandwidth in Hz as float, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        response = self.pna_device.query(f"SENSe{meas_cnum}:BAND:RES?")
+        return float(response)
+
     def pna_set_sweep_num_of_points(self, meas_name: str, num_of_points: int):
         """
         Stores given num_of_points in measurement-dict in running_measurements-list as 'sweep_num_of_points'
@@ -225,6 +282,24 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENS{meas_cnum}:SWE:POIN {num_of_points}")
         return True
 
+    def pna_get_sweep_num_of_points(self, meas_name: str):
+        """
+        Reads number of sweep points from PNA and returns it as int.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: number of sweep points as int, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        response = self.pna_device.query(f"SENS{meas_cnum}:SWE:POIN?")
+        return int(response)
+
     def pna_set_output_power(self, meas_name: str, power_dbm: float):
         """
         Stores given power_dbm in measurement-dict in running_measurements-list as 'output_power'
@@ -244,6 +319,24 @@ class E8361RemoteGPIB:
         self.running_measurements[meas_idx]['ouput_power'] = power_dbm
         self.pna_device.write(f"SOURce{meas_cnum}:POWer{1}:LEVel:IMMediate:AMPLitude {power_dbm}") # Not sure about Power-number but seems to work!
         return True
+
+    def pna_get_output_power(self, meas_name: str):
+        """
+        Reads output power from PNA and returns it as float.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: output power in dBm as float, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        response = self.pna_device.query(f"SOURce{meas_cnum}:POWer{1}:LEVel:IMMediate:AMPLitude?")
+        return float(response)
 
     def pna_is_busy(self):
         """
@@ -347,7 +440,7 @@ class E8361RemoteGPIB:
         if self.running_measurements[meas_idx]['avg_num'] != 1:
             self.pna_device.write(f"SENS{meas_cnum}:AVER:CLE")
             while self.pna_device.query('*OPC?') != '+1':
-                time.sleep(0.3)
+                time.sleep(self.__busy_wait_timeout)
 
         number_of_triggers = self.running_measurements[meas_idx]['avg_num']
 
@@ -361,7 +454,7 @@ class E8361RemoteGPIB:
             self.pna_device.write(f"INIT{meas_cnum}:IMM")
             while self.pna_device.query('*OPC?') != '+1':   # busy wait for measurement to finish before next trigger
                 print("chamber ist beschäftigt!\n")
-                time.sleep(0.3)
+                time.sleep(self.__busy_wait_timeout)
 
         return True
 
@@ -408,6 +501,30 @@ class E8361RemoteGPIB:
         self.pna_device.write(f"SENS{meas_cnum}:AVER:COUN {avg_number}")
         return True
 
+    def pna_get_average_number(self, meas_name: str):
+        """
+        Reads number of sweeps that are averaged for given measurement.
+        If measurement name not found or other error, returns False.
+
+        :param meas_name: unique name of measurement
+        :return: number of sweeps that are averaged for given measurement, False if error
+        """
+        meas_idx = self.get_idx_of_meas(meas_name)
+        if meas_idx == -1:
+            print("Error - meas_name not found in running_measurements-list!")
+            return False
+
+        meas_cnum = self.running_measurements[meas_idx]['cnum']
+
+        """ Check if averaging enabled """
+        avg_status = self.pna_device.query(f"SENS{meas_cnum}:AVER:STAT?")
+        if avg_status == '0':   # average is disabled
+            return 1
+
+        """ Check average number if necessary """
+        avg_num = self.pna_device.query(f"SENS{meas_cnum}:AVER:COUN?")
+        return int(avg_num)
+
     def pna_disable_average(self, meas_name: str):
         """
         Disables average function for given measurement.
@@ -452,6 +569,94 @@ class E8361RemoteGPIB:
             self.pna_set_average_number(meas_name=meas_name, avg_number=average_number)
         return True
 
+    def pna_preset_from_file(self, file_name: str, meas_name: str, set_trigger_manual: bool = True):
+        """
+        Presets whole PNA system to a locally stored '.cst' file on PNA.
+
+        The current implementation supports only one channel, namely channel 1 (default cnum = 1), to be used by the preconfiguration.
+        Measurements/Parameters not in channel 1 will not be detected.
+
+        dict on return:
+        pna_info = {
+            'meas_name': str,
+            'parameter': list[str],
+            'freq_start': float,
+            'freq_stop': float,
+            'IF_BW': float,
+            'sweep_num_of_points': int,
+            'output_power': float,
+            'avg_num': int,
+            }
+
+
+        :param file_name:  name of cst-file to load on PNA
+        :param meas_name:  unique name of measurement to read results from later
+        :param set_trigger_manual:  if True, manual triggering is set. Otherwise, no command modifying the trigger is sent.
+        :return: dict (pna-info) >> success, False >> failed
+        """
+        if file_name.split('.')[-1] != 'cst':
+            print("Error preset PNA from file - File is not a CST file!")
+            return False
+
+        default_cnum = 1
+        self.pna_preset()
+
+        """ Modify filepath if only filename given """
+        default_pna_rootpath = "C:/Program Files/Agilent/Network Analyzer/Documents/" # todo mention this file location in UI for user to know where default location is
+        if file_name.split('\\').__len__() == 1 and file_name.split('/').__len__() == 1:
+            file_name = default_pna_rootpath + file_name
+
+        """ Load file on PNA """
+        self.pna_device.write(f"MMEM:LOAD '{file_name}'")
+
+        """ Read measured parameters in channel 1 """
+        meas_list = self.pna_read_configured_measurements_on_channel(channel_number=default_cnum)
+        if meas_list.__len__() == 0:
+            print("Error preset PNA from file - No measurements found on preset PNA (On channel number 1)!")
+            return False
+        parameter_list = [meas[1] for meas in meas_list]
+
+        """ Update local running_measurements-list with minimum information """
+        self.running_measurements.append(
+            {'meas_name': meas_name, 'cnum': default_cnum, 'parameter': parameter_list})
+
+        """ Assure manual triggering if needed """
+        if set_trigger_manual:
+            self.pna_set_trigger_manual()
+
+        """ Get PNA info for return dict """
+        freq_start = self.pna_get_freq_start(meas_name)
+        freq_stop = self.pna_get_freq_stop(meas_name)
+        if_bw = self.pna_get_IF_BW(meas_name)
+        sweep_num_points = self.pna_get_sweep_num_of_points(meas_name)
+        output_power = self.pna_get_output_power(meas_name)
+        avgerage_number = self.pna_get_average_number(meas_name)
+
+        pna_info = {
+            'meas_name': meas_name,
+            'parameter': parameter_list,
+            'freq_start': freq_start,
+            'freq_stop': freq_stop,
+            'IF_BW': if_bw,
+            'sweep_num_of_points': sweep_num_points,
+            'output_power': output_power,
+            'avg_num': avgerage_number,
+            }
+
+        return pna_info
+
+    def pna_read_configured_measurements_on_channel(self, channel_number: int = 1):
+        """
+        Reads configured measurements from PNA and returns them as list.
+        :param channel_number:  channel number to read measurements from (<cnum>)
+        :return: list of lists with measurement names and parameters [ ['meas_name1', 'param1'], ['meas_name2', 'param2'], ...]. Empty list if no parameters measured on given channel.
+        """
+        meas_list_str = self.pna_device.read(f"CALC{channel_number}:PAR:CAT:EXT?")  # example response: "CH1_S11_1,S11,CH1_S12_2,S12"
+        if meas_list_str == '"NO CATALOG"':
+            return []  # return empty list if no parameters measured on given cnum
+        meas_list_parts = meas_list_str.split(',')  # sorted like ['meas_name1', 'param1', 'meas_name2', 'param2', ...]
+        meas_list = [meas_list_parts[i:i + 2] for i in range(0, len(meas_list_parts), 2)]  # sorted [ ['meas_name1', 'param1'], ['meas_name2', 'param2'], ...]
+        return meas_list
 
     def pna_write_custom_string(self, visa_str: str):
         try:

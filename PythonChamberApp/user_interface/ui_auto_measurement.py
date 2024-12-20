@@ -353,6 +353,7 @@ class UI_auto_measurement_window(QWidget):
         self.stacked_mesh_config_widget.setCurrentIndex(index)
 
     def __init_vna_measurement_config_widget(self):
+        # todo modify this widget to be stacked as mesh config widget. Use this to switch between manual vna config or preset from .cst file
         vna_measurement_config_frame = QFrame()
         vna_measurement_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         vna_measurement_config_frame.setContentsMargins(5, 5, 5, 5)
@@ -960,8 +961,17 @@ class UI_auto_measurement_window(QWidget):
             'output_power':     float, [dBm], RF-output power for measurement
             'average_number':   int, [], number of sweeps that should be averaged (1 - 65536)
             }
+
+        In case of vna preset from file selected, the vna_info dict as follows
+
+        vna_info: dict = {
+            'VNA_preset_from_file': str, path to '.cst' vna preset file or just file name at default location
+            }
+
         """
         vna_info = {}
+
+        # todo detect which UI is used and if preset from file or manually configure
 
         parameter_list = []
         if self.vna_S11_checkbox.isChecked():
