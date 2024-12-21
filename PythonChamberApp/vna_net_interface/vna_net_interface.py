@@ -602,7 +602,7 @@ class E8361RemoteGPIB:
         self.pna_preset()
 
         """ Modify filepath if only filename given """
-        default_pna_rootpath = "C:/Program Files/Agilent/Network Analyzer/Documents/" # todo mention this file location in UI for user to know where default location is
+        default_pna_rootpath = "C:/Program Files/Agilent/Network Analyzer/Documents/"   # specific to keysight PNA
         if file_name.split('\\').__len__() == 1 and file_name.split('/').__len__() == 1:
             file_name = default_pna_rootpath + file_name
 

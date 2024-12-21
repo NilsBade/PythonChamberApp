@@ -1011,7 +1011,6 @@ class ProcessController:
             return
 
         #   Setup results directory
-        # todo check correct path handling on erazer laptop!
         path_workdirectory = os.path.dirname(os.getcwd())
         if not os.path.exists(os.path.join(path_workdirectory + '/results')):
             os.makedirs(os.path.join(path_workdirectory + '/results'))
@@ -1019,25 +1018,14 @@ class ProcessController:
 
         #   Check if filename(s) are valid, avoid override
         meas_file_name = self.gui_mainWindow.ui_auto_measurement_window.get_new_filename()
-        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration() # todo get vna info must hand over dict with 'VNA_preset_from_file' attribute
         file_type_json_flag = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json()
         file_type_json_readable = self.gui_mainWindow.ui_auto_measurement_window.get_is_file_json_readable()
-        if file_type_json_flag:
-            new_file_path = os.path.join(path_results_folder + '/' + meas_file_name + '.json')
-            if os.path.isfile(new_file_path):
-                self.gui_mainWindow.prompt_warning("A json-measurement file with the given name is already stored. \n"
-                                                   "Overrride is not permitted. Please change the desired file name.",
-                                                   "Duplicate json Filename")
-                return
-        else:
-            for param in vna_info['parameter']:
-                new_file_path_substring = "/" + meas_file_name + "_" + param + ".txt"
-                new_file_path = os.path.join(path_results_folder + new_file_path_substring)
-                if os.path.isfile(new_file_path):
-                    self.gui_mainWindow.prompt_warning("A txt-measurement file with the given name is already stored. \n"
-                                                       "Overrride is not permitted. Please change the desired file name.",
-                                                       "Duplicate txt Filename")
-                    return
+        new_file_path = os.path.join(path_results_folder + '/' + meas_file_name + '.json')
+        if os.path.isfile(new_file_path):
+            self.gui_mainWindow.prompt_warning("A json-measurement file with the given name is already stored. \n"
+                                               "Overrride is not permitted. Please change the desired file name.",
+                                               "Duplicate json Filename")
+            return
 
         #   save generic meas_file_name without type and parameter
         generic_file_path = os.path.join(path_results_folder + "/" + meas_file_name)
@@ -1049,6 +1037,30 @@ class ProcessController:
                                                "boundaries.\n Please modify mesh config.",
                                                "Invalid mesh configuration")
             return
+
+        #   Get vna config info
+        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration()
+        vna_info['meas_name'] = 'AutoMeasurement'   # default AutoMeasurement meas_name
+
+        #   Configure vna by .cst file if selected
+        if 'vna_preset_from_file' in vna_info:
+            extra_info = self.vna.pna_preset_from_file(vna_info['vna_preset_from_file'], vna_info['meas_name'])
+            vna_info['parameter'] = extra_info['parameter']
+            vna_info['freq_start'] = extra_info['freq_start']
+            vna_info['freq_stop'] = extra_info['freq_stop']
+            vna_info['if_bw'] = extra_info['if_bw']
+            vna_info['sweep_num_points'] = extra_info['sweep_num_points']
+            vna_info['output_power'] = extra_info['output_power']
+            vna_info['average_number'] = extra_info['average_number']
+            self.gui_mainWindow.ui_auto_measurement_window.update_vna_measurement_config_entries(vna_info)
+        else:   # Configure vna by manual input
+            self.vna.pna_preset()   # clean up vna
+            self.vna.pna_add_measurement_detailed(meas_name=vna_info['meas_name'], parameter=vna_info['parameter'],
+                                                  freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
+                                                  if_bw=vna_info['if_bw'],
+                                                  sweep_num_points=vna_info['sweep_num_points'],
+                                                  output_power=vna_info['output_power'], trigger_manual=True,
+                                                  average_number=vna_info['average_number'])
 
         #ToDo implement checks to prevent start of invalid auto measurements because invalid vna config
 

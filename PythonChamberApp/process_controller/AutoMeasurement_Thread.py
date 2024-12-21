@@ -51,13 +51,16 @@ class AutoMeasurement(QRunnable):
     """
     The AutoMeasurement class is a runnable routine that can be fed to the PyQt QThreadpool object.
     It gets handed the chamber object and the VNA object to reach them via network and GPIB adapter.
-    The desired measurement-mesh configuration and VNA configuration are send to each device and the measurement
-    process runs in the assigned thread.
+    The defined measurement-mesh configuration and VNA configuration are stored in the saved results
+    (json-) file of the routine.
 
-     It emits signals to enable monitoring and display in the GUI.
-     Those are defined in 'AutoMeasurementSignals' class.
+    The routine assumes that the VNA is already set up and the chamber is connected and ready to move!
+    Making this sure is task of the method that starts the AutoMeasurement.
 
-     It is interruptable at specific points by calling the AutoMeasurement.stop() method of the object.
+    It emits signals to enable monitoring and display in the GUI.
+    Those are defined in 'AutoMeasurementSignals' class.
+
+    It is interruptable at specific points by calling the AutoMeasurement.stop() method of the object.
     """
 
     # Properties
@@ -66,15 +69,13 @@ class AutoMeasurement(QRunnable):
     _is_running: bool = None
     vna: E8361RemoteGPIB = None
     vna_info_buffer: dict = None
-    measurement_file_S11 = None
-    measurement_file_S12 = None
-    measurement_file_S22 = None
+    vna_meas_name: str = None
 
     mesh_x_vector: tuple[float, ...] = None
     mesh_y_vector: tuple[float, ...] = None
     mesh_z_vector: tuple[float, ...] = None
     chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
-    zero_position: tuple[float] = [0,0,0]  # zero position must be known to write relative antenna coordinates to meas file
+    zero_position: tuple[float, ...] = [0, 0, 0]  # zero position must be known to write relative antenna coordinates to meas file
 
     store_as_json: bool = None
     measurement_file_json = None
@@ -88,7 +89,6 @@ class AutoMeasurement(QRunnable):
     measurement_iteration_success: bool = False     # flag to indicate if measurement done and to redo measurement if error occured (in Try-block)
     error_log_path: str = None
 
-
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, zero_position: tuple[float, ...],
                  file_location: str, file_type_json: bool = True, file_type_json_readable: bool = True):
@@ -98,26 +98,10 @@ class AutoMeasurement(QRunnable):
         self.chamber = chamber  # Comment here when testing without chamber
         self.vna = vna
         self.vna_info_buffer = vna_info     # to enable re-configuration of PNA in exception handling
-        if 'VNA_preset_from_file' in vna_info:
-            extra_info = self.vna.pna_preset_from_file(vna_info['VNA_preset_from_file'])
-            vna_info['parameter'] = extra_info['parameter']
-            vna_info['freq_start'] = extra_info['freq_start']
-            vna_info['freq_stop'] = extra_info['freq_stop']
-            vna_info['if_bw'] = extra_info['if_bw']
-            vna_info['sweep_num_points'] = extra_info['sweep_num_points']
-            vna_info['output_power'] = extra_info['output_power']
-            vna_info['average_number'] = extra_info['average_number']
+        self.vna_meas_name = vna_info['meas_name']
 
-        else:
-            self.vna.pna_preset() #todo watchout
-            self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=vna_info['parameter'],
-                                                  freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
-                                                  if_bw=vna_info['if_bw'],
-                                                  sweep_num_points=vna_info['sweep_num_points'],
-                                                  output_power=vna_info['output_power'], trigger_manual=True,
-                                                  average_number=vna_info['average_number'])
-
-        # todo modify this section / routine, so that it can handle if the pna is preset before the thread is started
+        # Note: AutoMeasurement Thread assumes that the start-method already set up the PNA / VNA successfully and uses
+        # vna_info just for docu in json file. If the PNA / VNA is not set up correctly, the thread will fail.
 
         self.mesh_x_vector = x_vec
         self.mesh_y_vector = y_vec
@@ -128,9 +112,6 @@ class AutoMeasurement(QRunnable):
         self.json_format_readable = file_type_json_readable
 
         # redundant None initialization to be sure
-        self.measurement_file_S11 = None
-        self.measurement_file_S12 = None
-        self.measurement_file_S22 = None
         self.json_S11 = None
         self.json_S12 = None
         self.json_S22 = None
@@ -186,43 +167,13 @@ class AutoMeasurement(QRunnable):
             if 'S22' in vna_info['parameter']:
                 self.json_S22 = {'parameter': 'S22', 'values': [], 'amp_idx': amp_idx, 'phase_idx': phase_idx}
         else:
-            # open separate txt measurement file for each parameter configured
-            if 'S11' in vna_info['parameter']:
-                new_file_location = file_location + '_S11.txt'
-                self.measurement_file_S11 = open(new_file_location, "w")
-            if 'S12' in vna_info['parameter']:
-                new_file_location = file_location + '_S12.txt'
-                self.measurement_file_S12 = open(new_file_location, "w")
-            if 'S22' in vna_info['parameter']:
-                new_file_location = file_location + '_S22.txt'
-                self.measurement_file_S22 = open(new_file_location, "w")
-
-            # print header info to each measurement file
-            for file in [self.measurement_file_S11, self.measurement_file_S12, self.measurement_file_S22]:
-                if file is not None:
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    file.write("Auto Measurement Data File\n")
-                    file.write(f"Timestamp: {timestamp}\n")
-                    file.write(f"Mesh configuration:\nZero position: {zero_position}\n"
-                               f"x direction - min:{x_vec[0]}[mm]; max:{x_vec[-1]}[mm]; steps:{len(x_vec)}\n"
-                               f"y direction - min:{y_vec[0]}[mm]; max:{y_vec[-1]}[mm]; steps:{len(y_vec)}\n"
-                               f"x direction - min:{z_vec[0]}[mm]; max:{z_vec[-1]}[mm]; steps:{len(z_vec)}\n")
-                    file.write(f"Movementspeed: {mov_speed} [mm/s]\n")
-                    file.write("#####\n")
-                    file.write("X[mm]\tY[mm]\tZ[mm]\tfrequency[Hz]\tamplitude[dB]\tphase[deg]\n")
-                    file.write("#####\n")
+            assert False, "AutoMeasurement_Thread: Only JSON file type is supported at the moment!"
 
     def run(self):
         self.signals.update.emit("Started the AutoMeasurementThread")
 
         # assemble string that names all generated files.
         file_locations_string = "\n< "
-        if self.measurement_file_S11 is not None:
-            file_locations_string += self.measurement_file_S11.name + ';\n'
-        if self.measurement_file_S12 is not None:
-            file_locations_string += self.measurement_file_S12.name + ';\n'
-        if self.measurement_file_S22 is not None:
-            file_locations_string += self.measurement_file_S22.name + ';\n'
         if self.measurement_file_json is not None:
             file_locations_string += self.measurement_file_json.name
         file_locations_string += ">\n"
@@ -269,7 +220,7 @@ class AutoMeasurement(QRunnable):
                             self.signals.progress.emit(progress_dict)
                             self.close_all_files(meas_start_timestamp)
                             self.signals.finished.emit({'file_location': file_locations_string,
-                                                        'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))})  # ToDo: cleanup so that signal emitted by default method that is run after 'run' method stops (see python docu how to call it)
+                                                        'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))})
                             return
                         try:
                             self.signals.update.emit(
@@ -287,32 +238,15 @@ class AutoMeasurement(QRunnable):
                             y_coor_antennas = y_coor - self.zero_position[1]
                             z_coor_antennas = z_coor - self.zero_position[2]
 
-                            if self.store_as_json:
-                                for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
-                                    if json_dic is not None:
-                                        # read data to buffer property
-                                        self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
-                                        data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
-                                        for freq_point in data:
-                                            pointer = complex(real=freq_point[1], imag=freq_point[2])
-                                            json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
-                                        self.signals.update.emit(f"{json_dic['parameter']} data appended.")
-                            else:
-                                # Routine to read all configured parameters from VNA and write each result to each file.txt
-                                possible_parameters = ['S11', 'S12', 'S22']
-                                counter = 0
-                                for file in [self.measurement_file_S11, self.measurement_file_S12, self.measurement_file_S22]:
-                                    if file is not None:  # not None for all parameters that were introduced by __init__ function
-                                        self.signals.update.emit(f"Reading {possible_parameters[counter]}-Parameter Values...")
-                                        data = self.vna.pna_read_meas_data('AutoMeasurement', possible_parameters[counter])
-                                        for freq_point in data:
-                                            pointer = complex(real=freq_point[1], imag=freq_point[2])
-                                            # write measured data to file
-                                            file.write(
-                                                f"{x_coor_antennas};{y_coor_antennas};{z_coor_antennas};{freq_point[0]};{pointer.__abs__()};{math.degrees(cmath.phase(pointer))}\n")
-                                        self.signals.update.emit(f"Written {possible_parameters[counter]} values to file.")
-                                    counter += 1
-                                self.signals.update.emit("All data written to txt-file(s)!")
+                            for json_dic in [self.json_S11, self.json_S12, self.json_S22]:
+                                if json_dic is not None:
+                                    # read data to buffer property
+                                    self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
+                                    data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
+                                    for freq_point in data:
+                                        pointer = complex(real=freq_point[1], imag=freq_point[2])
+                                        json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
+                                    self.signals.update.emit(f"{json_dic['parameter']} data appended.")
 
                             # flag success of measurement
                             self.measurement_iteration_success = True
@@ -366,7 +300,7 @@ class AutoMeasurement(QRunnable):
         progress_dict['status_flag'] = "Measurement finished"
         self.signals.progress.emit(progress_dict)
         self.signals.finished.emit({'file_location': file_locations_string,
-                                    'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))}) # toDo Cleanup here as well
+                                    'duration': str(timedelta(seconds=(round((datetime.now() - meas_start_timestamp).total_seconds()))))})
         self.close_all_files(meas_start_timestamp)
         return
 
@@ -385,14 +319,6 @@ class AutoMeasurement(QRunnable):
         if meas_start_timestamp is not None:
             time_taken_sec = (datetime.now() - meas_start_timestamp).total_seconds()
             self.json_data_storage['measurement_config']['duration'] = str(timedelta(seconds=time_taken_sec))
-
-        # close text files - data already written
-        if self.measurement_file_S11 is not None:
-            self.measurement_file_S11.close()
-        if self.measurement_file_S12 is not None:
-            self.measurement_file_S12.close()
-        if self.measurement_file_S22 is not None:
-            self.measurement_file_S22.close()
 
         # close json file - dicts must be assembled and data written to file before close()
         if self.measurement_file_json is not None:
@@ -455,11 +381,16 @@ class AutoMeasurement(QRunnable):
         Presets PNA and reconfigures measurement as throughout init-routine.
         """
         self.vna.pna_preset()
-        self.vna.pna_add_measurement_detailed(meas_name='AutoMeasurement', parameter=self.vna_info_buffer['parameter'],
-                                              freq_start=self.vna_info_buffer['freq_start'],
-                                              freq_stop=self.vna_info_buffer['freq_stop'],
-                                              if_bw=self.vna_info_buffer['if_bw'],
-                                              sweep_num_points=self.vna_info_buffer['sweep_num_points'],
-                                              output_power=self.vna_info_buffer['output_power'],
-                                              trigger_manual=True,
-                                              average_number=self.vna_info_buffer['average_number'])
+        # reconfigure PNA by file setup
+        if 'vna_preset_from_file' in self.vna_info_buffer:
+            self.vna.pna_preset_from_file(self.vna_info_buffer['vna_preset_from_file'], self.vna_meas_name)
+        else:   # reconfigure PNA by manual setup
+            self.vna.pna_add_measurement_detailed(meas_name=self.vna_meas_name,
+                                                  parameter=self.vna_info_buffer['parameter'],
+                                                  freq_start=self.vna_info_buffer['freq_start'],
+                                                  freq_stop=self.vna_info_buffer['freq_stop'],
+                                                  if_bw=self.vna_info_buffer['if_bw'],
+                                                  sweep_num_points=self.vna_info_buffer['sweep_num_points'],
+                                                  output_power=self.vna_info_buffer['output_power'],
+                                                  trigger_manual=True,
+                                                  average_number=self.vna_info_buffer['average_number'])

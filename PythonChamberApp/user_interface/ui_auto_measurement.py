@@ -370,8 +370,8 @@ class UI_auto_measurement_window(QWidget):
         # dropdown to select between manual config or preset from .cst file
         self.vna_config_selection_dropdown = QComboBox()
         self.vna_config_selection_dropdown.addItems([
-            'Manual Configuration',
-            'Load Configuration from .cst file'
+            'Manual Configuration',     # idx 0 > do not change! idx is used for callback
+            'Setup from .cst file'      # idx 1 > do not change! idx is used for callback
         ])
         frame_layout.addWidget(self.vna_config_selection_dropdown)
 
@@ -526,6 +526,9 @@ class UI_auto_measurement_window(QWidget):
         self.file_type_json_checkbox.stateChanged.connect(self.__file_type_json_callback)
 
         # todo add 'Hint' field to put in extra information about the measurement. The input text should be saved in the measurement file info for explanation.
+
+        # set default values
+        self.file_type_json_checkbox.setEnabled(False)  # only json format supported since 21.12.24
 
         return measurement_data_config_frame
 
@@ -861,6 +864,33 @@ class UI_auto_measurement_window(QWidget):
         self.graphic_aut_obj.resetTransform()
         self.graphic_aut_obj.translate(dx=self.current_zero_x, dy=self.current_zero_y, dz=lowest_z_mesh)
 
+    def update_vna_measurement_config_entries(self, vna_info: dict):
+        """
+        Updates the VNA measurement configuration entries in GUI.
+
+        Receives a dictionary as follows
+            vna_info: dict = {
+                'parameter': list[str,...]
+                'freq_start': float
+                'freq_stop': float
+                'num_steps': int
+                'if_bandwidth': float
+                'output_power': float
+                'average_number': int
+            }
+        """
+
+        self.vna_S11_checkbox.setChecked(bool('S11' in vna_info['parameter']))
+        self.vna_S12_checkbox.setChecked(bool('S12' in vna_info['parameter']))
+        self.vna_S22_checkbox.setChecked(bool('S22' in vna_info['parameter']))
+        self.vna_freq_start_lineEdit.setText(str(vna_info['freq_start']/1e9)+'e9')
+        self.vna_freq_stop_lineEdit.setText(str(vna_info['freq_stop']/1e9)+'e9')
+        self.vna_freq_num_steps_lineEdit.setText(str(vna_info['num_steps']))
+        self.vna_if_bandwidth_lineEdit.setText(str(vna_info['if_bandwidth']))
+        self.vna_output_power_lineEdit.setText(str(vna_info['output_power']))
+        self.vna_enable_average_checkbox.setChecked(bool(vna_info['enable_average'] > 1))
+        self.vna_average_number_lineEdit.setText(str(vna_info['average_number']))
+
     def update_auto_measurement_progress_state(self, state_info: dict):
         """
         Function receives state info dictionary and updates the gui display accordingly.
@@ -1028,17 +1058,21 @@ class UI_auto_measurement_window(QWidget):
             'average_number':   int, [], number of sweeps that should be averaged (1 - 65536)
             }
 
-        In case of vna preset from file selected, the vna_info dict as follows
+        In case of 'Setup from .cst file' selected, the vna_info dict as follows
 
         vna_info: dict = {
-            'VNA_preset_from_file': str, path to '.cst' vna preset file or just file name at default location
+            'vna_preset_from_file': str, path to '.cst' vna preset file or just file name at default location
             }
 
         """
         vna_info = {}
 
-        # todo detect which UI is used and if preset from file or manually configure
+        """ Configuration from selected .cst file """
+        if self.vna_config_selection_dropdown.currentIndex() == 1:
+            vna_info['vna_preset_from_file'] = self.vna_config_filepath_lineEdit.text()
+            return vna_info
 
+        """ Configuration manually by given inputs on UI """
         parameter_list = []
         if self.vna_S11_checkbox.isChecked():
             parameter_list.append('S11')
