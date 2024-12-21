@@ -54,6 +54,8 @@ class UI_auto_measurement_window(QWidget):
     #   > more to come... [3]
 
     #   vna_measurement_config_field
+    vna_config_selection_dropdown: QComboBox = None
+    vna_config_filepath_lineEdit: QLineEdit = None  # filepath to .cst config file
     vna_S11_checkbox: QCheckBox = None
     vna_S12_checkbox: QCheckBox = None  # AUT: Port2, Probe: Port1
     vna_S22_checkbox: QCheckBox = None
@@ -353,20 +355,44 @@ class UI_auto_measurement_window(QWidget):
         self.stacked_mesh_config_widget.setCurrentIndex(index)
 
     def __init_vna_measurement_config_widget(self):
-        # todo modify this widget to be stacked as mesh config widget. Use this to switch between manual vna config or preset from .cst file
         vna_measurement_config_frame = QFrame()
         vna_measurement_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         vna_measurement_config_frame.setContentsMargins(5, 5, 5, 5)
         vna_measurement_config_frame.setFixedWidth(300)
-        frame_layout = QGridLayout()
-        frame_layout.setVerticalSpacing(12)
+        frame_layout = QVBoxLayout()
         vna_measurement_config_frame.setLayout(frame_layout)
 
-
+        # put header label
         main_label = QLabel("3. VNA Configuration")
         main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
-        frame_layout.addWidget(main_label,0,0,1,6, alignment=Qt.AlignmentFlag.AlignHCenter)
+        frame_layout.addWidget(main_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+        # dropdown to select between manual config or preset from .cst file
+        self.vna_config_selection_dropdown = QComboBox()
+        self.vna_config_selection_dropdown.addItems([
+            'Manual Configuration',
+            'Load Configuration from .cst file'
+        ])
+        frame_layout.addWidget(self.vna_config_selection_dropdown)
+
+        # Setup inputs layout
+        inputs_layout = QGridLayout()
+        inputs_layout.setVerticalSpacing(12)
+
+        # file config inputs
+        config_filepath_label = QLabel("Filepath to .cst file:")
+        config_filepath_hint_label = QLabel("*if cst-file is placed in default directory, only filename needed."
+                                            "\ndefault directory of PNA:\nC:/Program Files/Agilent/Network Analyzer/Documents/")
+        config_filepath_hint_label.setStyleSheet("text-decoration: italic; font-size: 10px;")
+
+        self.vna_config_filepath_lineEdit = QLineEdit("-")
+        self.vna_config_filepath_lineEdit.setToolTip("Put in absolute filepath if cst-file is not in default directory.")
+
+        inputs_layout.addWidget(config_filepath_label,0,0,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_config_filepath_lineEdit,0,3,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(config_filepath_hint_label,1,0,1,6, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        # manual config inputs
         self.vna_S11_checkbox = QCheckBox('S11')
         self.vna_S12_checkbox = QCheckBox('S12')
         self.vna_S12_checkbox.setChecked(True)
@@ -394,29 +420,37 @@ class UI_auto_measurement_window(QWidget):
         self.vna_average_number_lineEdit.setToolTip("Number of sweeps that should be performed \nand averaged for the "
                                                     "measurement result.")
 
-        frame_layout.addWidget(self.vna_S11_checkbox,1,0,1,2,Qt.AlignmentFlag.AlignCenter)
-        frame_layout.addWidget(self.vna_S12_checkbox,1,2,1,2,Qt.AlignmentFlag.AlignCenter)
-        frame_layout.addWidget(self.vna_S22_checkbox,1,4,1,2,Qt.AlignmentFlag.AlignCenter)
-        frame_layout.addWidget(freq_start_label,2,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_freq_start_lineEdit,2,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(freq_start_unit_label,2,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(freq_stop_label,3,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_freq_stop_lineEdit,3,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(freq_stop_unit_label,3,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(freq_num_steps_label,4,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_freq_num_steps_lineEdit,4,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(if_bw_label,5,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_if_bandwidth_lineEdit,5,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(if_bw_unit_label,5,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(output_pow_label,6,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_output_power_lineEdit,6,2,1,3, Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(output_pow_unit_label,6,5,1,1, Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_enable_average_checkbox,7,0,1,5, Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(average_label,8,0,1,2, Qt.AlignmentFlag.AlignLeft)
-        frame_layout.addWidget(self.vna_average_number_lineEdit,8,2,1,3, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_S11_checkbox,2,0,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(self.vna_S12_checkbox,2,2,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(self.vna_S22_checkbox,2,4,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(freq_start_label,3,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_start_lineEdit,3,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_start_unit_label,3,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_stop_label,4,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_stop_lineEdit,4,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_stop_unit_label,4,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_num_steps_label,5,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_num_steps_lineEdit,5,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(if_bw_label,6,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_if_bandwidth_lineEdit,6,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(if_bw_unit_label,6,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(output_pow_label,7,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_output_power_lineEdit,7,2,1,3, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(output_pow_unit_label,7,5,1,1, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_enable_average_checkbox,8,0,1,5, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(average_label,9,0,1,2, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_average_number_lineEdit,9,2,1,3, Qt.AlignmentFlag.AlignLeft)
+
+        frame_layout.addLayout(inputs_layout)
 
         # connect local callbacks & signals
         self.vna_enable_average_checkbox.stateChanged.connect(self.__enable_avg_num_callback)
+        self.vna_config_selection_dropdown.currentIndexChanged.connect(
+            self.__update_vna_measurement_config_modus_callback)
+
+        # set default values
+        self.vna_config_selection_dropdown.setCurrentIndex(0)
+        self.vna_config_filepath_lineEdit.setEnabled(False)
 
         return vna_measurement_config_frame
 
@@ -428,6 +462,38 @@ class UI_auto_measurement_window(QWidget):
             self.vna_average_number_lineEdit.setEnabled(True)
         else:
             self.vna_average_number_lineEdit.setEnabled((False))
+        return
+
+    def __update_vna_measurement_config_modus_callback(self):
+        """
+        updates the vna measurement config modus by disabling/enabling corresponding input fields
+        dependent on the selection.
+        """
+        modus_idx = self.vna_config_selection_dropdown.currentIndex()
+        if modus_idx == 0:
+            self.vna_config_filepath_lineEdit.setEnabled(False)
+            self.vna_S11_checkbox.setEnabled(True)
+            self.vna_S12_checkbox.setEnabled(True)
+            self.vna_S22_checkbox.setEnabled(True)
+            self.vna_freq_start_lineEdit.setEnabled(True)
+            self.vna_freq_stop_lineEdit.setEnabled(True)
+            self.vna_freq_num_steps_lineEdit.setEnabled(True)
+            self.vna_if_bandwidth_lineEdit.setEnabled(True)
+            self.vna_output_power_lineEdit.setEnabled(True)
+            self.vna_enable_average_checkbox.setEnabled(True)
+            self.vna_average_number_lineEdit.setEnabled(True)
+        else:
+            self.vna_config_filepath_lineEdit.setEnabled(True)
+            self.vna_S11_checkbox.setEnabled(False)
+            self.vna_S12_checkbox.setEnabled(False)
+            self.vna_S22_checkbox.setEnabled(False)
+            self.vna_freq_start_lineEdit.setEnabled(False)
+            self.vna_freq_stop_lineEdit.setEnabled(False)
+            self.vna_freq_num_steps_lineEdit.setEnabled(False)
+            self.vna_if_bandwidth_lineEdit.setEnabled(False)
+            self.vna_output_power_lineEdit.setEnabled(False)
+            self.vna_enable_average_checkbox.setEnabled(False)
+            self.vna_average_number_lineEdit.setEnabled(False)
         return
     def __init_measurement_data_config_widget(self):
         measurement_data_config_frame = QFrame()
