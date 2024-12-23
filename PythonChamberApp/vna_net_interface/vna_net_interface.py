@@ -240,7 +240,7 @@ class E8361RemoteGPIB:
 
         meas_cnum = self.running_measurements[meas_idx]['cnum']
 
-        self.running_measurements[meas_idx]['IF_BW'] = if_bw
+        self.running_measurements[meas_idx]['if_bw'] = if_bw
         self.pna_device.write(f"SENSe{meas_cnum}:BAND:RES {if_bw}")
         return True
 
@@ -262,7 +262,7 @@ class E8361RemoteGPIB:
         response = self.pna_device.query(f"SENSe{meas_cnum}:BAND:RES?")
         return float(response)
 
-    def pna_set_sweep_num_of_points(self, meas_name: str, num_of_points: int):
+    def pna_set_sweep_num_points(self, meas_name: str, num_of_points: int):
         """
         Stores given num_of_points in measurement-dict in running_measurements-list as 'sweep_num_of_points'
         and sends sweep number of points to pna.
@@ -278,11 +278,11 @@ class E8361RemoteGPIB:
 
         meas_cnum = self.running_measurements[meas_idx]['cnum']
 
-        self.running_measurements[meas_idx]['sweep_num_of_points'] = num_of_points
+        self.running_measurements[meas_idx]['sweep_num_points'] = num_of_points
         self.pna_device.write(f"SENS{meas_cnum}:SWE:POIN {num_of_points}")
         return True
 
-    def pna_get_sweep_num_of_points(self, meas_name: str):
+    def pna_get_sweep_num_points(self, meas_name: str):
         """
         Reads number of sweep points from PNA and returns it as int.
         If measurement name not found or other error, returns False.
@@ -392,7 +392,18 @@ class E8361RemoteGPIB:
             return False
 
         meas_cnum = self.running_measurements[meas_idx]['cnum']
-        detailed_meas_name = meas_name + '_' + parameter
+
+        """ Differentiate between setup by .cst-file (use PNA's names!) or manual setup (use own names!) """
+        if 'meas_name_list' in self.running_measurements[meas_idx]:
+            # Use PNA's names to read data
+            # exploit the fact, that meas_name_list order is always same as parameter order...
+            detailed_meas_name = self.running_measurements[meas_idx]['meas_name_list'][self.running_measurements[meas_idx]['parameter'].index(parameter)]
+
+            # print(f"Using PNA's name: {detailed_meas_name} for {parameter}")  # debug
+        else:
+            # Use own names to read data
+            detailed_meas_name = meas_name + '_' + parameter
+
         # Get stimulus points in Hz
         self.pna_device.write(f"CALC{meas_cnum}:PAR:SEL '{detailed_meas_name}'")
         x_axis_string = self.pna_device.query(f"SENS{meas_cnum}:X?")
@@ -561,7 +572,7 @@ class E8361RemoteGPIB:
         self.pna_set_freq_start(meas_name=meas_name, freq_start=freq_start)
         self.pna_set_freq_stop(meas_name=meas_name, freq_stop=freq_stop)
         self.pna_set_IF_BW(meas_name=meas_name, if_bw=if_bw)
-        self.pna_set_sweep_num_of_points(meas_name=meas_name, num_of_points=sweep_num_points)
+        self.pna_set_sweep_num_points(meas_name=meas_name, num_of_points=sweep_num_points)
         self.pna_set_output_power(meas_name=meas_name, power_dbm=output_power)
         if trigger_manual:
             self.pna_set_trigger_manual()
@@ -573,8 +584,15 @@ class E8361RemoteGPIB:
         """
         Presets whole PNA system to a locally stored '.cst' file on PNA.
 
-        The current implementation supports only one channel, namely channel 1 (default cnum = 1), to be used by the preconfiguration.
-        Measurements/Parameters not in channel 1 will not be detected.
+        The current implementation supports only one channel, namely channel 1 (default cnum = 1), to be used by the
+        preconfiguration. Measurements/Parameters not in channel 1 will not be detected.
+
+        This method updates the running_measurements-list in the E8361RemoteGPIB-object to enable reading the configured
+        measurements from the PNA.
+        SPECIAL:
+        Using this method, a new attribute 'meas_name_list' is added to the running_measurements-list to store
+        the PNA's internal measurement names one needs to read a certain dataset! (= S11 OR S12 OR S22)
+        This attribute is used by the pna_read_meas_data() method if it exists in the running_measurements-list.
 
         dict on return:
         pna_info = {
@@ -582,8 +600,8 @@ class E8361RemoteGPIB:
             'parameter': list[str],
             'freq_start': float,
             'freq_stop': float,
-            'IF_BW': float,
-            'sweep_num_of_points': int,
+            'if_bw': float,
+            'sweep_num_points': int,
             'output_power': float,
             'avg_num': int,
             }
@@ -615,6 +633,7 @@ class E8361RemoteGPIB:
             print("Error preset PNA from file - No measurements found on preset PNA (On channel number 1)!")
             return False
         parameter_list = [meas[1] for meas in meas_list]
+        meas_name_list = [meas[0] for meas in meas_list]
 
         """ Update local running_measurements-list with minimum information """
         self.running_measurements.append(
@@ -628,7 +647,7 @@ class E8361RemoteGPIB:
         freq_start = self.pna_get_freq_start(meas_name)
         freq_stop = self.pna_get_freq_stop(meas_name)
         if_bw = self.pna_get_IF_BW(meas_name)
-        sweep_num_points = self.pna_get_sweep_num_of_points(meas_name)
+        sweep_num_points = self.pna_get_sweep_num_points(meas_name)
         output_power = self.pna_get_output_power(meas_name)
         avgerage_number = self.pna_get_average_number(meas_name)
 
@@ -637,11 +656,21 @@ class E8361RemoteGPIB:
             'parameter': parameter_list,
             'freq_start': freq_start,
             'freq_stop': freq_stop,
-            'IF_BW': if_bw,
-            'sweep_num_of_points': sweep_num_points,
+            'if_bw': if_bw,
+            'sweep_num_points': sweep_num_points,
             'output_power': output_power,
             'avg_num': avgerage_number,
             }
+
+        """ Update running_measurements-list with full information """
+        self.running_measurements[0]['freq_start'] = freq_start
+        self.running_measurements[0]['freq_stop'] = freq_stop
+        self.running_measurements[0]['if_bw'] = if_bw
+        self.running_measurements[0]['sweep_num_points'] = sweep_num_points
+        self.running_measurements[0]['output_power'] = output_power
+        self.running_measurements[0]['avg_num'] = avgerage_number
+        # Other than regular measurement extra:
+        self.running_measurements[0]['meas_name_list'] = meas_name_list  # USE THIS TO READ MEASUREMENTS!
 
         return pna_info
 
@@ -651,9 +680,10 @@ class E8361RemoteGPIB:
         :param channel_number:  channel number to read measurements from (<cnum>)
         :return: list of lists with measurement names and parameters [ ['meas_name1', 'param1'], ['meas_name2', 'param2'], ...]. Empty list if no parameters measured on given channel.
         """
-        meas_list_str = self.pna_device.read(f"CALC{channel_number}:PAR:CAT:EXT?")  # example response: "CH1_S11_1,S11,CH1_S12_2,S12"
+        meas_list_str = self.pna_device.query(f"CALC{channel_number}:PAR:CAT:EXT?")  # example response: "CH1_S11_1,S11,CH1_S12_2,S12"
         if meas_list_str == '"NO CATALOG"':
             return []  # return empty list if no parameters measured on given cnum
+        meas_list_str = meas_list_str[1:-1]  # remove quotation marks at start/end
         meas_list_parts = meas_list_str.split(',')  # sorted like ['meas_name1', 'param1', 'meas_name2', 'param2', ...]
         meas_list = [meas_list_parts[i:i + 2] for i in range(0, len(meas_list_parts), 2)]  # sorted [ ['meas_name1', 'param1'], ['meas_name2', 'param2'], ...]
         return meas_list

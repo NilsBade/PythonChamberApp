@@ -148,7 +148,7 @@ class AutoMeasurement(QRunnable):
                 'sweep_num_points': vna_info['sweep_num_points'],
                 'if_bw':            vna_info['if_bw'], #[Hz]
                 'output_power':     vna_info['output_power'], #[dBm]
-                'average_number':   vna_info['average_number'],
+                'average_number':   vna_info['avg_num'],
             }
             self.json_data_storage['measurement_config'] = measurement_config
             self.json_data_storage['data'] = []
@@ -231,7 +231,7 @@ class AutoMeasurement(QRunnable):
 
                             # Routine to do vna measurement and store data somewhere put here...
                             self.signals.update.emit("Trigger measurement...")
-                            self.vna.pna_trigger_measurement('AutoMeasurement')
+                            self.vna.pna_trigger_measurement(self.vna_meas_name)
                             self.signals.update.emit("Measurement done! Read data from VNA and write to file...")
 
                             x_coor_antennas = x_coor - self.zero_position[0]
@@ -242,7 +242,7 @@ class AutoMeasurement(QRunnable):
                                 if json_dic is not None:
                                     # read data to buffer property
                                     self.signals.update.emit(f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
-                                    data = self.vna.pna_read_meas_data('AutoMeasurement', json_dic['parameter'])
+                                    data = self.vna.pna_read_meas_data(self.vna_meas_name, json_dic['parameter'])
                                     for freq_point in data:
                                         pointer = complex(real=freq_point[1], imag=freq_point[2])
                                         json_dic['values'].append([x_coor_antennas, y_coor_antennas, z_coor_antennas, freq_point[0], pointer.__abs__(), math.degrees(cmath.phase(pointer))])
@@ -393,4 +393,4 @@ class AutoMeasurement(QRunnable):
                                                   sweep_num_points=self.vna_info_buffer['sweep_num_points'],
                                                   output_power=self.vna_info_buffer['output_power'],
                                                   trigger_manual=True,
-                                                  average_number=self.vna_info_buffer['average_number'])
+                                                  average_number=self.vna_info_buffer['avg_num'])

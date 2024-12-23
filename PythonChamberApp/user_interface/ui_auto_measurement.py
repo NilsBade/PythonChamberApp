@@ -56,6 +56,7 @@ class UI_auto_measurement_window(QWidget):
     #   vna_measurement_config_field
     vna_config_selection_dropdown: QComboBox = None
     vna_config_filepath_lineEdit: QLineEdit = None  # filepath to .cst config file
+    vna_config_filepath_check_button: QPushButton = None  # presets with .cst file and reads config from pna
     vna_S11_checkbox: QCheckBox = None
     vna_S12_checkbox: QCheckBox = None  # AUT: Port2, Probe: Port1
     vna_S22_checkbox: QCheckBox = None
@@ -358,7 +359,7 @@ class UI_auto_measurement_window(QWidget):
         vna_measurement_config_frame = QFrame()
         vna_measurement_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         vna_measurement_config_frame.setContentsMargins(5, 5, 5, 5)
-        vna_measurement_config_frame.setFixedWidth(300)
+        vna_measurement_config_frame.setFixedWidth(320)
         frame_layout = QVBoxLayout()
         vna_measurement_config_frame.setLayout(frame_layout)
 
@@ -385,11 +386,16 @@ class UI_auto_measurement_window(QWidget):
                                             "\ndefault directory of PNA:\nC:/Program Files/Agilent/Network Analyzer/Documents/")
         config_filepath_hint_label.setStyleSheet("text-decoration: italic; font-size: 10px;")
 
-        self.vna_config_filepath_lineEdit = QLineEdit("-")
+        self.vna_config_filepath_lineEdit = QLineEdit("pna_test_cfg.cst")
         self.vna_config_filepath_lineEdit.setToolTip("Put in absolute filepath if cst-file is not in default directory.")
 
-        inputs_layout.addWidget(config_filepath_label,0,0,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_config_filepath_lineEdit,0,3,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.vna_config_filepath_check_button = QPushButton("Check")
+        self.vna_config_filepath_check_button.setToolTip("Tries to setup the PNA by given filename and\nshows "
+                                                         "configuration in menu below if successful.")
+
+        inputs_layout.addWidget(config_filepath_label,0,0,1,2, alignment=Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_config_filepath_lineEdit,0,2,1,3, alignment=Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_config_filepath_check_button,0,5,1,1, alignment=Qt.AlignmentFlag.AlignRight)
         inputs_layout.addWidget(config_filepath_hint_label,1,0,1,6, alignment=Qt.AlignmentFlag.AlignLeft)
 
         # manual config inputs
@@ -420,26 +426,26 @@ class UI_auto_measurement_window(QWidget):
         self.vna_average_number_lineEdit.setToolTip("Number of sweeps that should be performed \nand averaged for the "
                                                     "measurement result.")
 
-        inputs_layout.addWidget(self.vna_S11_checkbox,2,0,1,2,Qt.AlignmentFlag.AlignCenter)
-        inputs_layout.addWidget(self.vna_S12_checkbox,2,2,1,2,Qt.AlignmentFlag.AlignCenter)
-        inputs_layout.addWidget(self.vna_S22_checkbox,2,4,1,2,Qt.AlignmentFlag.AlignCenter)
-        inputs_layout.addWidget(freq_start_label,3,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_freq_start_lineEdit,3,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(freq_start_unit_label,3,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(freq_stop_label,4,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_freq_stop_lineEdit,4,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(freq_stop_unit_label,4,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(freq_num_steps_label,5,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_freq_num_steps_lineEdit,5,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(if_bw_label,6,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_if_bandwidth_lineEdit,6,2,1,3,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(if_bw_unit_label,6,5,1,1,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(output_pow_label,7,0,1,2,Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_output_power_lineEdit,7,2,1,3, Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(output_pow_unit_label,7,5,1,1, Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_enable_average_checkbox,8,0,1,5, Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(average_label,9,0,1,2, Qt.AlignmentFlag.AlignLeft)
-        inputs_layout.addWidget(self.vna_average_number_lineEdit,9,2,1,3, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_S11_checkbox,3,0,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(self.vna_S12_checkbox,3,2,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(self.vna_S22_checkbox,3,4,1,2,Qt.AlignmentFlag.AlignCenter)
+        inputs_layout.addWidget(freq_start_label,4,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_start_lineEdit,4,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_start_unit_label,4,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_stop_label,5,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_stop_lineEdit,5,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_stop_unit_label,5,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(freq_num_steps_label,6,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_freq_num_steps_lineEdit,6,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(if_bw_label,7,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_if_bandwidth_lineEdit,7,2,1,3,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(if_bw_unit_label,7,5,1,1,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(output_pow_label,8,0,1,2,Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_output_power_lineEdit,8,2,1,3, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(output_pow_unit_label,8,5,1,1, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_enable_average_checkbox,9,0,1,5, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(average_label,10,0,1,2, Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_average_number_lineEdit,10,2,1,3, Qt.AlignmentFlag.AlignLeft)
 
         frame_layout.addLayout(inputs_layout)
 
@@ -451,6 +457,7 @@ class UI_auto_measurement_window(QWidget):
         # set default values
         self.vna_config_selection_dropdown.setCurrentIndex(0)
         self.vna_config_filepath_lineEdit.setEnabled(False)
+        self.vna_config_filepath_check_button.setEnabled(False)
 
         return vna_measurement_config_frame
 
@@ -472,6 +479,7 @@ class UI_auto_measurement_window(QWidget):
         modus_idx = self.vna_config_selection_dropdown.currentIndex()
         if modus_idx == 0:
             self.vna_config_filepath_lineEdit.setEnabled(False)
+            self.vna_config_filepath_check_button.setEnabled(False)
             self.vna_S11_checkbox.setEnabled(True)
             self.vna_S12_checkbox.setEnabled(True)
             self.vna_S22_checkbox.setEnabled(True)
@@ -484,6 +492,7 @@ class UI_auto_measurement_window(QWidget):
             self.vna_average_number_lineEdit.setEnabled(True)
         else:
             self.vna_config_filepath_lineEdit.setEnabled(True)
+            self.vna_config_filepath_check_button.setEnabled(True)
             self.vna_S11_checkbox.setEnabled(False)
             self.vna_S12_checkbox.setEnabled(False)
             self.vna_S22_checkbox.setEnabled(False)
@@ -499,7 +508,7 @@ class UI_auto_measurement_window(QWidget):
         measurement_data_config_frame = QFrame()
         measurement_data_config_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         measurement_data_config_frame.setContentsMargins(5, 5, 5, 5)
-        measurement_data_config_frame.setFixedSize(300, 150)
+        measurement_data_config_frame.setFixedSize(320, 150)
         frame_layout = QGridLayout()
         measurement_data_config_frame.setLayout(frame_layout)
 
@@ -873,10 +882,10 @@ class UI_auto_measurement_window(QWidget):
                 'parameter': list[str,...]
                 'freq_start': float
                 'freq_stop': float
-                'num_steps': int
-                'if_bandwidth': float
+                'sweep_num_points': int
+                'if_bw': float
                 'output_power': float
-                'average_number': int
+                'avg_num': int
             }
         """
 
@@ -885,11 +894,11 @@ class UI_auto_measurement_window(QWidget):
         self.vna_S22_checkbox.setChecked(bool('S22' in vna_info['parameter']))
         self.vna_freq_start_lineEdit.setText(str(vna_info['freq_start']/1e9)+'e9')
         self.vna_freq_stop_lineEdit.setText(str(vna_info['freq_stop']/1e9)+'e9')
-        self.vna_freq_num_steps_lineEdit.setText(str(vna_info['num_steps']))
-        self.vna_if_bandwidth_lineEdit.setText(str(vna_info['if_bandwidth']))
+        self.vna_freq_num_steps_lineEdit.setText(str(vna_info['sweep_num_points']))
+        self.vna_if_bandwidth_lineEdit.setText(str(vna_info['if_bw']))
         self.vna_output_power_lineEdit.setText(str(vna_info['output_power']))
-        self.vna_enable_average_checkbox.setChecked(bool(vna_info['enable_average'] > 1))
-        self.vna_average_number_lineEdit.setText(str(vna_info['average_number']))
+        self.vna_enable_average_checkbox.setChecked(bool(vna_info['avg_num'] > 1))
+        self.vna_average_number_lineEdit.setText(str(vna_info['avg_num']))
 
     def update_auto_measurement_progress_state(self, state_info: dict):
         """
@@ -1089,9 +1098,9 @@ class UI_auto_measurement_window(QWidget):
         vna_info['output_power'] = float(self.vna_output_power_lineEdit.text())
 
         if self.vna_enable_average_checkbox.isChecked():
-            vna_info['average_number'] = int(self.vna_average_number_lineEdit.text())
+            vna_info['avg_num'] = int(self.vna_average_number_lineEdit.text())
         else:
-            vna_info['average_number'] = 1
+            vna_info['avg_num'] = 1
 
         return vna_info
 

@@ -110,6 +110,8 @@ class ProcessController:
             self.auto_measurement_setZero_button_handler)
         self.gui_mainWindow.ui_auto_measurement_window.button_set_z_zero_from_antennas.pressed.connect(
             self.auto_measurement_set_z_zero_from_antenna_dimensions_button_handler)
+        self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.pressed.connect(
+            self.auto_measurement_vna_config_check_button_handler)
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.pressed.connect(
             self.auto_measurement_start_handler)
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_stop_button.pressed.connect(
@@ -1051,7 +1053,7 @@ class ProcessController:
             vna_info['if_bw'] = extra_info['if_bw']
             vna_info['sweep_num_points'] = extra_info['sweep_num_points']
             vna_info['output_power'] = extra_info['output_power']
-            vna_info['average_number'] = extra_info['average_number']
+            vna_info['avg_num'] = extra_info['avg_num']
             self.gui_mainWindow.ui_auto_measurement_window.update_vna_measurement_config_entries(vna_info)
         else:   # Configure vna by manual input
             self.vna.pna_preset()   # clean up vna
@@ -1060,13 +1062,14 @@ class ProcessController:
                                                   if_bw=vna_info['if_bw'],
                                                   sweep_num_points=vna_info['sweep_num_points'],
                                                   output_power=vna_info['output_power'], trigger_manual=True,
-                                                  average_number=vna_info['average_number'])
+                                                  average_number=vna_info['avg_num'])
 
         #ToDo implement checks to prevent start of invalid auto measurements because invalid vna config
 
         #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
         self.gui_mainWindow.disable_vna_control_window()
+        self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(False)
 
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
         zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
@@ -1098,6 +1101,31 @@ class ProcessController:
                                                "More than one Measurement Process")
         return
 
+    def auto_measurement_vna_config_check_button_handler(self):
+        """
+        Callback for 'Check'-button in ui_auto_measurement > VNA configuration window.
+        Sets up the PNA according to given filename and updates UI below accordingly.
+        If invalid filename is given, error will occur in terminal due to pna not reacting etc.
+        """
+        """ Same procedure as in AutoMeasurement start_handler """
+        #   Get vna config info
+        vna_info = self.gui_mainWindow.ui_auto_measurement_window.get_vna_configuration()
+        vna_info['meas_name'] = 'CheckMeasurement'  # default check-meas_name
+
+        #   Configure vna by .cst file if selected
+        if 'vna_preset_from_file' in vna_info:
+            extra_info = self.vna.pna_preset_from_file(vna_info['vna_preset_from_file'], vna_info['meas_name'])
+            vna_info['parameter'] = extra_info['parameter']
+            vna_info['freq_start'] = extra_info['freq_start']
+            vna_info['freq_stop'] = extra_info['freq_stop']
+            vna_info['if_bw'] = extra_info['if_bw']
+            vna_info['sweep_num_points'] = extra_info['sweep_num_points']
+            vna_info['output_power'] = extra_info['output_power']
+            vna_info['avg_num'] = extra_info['avg_num']
+            self.gui_mainWindow.ui_auto_measurement_window.update_vna_measurement_config_entries(vna_info)
+
+        return
+
     def auto_measurement_check_move_boundary(self, x_vec: tuple[float], y_vec: tuple[float], z_vec: tuple[float]):
         """
         Checks if rectangular / cubic mesh is out of chamber workspace.
@@ -1120,6 +1148,7 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_vna_control_window()
+        self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(True)
 
     def auto_measurement_goZero_button_handler(self):
         """
