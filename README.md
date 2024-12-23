@@ -337,12 +337,12 @@ The only part that is meant to be frequently attached and detached from the cham
 
 ## Release History
 > [!NOTE] Version Numbering is changed in [PythonChamberApp's mainwindow.py](PythonChamberApp/user_interface/ui_mainwindow.py) line 33
-
-* 1.2 - development state
+* 1.3 - development state
   * Extra Tab 'Postprocessing'
     * to generate calibration matrix from measurement file [To Do 11.9.24]
     * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
       * maybe also amplitude compensation?
+* 1.2
   * Enabled display of measurement-files that have just one point in any axis direction
   * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber)
     * Stores error log in 'GIT/PythonChamberApp/error_log.txt' directory
