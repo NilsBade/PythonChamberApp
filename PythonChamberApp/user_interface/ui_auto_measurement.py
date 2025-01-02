@@ -102,9 +102,9 @@ class UI_auto_measurement_window(QWidget):
     plot_2d_xy: pg.PlotItem = None
     plot_xy_zero_cos: pg.PlotDataItem = None
     plot_xy_mesh_points: pg.PlotDataItem
-    plot_2d_yz: pg.PlotItem = None
-    plot_yz_zero_cos: pg.PlotDataItem = None
-    plot_yz_mesh_points: pg.PlotDataItem = None
+    plot_2d_xz: pg.PlotItem = None
+    plot_xz_zero_cos: pg.PlotDataItem = None
+    plot_xz_mesh_points: pg.PlotDataItem = None
 
     def __init__(self, chamber_x_max_coor: float, chamber_y_max_coor: float, chamber_z_max_coor: float,
                  chamber_z_head_bed_offset: float):
@@ -653,6 +653,8 @@ class UI_auto_measurement_window(QWidget):
         #   COS at 0,0,0
         cos = gl.GLAxisItem()
         cos.setSize(x=50, y=50, z=50)
+        cos.translate(dx=self.chamber_x_max_coor, dy=0, dz=0)          # position COS origin in klipper COS
+        cos.rotate(180,0,1,0,local=True)                # rotate COS to match klipper COS
         view_widget.addItem(cos)
 
         #   meas-scatter-plot
@@ -664,6 +666,7 @@ class UI_auto_measurement_window(QWidget):
 
         # set view point roughly
         view_widget.pan(self.chamber_x_max_coor / 2, self.chamber_y_max_coor / 2, -self.chamber_z_max_coor / 3)
+        view_widget.orbit(azim=-135, elev=10)
         view_widget.setCameraPosition(distance=1200)
 
         return view_widget
@@ -676,15 +679,15 @@ class UI_auto_measurement_window(QWidget):
         graph_layout_widget.setBackground(background=(255, 255, 255))
         label_pen = pg.mkPen(color='k', width=1)
 
-        x_axis = pg.AxisItem(orientation='left', text='X [mm]', textPen=label_pen)
-        x_axis.setGrid(125)
-        x_axis.showLabel()
-        y_axis_xy = pg.AxisItem(orientation='top', text='Y [mm]', textPen=label_pen)
+        x_axis_xy = pg.AxisItem(orientation='top', text='X [mm]', textPen=label_pen)
+        x_axis_xy.setGrid(125)
+        x_axis_xy.showLabel()
+        y_axis_xy = pg.AxisItem(orientation='left', text='Y [mm]', textPen=label_pen)
         y_axis_xy.setGrid(125)
         y_axis_xy.showLabel()
-        y_axis_yz = pg.AxisItem(orientation='top', text='Y [mm]', textPen=label_pen)
-        y_axis_yz.setGrid(125)
-        y_axis_yz.showLabel()
+        x_axis_xz = pg.AxisItem(orientation='top', text='X [mm]', textPen=label_pen)
+        x_axis_xz.setGrid(125)
+        x_axis_xz.showLabel()
         z_axis = pg.AxisItem(orientation='left', text='Z [mm]', textPen=label_pen)
         z_axis.setGrid(125)
         z_axis.showLabel()
@@ -695,49 +698,50 @@ class UI_auto_measurement_window(QWidget):
         xy_workspace_lines_connect = np.array([[0, 1], [1, 2], [2, 3], [3, 0]])
         xy_workspace_plot = pg.GraphItem(pos=xy_workspace_vertices, adj=xy_workspace_lines_connect, pen='r', symbolPen='r', symbolBrush=None, symbol='+')
 
-        yz_workspace_vertices = np.array([
+        xz_workspace_vertices = np.array([
             [0, -self.chamber_z_head_bed_offset], [0, 0], [0, self.chamber_z_max_coor],
-            [self.chamber_y_max_coor, self.chamber_z_max_coor], [self.chamber_y_max_coor, 0],
-            [self.chamber_y_max_coor, -self.chamber_z_head_bed_offset]
+            [self.chamber_x_max_coor, self.chamber_z_max_coor], [self.chamber_x_max_coor, 0],
+            [self.chamber_x_max_coor, -self.chamber_z_head_bed_offset]
         ])
-        yz_workspace_lines_connect = np.array([[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,4]])
-        yz_workspace_plot = pg.GraphItem(pos=yz_workspace_vertices, adj=yz_workspace_lines_connect, pen='r', symbolPen='r', symbolBrush=None, symbol='+')
+        xz_workspace_lines_connect = np.array([[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,4]])
+        xz_workspace_plot = pg.GraphItem(pos=xz_workspace_vertices, adj=xz_workspace_lines_connect, pen='r', symbolPen='r', symbolBrush=None, symbol='+')
 
         # build xy plot --> Graph-x-axis is positive Chamber-Y-axis | Graph-y-axis is negative Chamber-x-axis
         self.plot_2d_xy = pg.PlotItem()
         graph_layout_widget.addItem(self.plot_2d_xy, 0, 0)
         self.plot_2d_xy.setTitle(title='XY-TopView on Mesh', color='k')
-        self.plot_2d_xy.setAxisItems(axisItems={'left': x_axis, 'top': y_axis_xy})
+        self.plot_2d_xy.setAxisItems(axisItems={'left': y_axis_xy, 'top': x_axis_xy})
         self.plot_2d_xy.hideAxis('bottom')
-        self.plot_2d_xy.getViewBox().invertY(True)
+        self.plot_2d_xy.getViewBox().invertX(True)
         self.plot_2d_xy.getViewBox().setRange(xRange=(0, self.chamber_y_max_coor), yRange=(0, self.chamber_x_max_coor))
         self.plot_2d_xy.getViewBox().setAspectLocked(lock=True, ratio=1)
         self.plot_2d_xy.addItem(xy_workspace_plot)
 
-        # build yz plot
-        self.plot_2d_yz = pg.PlotItem()
-        graph_layout_widget.addItem(self.plot_2d_yz, 1, 0)
-        self.plot_2d_yz.setTitle('YZ-SideView on Mesh', color='k')
-        self.plot_2d_yz.setAxisItems(axisItems={'left': z_axis, 'top': y_axis_yz})
+        # build xz plot
+        self.plot_2d_xz = pg.PlotItem()
+        graph_layout_widget.addItem(self.plot_2d_xz, 1, 0)
+        self.plot_2d_xz.setTitle('xz-SideView on Mesh', color='k')
+        self.plot_2d_xz.setAxisItems(axisItems={'left': z_axis, 'top': x_axis_xz})
         y_axis_xy.linkToView(self.plot_2d_xy.getViewBox())
-        self.plot_2d_yz.getViewBox().invertY(True)
-        self.plot_2d_yz.getViewBox().setRange(xRange=(0, self.chamber_y_max_coor), yRange=(0, self.chamber_z_max_coor))
-        self.plot_2d_yz.getViewBox().setAspectLocked(lock=True, ratio=2)
-        self.plot_2d_yz.addItem(yz_workspace_plot)
-        self.plot_2d_yz.getViewBox().setXLink(self.plot_2d_xy.getViewBox())
+        self.plot_2d_xz.getViewBox().invertX(True)
+        self.plot_2d_xz.getViewBox().invertY(True)
+        self.plot_2d_xz.getViewBox().setRange(xRange=(0, self.chamber_y_max_coor), yRange=(0, self.chamber_z_max_coor))
+        self.plot_2d_xz.getViewBox().setAspectLocked(lock=True, ratio=2)
+        self.plot_2d_xz.addItem(xz_workspace_plot)
+        self.plot_2d_xz.getViewBox().setXLink(self.plot_2d_xy.getViewBox())
 
         zero_cos_pen = pg.mkPen(color=(0, 0, 255), width=1)
         self.plot_xy_zero_cos = pg.PlotDataItem(symbol='s', symbolPen=zero_cos_pen)
-        self.plot_yz_zero_cos = pg.PlotDataItem(symbol='s', symbolPen=zero_cos_pen)
+        self.plot_xz_zero_cos = pg.PlotDataItem(symbol='s', symbolPen=zero_cos_pen)
 
         mesh_pen = pg.mkPen(color=(10, 255, 10), width=2)
         self.plot_xy_mesh_points = pg.PlotDataItem(symbol='o', symbolPen=mesh_pen, symbolSize=2, pen=None)
-        self.plot_yz_mesh_points = pg.PlotDataItem(symbol='o', symbolPen=mesh_pen, symbolSize=2, pen=None)
+        self.plot_xz_mesh_points = pg.PlotDataItem(symbol='o', symbolPen=mesh_pen, symbolSize=2, pen=None)
 
         self.plot_2d_xy.addItem(self.plot_xy_zero_cos)
-        self.plot_2d_yz.addItem(self.plot_yz_zero_cos)
+        self.plot_2d_xz.addItem(self.plot_xz_zero_cos)
         self.plot_2d_xy.addItem(self.plot_xy_mesh_points)
-        self.plot_2d_yz.addItem(self.plot_yz_mesh_points)
+        self.plot_2d_xz.addItem(self.plot_xz_mesh_points)
 
         #   default values
         self.update_2d_plots()
@@ -756,9 +760,9 @@ class UI_auto_measurement_window(QWidget):
             return
         #   update zero positions in plot
         xy_zero = np.array([[self.current_zero_x, self.current_zero_y]])
-        yz_zero = np.array([[self.current_zero_y, self.current_zero_z]])
+        xz_zero = np.array([[self.current_zero_x, self.current_zero_z]])
         self.plot_xy_zero_cos.setData(xy_zero)
-        self.plot_yz_zero_cos.setData(yz_zero)
+        self.plot_xz_zero_cos.setData(xz_zero)
         #   update mesh points
         mesh_info = self.get_mesh_cubic_data()
         xy_mesh_points_list = []
@@ -766,13 +770,13 @@ class UI_auto_measurement_window(QWidget):
             for y in mesh_info['y_vec']:
                 xy_mesh_points_list.append([x, y])
         xy_mesh_points_array = np.array(xy_mesh_points_list)
-        yz_mesh_points_list = []
-        for y in mesh_info['y_vec']:
+        xz_mesh_points_list = []
+        for x in mesh_info['x_vec']:
             for z in mesh_info['z_vec']:
-                yz_mesh_points_list.append([y, z - self.get_aut_height()]) # correcting by head bed offset since bed coordinates are stored in z_vec
-        yz_mesh_points_array = np.array(yz_mesh_points_list)
+                xz_mesh_points_list.append([x, z - self.get_aut_height()]) # correcting by head bed offset since bed coordinates are stored in z_vec
+        xz_mesh_points_array = np.array(xz_mesh_points_list)
         self.plot_xy_mesh_points.setData(xy_mesh_points_array)
-        self.plot_yz_mesh_points.setData(yz_mesh_points_array)
+        self.plot_xz_mesh_points.setData(xz_mesh_points_array)
 
 
 
