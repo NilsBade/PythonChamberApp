@@ -100,7 +100,7 @@ class ProcessController:
         # setup AutoMeasurement
         self.zero_pos_x = 258.0     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
         self.zero_pos_y = 225.5     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
-        self.zero_pos_z = None
+        self.zero_pos_z = 100.0 #None todo set none again after debug
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
         # connect all Slots & Signals Auto measurement window
@@ -116,6 +116,8 @@ class ProcessController:
             self.auto_measurement_start_handler)
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_stop_button.pressed.connect(
             self.auto_measurement_terminate_thread_handler)
+
+        # todo connect all Slots & Signals of body scan window. Define all necessary methods!
 
         # connect all Slots & Signals display measurement window
         self.gui_mainWindow.ui_display_measurement_window.file_select_refresh_button.pressed.connect(

@@ -9,6 +9,7 @@ from .ui_chamber_control_window import UI_chamber_control_window
 from .ui_vna_control_window import UI_vna_control_window
 from .ui_auto_measurement import UI_auto_measurement_window
 from .ui_display_measurement_window import UI_display_measurement_window
+from .ui_body_scan_measurement import UI_body_scan_measurement_window
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
     ui_vna_control_window: UI_vna_control_window = None
     ui_auto_measurement_window: UI_auto_measurement_window = None
     ui_display_measurement_window: UI_display_measurement_window = None
+    ui_body_scan_window: UI_body_scan_measurement_window = None
 
     main_status_bar: QStatusBar = None
 
@@ -50,17 +52,20 @@ class MainWindow(QMainWindow):
         self.ui_vna_control_window = UI_vna_control_window()
         self.ui_auto_measurement_window = UI_auto_measurement_window(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
         self.ui_display_measurement_window = UI_display_measurement_window()
+        self.ui_body_scan_window = UI_body_scan_measurement_window(chamber_x_max_coor, chamber_y_max_coor, chamber_z_max_coor, chamber_z_head_bed_offset)
 
         self.tabs.addTab(self.ui_config_window, 'Config')  # Tab 0
         self.tabs.addTab(self.ui_chamber_control_window, 'Chamber control')  # Tab 1
         self.tabs.addTab(self.ui_vna_control_window, 'VNA control')  # Tab 2
         self.tabs.addTab(self.ui_auto_measurement_window, 'Auto Measurement')   # Tab 3
-        self.tabs.addTab(self.ui_display_measurement_window, 'Display Measurements')
+        self.tabs.addTab(self.ui_body_scan_window, 'Body Scan')     # Tab 4
+        self.tabs.addTab(self.ui_display_measurement_window, 'Display Measurements')    # Tab 5
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, False)       # Modify here when testing GUI elements without valid app config
-        self.tabs.setTabEnabled(2, False)
-        self.tabs.setTabEnabled(3, False)
-        self.tabs.setTabEnabled(4, True)        # always enable!
+        self.tabs.setTabEnabled(1, True)       # Modify here when testing GUI elements without valid app config
+        self.tabs.setTabEnabled(2, True)        # todo set all to false after debug
+        self.tabs.setTabEnabled(3, True)
+        self.tabs.setTabEnabled(4, True)
+        self.tabs.setTabEnabled(5, True)        # always enable!
 
         self.setCentralWidget(self.tabs)
         return

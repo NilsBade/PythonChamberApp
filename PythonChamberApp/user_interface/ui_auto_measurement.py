@@ -136,7 +136,7 @@ class UI_auto_measurement_window(QWidget):
 
         third_column = QVBoxLayout()
         auto_measurement_progress_widget = self.__init_auto_measurement_progress_widget()
-        auto_measurement_progress_widget.setFixedHeight(170)
+        # auto_measurement_progress_widget.setFixedHeight(170)
         view_widget = self.__init_3d_graphic()
         self.view_widget_status_label = QLabel("Mesh-display initialized! Display updates once 'Zero Position' defined...")
         view_widget_status_label_holder = QWidget()
@@ -720,7 +720,7 @@ class UI_auto_measurement_window(QWidget):
         # build xz plot
         self.plot_2d_xz = pg.PlotItem()
         graph_layout_widget.addItem(self.plot_2d_xz, 1, 0)
-        self.plot_2d_xz.setTitle('xz-SideView on Mesh', color='k')
+        self.plot_2d_xz.setTitle('XZ-FrontView on Mesh', color='k')
         self.plot_2d_xz.setAxisItems(axisItems={'left': z_axis, 'top': x_axis_xz})
         y_axis_xy.linkToView(self.plot_2d_xy.getViewBox())
         self.plot_2d_xz.getViewBox().invertX(True)
@@ -777,8 +777,6 @@ class UI_auto_measurement_window(QWidget):
         xz_mesh_points_array = np.array(xz_mesh_points_list)
         self.plot_xy_mesh_points.setData(xy_mesh_points_array)
         self.plot_xz_mesh_points.setData(xz_mesh_points_array)
-
-
 
     def update_live_coor_display(self, new_x: float, new_y: float, new_z: float):
         """
