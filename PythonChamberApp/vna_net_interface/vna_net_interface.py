@@ -610,7 +610,7 @@ class E8361RemoteGPIB:
         :param file_name:  name of cst-file to load on PNA
         :param meas_name:  unique name of measurement to read results from later
         :param set_trigger_manual:  if True, manual triggering is set. Otherwise, no command modifying the trigger is sent.
-        :return: dict (pna-info) >> success, False >> failed
+        :return: dict (pna-info) >> success, None >> failed
         """
         if file_name.split('.')[-1] != 'cst':
             print("Error preset PNA from file - File is not a CST file!")
@@ -631,7 +631,7 @@ class E8361RemoteGPIB:
         meas_list = self.pna_read_configured_measurements_on_channel(channel_number=default_cnum)
         if meas_list.__len__() == 0:
             print("Error preset PNA from file - No measurements found on preset PNA (On channel number 1)!")
-            return False
+            return None
         parameter_list = [meas[1] for meas in meas_list]
         meas_name_list = [meas[0] for meas in meas_list]
 
