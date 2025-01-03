@@ -185,6 +185,14 @@ class UI_body_scan_measurement_window(QWidget):
         sub_layout.addWidget(label_sleep_time, 6, 0, 1, 1)
         sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 6, 1, 1, 1)
 
+        # connect callbacks for plot updates when mesh changed
+        self.mesh_x_length_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_x_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_y_length_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_y_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_z_length_lineEdit.editingFinished.connect(self.update_2d_plots)
+        self.mesh_z_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
+
         return mesh_config_frame
 
     def __init_figure_widget(self):
@@ -466,11 +474,11 @@ class UI_body_scan_measurement_window(QWidget):
         #   skip update if no zero position logged
         if self.current_origin_x is None or self.current_origin_y is None or self.current_origin_z is None:
             return
-        #   update zero positions in plot
-        xy_zero = np.array([[self.current_origin_x, self.current_origin_y]])
-        xz_zero = np.array([[self.current_origin_x, self.current_origin_z]])
-        self.plot_xy_zero_cos.setData(xy_zero)
-        self.plot_xz_zero_cos.setData(xz_zero)
+        #   update origin position in plot
+        xy_origin = np.array([[self.current_origin_x, self.current_origin_y]])
+        xz_origin = np.array([[self.current_origin_x, self.current_origin_z]])
+        self.plot_xy_zero_cos.setData(xy_origin)
+        self.plot_xz_zero_cos.setData(xz_origin)
         #   update mesh points
         mesh_info = self.get_mesh_data()
         xy_mesh_points_list = []
@@ -485,63 +493,6 @@ class UI_body_scan_measurement_window(QWidget):
         xz_mesh_points_array = np.array(xz_mesh_points_list)
         self.plot_xy_mesh_points.setData(xy_mesh_points_array)
         self.plot_xz_mesh_points.setData(xz_mesh_points_array)
-
-    def get_mesh_data(self):
-        """
-                This function returns a dictionary that provides additional info about the measurement mesh.
-                The x,y,z vectors describe the necessary points to move to by the chamber, to do the measurement.
-                dict:
-                    {
-                    'tot_num_of_points' : int
-                    'num_steps_x' : int
-                    'num_steps_y' : int
-                    'num_steps_z' : int
-                    'x_vec' : tuple(float,...) , vector that stores all x coordinates for chamber movement in growing order
-                    'y_vec' : tuple(float,...) , vector that stores all y coordinates for chamber movement in growing order
-                    'z_vec' : tuple(float,...) , vector that stores all z coordinates for chamber movement in growing order
-                    }
-
-                *Coordinates are already transferred to chamber-movement coordinate system based on set origin!*
-                """
-        info_dict = {}
-        #   get inputs
-        x_length = float(self.mesh_x_length_lineEdit.text())
-        x_num_steps = int(self.mesh_x_num_of_steps_lineEdit.text())
-        y_length = float(self.mesh_y_length_lineEdit.text())
-        y_num_steps = int(self.mesh_y_num_of_steps_lineEdit.text())
-        z_length = float(self.mesh_z_length_lineEdit.text())
-        z_num_steps = int(self.mesh_z_num_of_steps_lineEdit.text())
-
-        #   get current zero
-        x_origin = self.current_origin_x
-        y_origin = self.current_origin_y
-        z_origin = self.current_origin_z
-
-        #   calculate coordinate vectors in Klipper/Chamber COS
-        x_linspace = np.linspace(x_origin, x_origin + x_length, x_num_steps)
-        y_linspace = np.linspace(y_origin, y_origin + y_length, y_num_steps)
-        z_linspace = np.linspace(z_origin, z_origin + z_length, z_num_steps)
-
-        x_vec = []
-        for i in x_linspace:
-            x_vec.append(i)
-        y_vec = []
-        for i in y_linspace:
-            y_vec.append(i)
-        z_vec = []
-        for i in z_linspace:
-            z_vec.append(i)
-
-        #   fill info dict
-        info_dict['tot_num_of_points'] = x_num_steps * y_num_steps * z_num_steps
-        info_dict['num_steps_x'] = x_num_steps
-        info_dict['num_steps_y'] = y_num_steps
-        info_dict['num_steps_z'] = z_num_steps
-        info_dict['x_vec'] = tuple(x_vec)
-        info_dict['y_vec'] = tuple(y_vec)
-        info_dict['z_vec'] = tuple(z_vec)
-
-        return info_dict
 
     def update_live_coor_display(self, new_x: float, new_y: float, new_z: float):
         """
@@ -620,3 +571,71 @@ class UI_body_scan_measurement_window(QWidget):
         new_text = '[' + timestamp + ']: ' + message
         self.meas_progress_log_textEdit.append(new_text)
         return
+
+    def get_mesh_data(self):
+        """
+                This function returns a dictionary that provides additional info about the measurement mesh.
+                The x,y,z vectors describe the necessary points to move to by the chamber, to do the measurement.
+                dict:
+                    {
+                    'tot_num_of_points' : int
+                    'num_steps_x' : int
+                    'num_steps_y' : int
+                    'num_steps_z' : int
+                    'x_vec' : tuple(float,...) , vector that stores all x coordinates for chamber movement in growing order
+                    'y_vec' : tuple(float,...) , vector that stores all y coordinates for chamber movement in growing order
+                    'z_vec' : tuple(float,...) , vector that stores all z coordinates for chamber movement in growing order
+                    }
+
+                *Coordinates are already transferred to chamber-movement coordinate system based on set origin!*
+                """
+        info_dict = {}
+        #   get inputs
+        x_length = float(self.mesh_x_length_lineEdit.text())
+        x_num_steps = int(self.mesh_x_num_of_steps_lineEdit.text())
+        y_length = float(self.mesh_y_length_lineEdit.text())
+        y_num_steps = int(self.mesh_y_num_of_steps_lineEdit.text())
+        z_length = float(self.mesh_z_length_lineEdit.text())
+        z_num_steps = int(self.mesh_z_num_of_steps_lineEdit.text())
+
+        #   get current zero
+        x_origin = self.current_origin_x
+        y_origin = self.current_origin_y
+        z_origin = self.current_origin_z
+
+        #   calculate coordinate vectors in Klipper/Chamber COS
+        x_linspace = np.linspace(x_origin, x_origin + x_length, x_num_steps)
+        y_linspace = np.linspace(y_origin, y_origin + y_length, y_num_steps)
+        z_linspace = np.linspace(z_origin, z_origin + z_length, z_num_steps)
+
+        x_vec = []
+        for i in x_linspace:
+            x_vec.append(i)
+        y_vec = []
+        for i in y_linspace:
+            y_vec.append(i)
+        z_vec = []
+        for i in z_linspace:
+            z_vec.append(i)
+
+        #   fill info dict
+        info_dict['tot_num_of_points'] = x_num_steps * y_num_steps * z_num_steps
+        info_dict['num_steps_x'] = x_num_steps
+        info_dict['num_steps_y'] = y_num_steps
+        info_dict['num_steps_z'] = z_num_steps
+        info_dict['x_vec'] = tuple(x_vec)
+        info_dict['y_vec'] = tuple(y_vec)
+        info_dict['z_vec'] = tuple(z_vec)
+
+        return info_dict
+
+    def get_vna_configuration(self):
+        """
+        Returns dict with all info necessary to configure the measurement routine.
+        Since always 'Setup from .cst file', the vna_info dict as follows
+
+        vna_info: dict = {
+            'vna_preset_from_file': str, path to '.cst' vna preset file or just file name at default location
+            }
+        """
+        return {'vna_preset_from_file': self.vna_config_filepath_lineEdit.text()}
