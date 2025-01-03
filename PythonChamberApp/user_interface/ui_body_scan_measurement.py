@@ -1,6 +1,6 @@
 import os
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit, \
-    QProgressBar, QFrame
+    QProgressBar, QFrame, QCheckBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtSvgWidgets import QSvgWidget
 from PyQt6.QtGui import QPixmap
@@ -39,6 +39,7 @@ class UI_body_scan_measurement_window(QWidget):
     # VNA config inputs
     vna_config_filepath_lineEdit: QLineEdit = None  # filepath to .cst config file
     vna_config_filepath_check_button: QPushButton = None  # presets with .cst file and reads config from pna
+    vna_config_info_textEdit: QTextEdit = None  # shows config info from pna
 
     # Data-management inputs
     filename_lineEdit: QLineEdit = None
@@ -58,6 +59,9 @@ class UI_body_scan_measurement_window(QWidget):
     meas_progress_total_point_current: QLabel = None
     meas_progress_total_point_progressBar: QProgressBar = None
     meas_progress_status_label: QLabel = None
+
+    #   Process Log
+    meas_progress_log_textEdit: QTextEdit = None
 
     #   2d graph visualization of mesh
     plot_2d_layout_widget: pg.GraphicsLayoutWidget = None
@@ -81,26 +85,32 @@ class UI_body_scan_measurement_window(QWidget):
         self.label_show_current_origin = QLabel("Current Origin >> Not initialized")
 
         main_layout = QHBoxLayout()
-        # Column 1,2
-        configs_layout = QGridLayout()
+        # Column 1
+        first_column = QVBoxLayout()
         mesh_config_widget = self.__init_mesh_config_widget()
+        figure_widget = self.__init_figure_widget()
+        figure_widget.setMaximumHeight(400)
+        first_column.addWidget(mesh_config_widget, stretch=0)
+        first_column.addWidget(figure_widget, stretch=10)
+        first_column.addStretch(1)
+
+        # Column 2
+        second_column = QVBoxLayout()
         vna_config_widget = self.__init_vna_config_widget()
         data_management_widget = self.__init_data_management_widget()
         self.body_scan_start_button = QPushButton("Start Body Scan Process")
-        configs_layout.addWidget(mesh_config_widget, 0, 0, 3, 1)
-        configs_layout.addWidget(vna_config_widget, 0, 1, 1, 1, Qt.AlignmentFlag.AlignTop)
-        configs_layout.addWidget(data_management_widget, 1, 1, 1, 1, Qt.AlignmentFlag.AlignTop)
-        configs_layout.addWidget(self.body_scan_start_button, 2, 1, 1, 1, Qt.AlignmentFlag.AlignBottom)
+        second_column.addWidget(vna_config_widget, stretch=0)
+        second_column.addWidget(data_management_widget, stretch=0)
+        second_column.addStretch(1)
+        second_column.addWidget(self.body_scan_start_button, Qt.AlignmentFlag.AlignBottom)
 
         # Column 3
         third_column = QVBoxLayout()
         body_scan_progress_widget = self.__init_body_scan_progress_widget()
-        # body_scan_progress_widget.setFixedHeight(170)
-        figure_widget = self.__init_figure_widget()
-        # figure_widget.setFixedWidth(300)
-        # figure_widget.setFixedHeight(400)
+        meas_progress_log_widget = self.__init_progress_log_widget()
         third_column.addWidget(body_scan_progress_widget, stretch=1)
-        third_column.addWidget(figure_widget, stretch=2)
+        third_column.addWidget(meas_progress_log_widget, stretch=3)
+        third_column.addStretch(1)
 
         # Column 4
         fourth_column = QVBoxLayout()
@@ -108,9 +118,10 @@ class UI_body_scan_measurement_window(QWidget):
         self.plot_2d_layout_widget.setMinimumWidth(300)
         fourth_column.addWidget(self.plot_2d_layout_widget)
 
-        main_layout.addLayout(configs_layout, stretch=0)
+        main_layout.addLayout(first_column, stretch=0)
+        main_layout.addLayout(second_column, stretch=0)
         main_layout.addLayout(third_column, stretch=1)
-        main_layout.addLayout(fourth_column, stretch=1)
+        main_layout.addLayout(fourth_column, stretch=2)
         self.setLayout(main_layout)
 
     def __init_mesh_config_widget(self):
@@ -123,10 +134,73 @@ class UI_body_scan_measurement_window(QWidget):
         mesh_config_frame.setFixedWidth(300)
         frame_layout = QVBoxLayout()
         mesh_config_frame.setLayout(frame_layout)
+        # Header
+        main_label = QLabel("1. Mesh Config")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        frame_layout.addWidget(main_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # todo put in all the inputs etc as planned on paper
+        self.button_set_current_as_origin = QPushButton("Set Current Position as Origin")
+        frame_layout.addWidget(self.button_set_current_as_origin)
+        frame_layout.addWidget(self.label_show_current_origin)
+        frame_layout.addWidget(self.label_show_current_position)
+        frame_layout.addSpacing(10)
+
+        # Initialize mesh config inputs
+        sub_layout = QGridLayout()
+        frame_layout.addLayout(sub_layout)
+        label_len_x = QLabel("Length X [mm]:")
+        label_len_y = QLabel("Length Y [mm]:")
+        label_len_z = QLabel("Length Z [mm]:")
+        label_num_x = QLabel("Num of Steps X:")
+        label_num_y = QLabel("Num of Steps Y:")
+        label_num_z = QLabel("Num of Steps Z:")
+        label_sleep_time = QLabel("Sleep Time [s]:")
+        self.mesh_x_length_lineEdit = QLineEdit("0")
+        self.mesh_x_max_length_label = QLabel("< max 0 mm")
+        self.mesh_x_max_length_label.setFixedWidth(100)     # set (at least one) fixed width to avoid jumping labels
+        self.mesh_x_num_of_steps_lineEdit = QLineEdit("0")
+        self.mesh_y_length_lineEdit = QLineEdit("0")
+        self.mesh_y_max_length_label = QLabel("< max 0 mm")
+        self.mesh_y_num_of_steps_lineEdit = QLineEdit("0")
+        self.mesh_z_length_lineEdit = QLineEdit("0")
+        self.mesh_z_max_length_label = QLabel("< max 0 mm")
+        self.mesh_z_num_of_steps_lineEdit = QLineEdit("0")
+        self.z_move_sleepTime_lineEdit = QLineEdit("0.0")
+        # Assemble layout
+        sub_layout.addWidget(label_len_x, 0, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_length_lineEdit, 0, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_x_max_length_label, 0, 2, 1, 1)
+        sub_layout.addWidget(label_num_x, 1, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_num_of_steps_lineEdit, 1, 1, 1, 1)
+        sub_layout.addWidget(label_len_y, 2, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_length_lineEdit, 2, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_y_max_length_label, 2, 2, 1, 1)
+        sub_layout.addWidget(label_num_y, 3, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_num_of_steps_lineEdit, 3, 1, 1, 1)
+        sub_layout.addWidget(label_len_z, 4, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_length_lineEdit, 4, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_z_max_length_label, 4, 2, 1, 1)
+        sub_layout.addWidget(label_num_z, 5, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_num_of_steps_lineEdit, 5, 1, 1, 1)
+        sub_layout.addWidget(label_sleep_time, 6, 0, 1, 1)
+        sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 6, 1, 1, 1)
 
         return mesh_config_frame
+
+    def __init_figure_widget(self):
+        """
+        Initialize SVG widget with smart path handling. return widget.
+        """
+        abs_path_root = os.getcwd()
+        file_is_at_location = os.path.isfile(
+            os.path.join(abs_path_root, "figures/bodyscan_measurement.svg"))
+        if not file_is_at_location:
+            # correct root if working directory 'too high'
+            abs_path_root = os.path.join(abs_path_root, 'PythonChamberApp')
+
+        figure_widget = QSvgWidget()
+        figure_widget.load(os.path.join(abs_path_root, 'figures/bodyscan_measurement.svg'))
+        return figure_widget
 
     def __init_vna_config_widget(self):
         """
@@ -139,7 +213,37 @@ class UI_body_scan_measurement_window(QWidget):
         frame_layout = QVBoxLayout()
         vna_config_frame.setLayout(frame_layout)
 
-        # todo put in all the inputs etc as planned on paper
+        main_label = QLabel("2. VNA Config")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        frame_layout.addWidget(main_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Setup inputs layout
+        inputs_layout = QVBoxLayout()
+        frame_layout.addLayout(inputs_layout)
+
+        # file config inputs
+        config_filepath_label = QLabel("Filepath to .cst file:")
+        config_filepath_hint_label = QLabel("*if cst-file is placed in default directory, only filename needed."
+                                            "\ndefault directory of PNA:\nC:/Program Files/Agilent/Network Analyzer/Documents/")
+        config_filepath_hint_label.setStyleSheet("text-decoration: italic; font-size: 10px;")
+
+        self.vna_config_filepath_lineEdit = QLineEdit("pna_test_cfg.cst")
+        self.vna_config_filepath_lineEdit.setToolTip(
+            "Put in absolute filepath if cst-file is not in default directory.")
+
+        self.vna_config_filepath_check_button = QPushButton("Check")
+        self.vna_config_filepath_check_button.setFixedWidth(75)
+        self.vna_config_filepath_check_button.setToolTip("Tries to setup the PNA by given filename and\nshows "
+                                                         "configuration in menu below if successful.")
+        self.vna_config_info_textEdit = QTextEdit("No config loaded yet...")
+
+        inputs_layout.addWidget(config_filepath_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        line_layout = QHBoxLayout()
+        line_layout.addWidget(self.vna_config_filepath_lineEdit)
+        line_layout.addWidget(self.vna_config_filepath_check_button)
+        inputs_layout.addLayout(line_layout)
+        inputs_layout.addWidget(config_filepath_hint_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        inputs_layout.addWidget(self.vna_config_info_textEdit)
 
         return vna_config_frame
 
@@ -154,7 +258,30 @@ class UI_body_scan_measurement_window(QWidget):
         frame_layout = QVBoxLayout()
         data_management_frame.setLayout(frame_layout)
 
-        # todo put in all the inputs etc as planned on paper
+        main_label = QLabel("3. Data Management")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+        self.filename_lineEdit = QLineEdit("new_measurement")
+        self.filename_lineEdit.setMinimumWidth(200)
+        filename_label = QLabel("Filename:")
+        filename_info_label = QLabel("* Measurement Files are stored in \n'[GIT]PythonChamberApp/results/...'")
+        filename_info_label.setStyleSheet("font: italic")
+        file_type_json_checkbox = QCheckBox(".json format")     # json as default, display for convenience
+        file_type_json_checkbox.setChecked(True)
+        file_type_json_checkbox.setEnabled(False)
+        file_json_readable_checkbox = QCheckBox("format for readability")       # readable as default, display for convenience
+        file_json_readable_checkbox.setChecked(True)
+        file_json_readable_checkbox.setEnabled(False)
+
+        frame_layout.addWidget(main_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        line_layout = QHBoxLayout()
+        line_layout.addWidget(filename_label, stretch=0)
+        line_layout.addWidget(self.filename_lineEdit, stretch=1)
+        frame_layout.addLayout(line_layout)
+        frame_layout.addWidget(filename_info_label, alignment=Qt.AlignmentFlag.AlignLeft)
+        line_layout_boxes = QHBoxLayout()
+        line_layout_boxes.addWidget(file_type_json_checkbox)
+        line_layout_boxes.addWidget(file_json_readable_checkbox)
+        frame_layout.addLayout(line_layout_boxes)
 
         return data_management_frame
 
@@ -229,20 +356,27 @@ class UI_body_scan_measurement_window(QWidget):
 
         return frame_widget
 
-    def __init_figure_widget(self):
+    def __init_progress_log_widget(self):
         """
-        Initialize SVG widget with smart path handling. return widget.
+        Initialize 'Progress Log' Frame Widget and return it
         """
-        abs_path_root = os.getcwd()
-        file_is_at_location = os.path.isfile(
-            os.path.join(abs_path_root, "figures/bodyscan_measurement.svg"))
-        if not file_is_at_location:
-            # correct root if working directory 'too high'
-            abs_path_root = os.path.join(abs_path_root, 'PythonChamberApp')
+        progress_log_frame = QFrame()
+        progress_log_frame.setFrameStyle(QFrame.Shape.StyledPanel)
+        progress_log_frame.setContentsMargins(5, 5, 5, 5)
 
-        figure_widget = QSvgWidget()
-        figure_widget.load(os.path.join(abs_path_root, 'figures/bodyscan_measurement.svg'))
-        return figure_widget
+        main_label = QLabel("Message Log")
+        main_label.setStyleSheet("text-decoration: underline; font-size: 16px; font-weight: bold;")
+
+        main_layout = QVBoxLayout()
+        progress_log_frame.setLayout(main_layout)
+        main_layout.addWidget(main_label, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.meas_progress_log_textEdit = QTextEdit()
+        self.meas_progress_log_textEdit.setReadOnly(True)
+        self.meas_progress_log_textEdit.setText("No notifications yet...\n")
+        main_layout.addWidget(self.meas_progress_log_textEdit)
+
+        return progress_log_frame
 
     def __init_2d_plots(self):
         """
@@ -444,3 +578,45 @@ class UI_body_scan_measurement_window(QWidget):
         self.mesh_x_max_length_label.setText("< max " + str(x_distance2border) + " mm")
         self.mesh_y_max_length_label.setText("< max " + str(y_distance2border) + " mm")
         self.mesh_z_max_length_label.setText("< max " + str(z_distance2border) + " mm")
+
+
+    def update_vna_measurement_config_textEdit(self, vna_info: dict):
+        """
+        Updates the VNA measurement configuration textbox in body scan GUI.
+
+        Receives a dictionary as follows
+            vna_info: dict = {
+                'parameter': list[str,...]
+                'freq_start': float
+                'freq_stop': float
+                'sweep_num_points': int
+                'if_bw': float
+                'output_power': float
+                'avg_num': int
+            }
+
+        if vna_info is None, the textEdit will be cleared and 'No Config found' will be displayed.
+        """
+        if vna_info is None:
+            self.vna_config_info_textEdit.setText("No valid config found...")
+            return
+
+        info_string = "VNA Measurement Configuration\n"
+        info_string += "Parameters: " + str(vna_info['parameter']) + "\n"
+        info_string += "Frequency Start: " + str(vna_info['freq_start']) + " Hz\n"
+        info_string += "Frequency Stop: " + str(vna_info['freq_stop']) + " Hz\n"
+        info_string += "Number of Sweep Points: " + str(vna_info['sweep_num_points']) + "\n"
+        info_string += "IF Bandwidth: " + str(vna_info['if_bw']) + " Hz\n"
+        info_string += "Output Power: " + str(vna_info['output_power']) + " dBm\n"
+        info_string += "Number of Averages: " + str(vna_info['avg_num']) + "\n"
+        self.vna_config_info_textEdit.setText(info_string)
+
+    def append_message2log(self, message: str):
+        """
+        Adds the given 'message: str' with extra timestamp to the console field in the chamber_control_window.
+        """
+        time_now = datetime.now()
+        timestamp = time_now.strftime("%H:%M:%S")
+        new_text = '[' + timestamp + ']: ' + message
+        self.meas_progress_log_textEdit.append(new_text)
+        return
