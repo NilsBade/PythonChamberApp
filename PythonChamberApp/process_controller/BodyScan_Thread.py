@@ -43,6 +43,7 @@ class BodyScan(QRunnable):
     mesh_y_vector: tuple[float, ...] = None
     mesh_z_vector: tuple[float, ...] = None
     chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
+    z_move_sleep_time: float = 0.0  # unit [s], sleep time after z-movement to let chamber/body settle
     origin: tuple[float, ...] = None
 
     measurement_file_json = None
@@ -57,7 +58,7 @@ class BodyScan(QRunnable):
 
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, origin: tuple[float, ...],
-                 file_location: str):
+                 file_location: str, z_move_sleep_time: float = 0.0):
         super(BodyScan, self).__init__()
 
         self.signals = AutoMeasurementSignals()
@@ -73,6 +74,7 @@ class BodyScan(QRunnable):
         self.mesh_y_vector = y_vec
         self.mesh_z_vector = z_vec
         self.chamber_mov_speed = mov_speed
+        self.z_move_sleep_time = z_move_sleep_time
         self.origin = origin
 
         # redundant None initialization to be sure
@@ -146,7 +148,7 @@ class BodyScan(QRunnable):
         progress_dict = {
             'total_points_in_measurement': total_num_of_points,
             'num_of_layers_in_measurement': num_of_layers,
-            'num_of_point_in_current_layer': num_of_points_per_layer,
+            'num_of_points_in_current_layer': num_of_points_per_layer,
             'status_flag': "Measurement running ...",
             'time_to_go': 'N/A',  # time to go in [seconds] as float
         }
@@ -191,9 +193,12 @@ class BodyScan(QRunnable):
                             self.signals.position_update.emit({'abs_x': x_coor, 'abs_y': y_coor, 'abs_z': z_coor})
                             self.signals.update.emit("Movement done!")
 
+                            # sleep to let chamber/body settle #
+                            time.sleep(self.z_move_sleep_time)
+
                             # Routine to do vna measurement and store data somewhere put here...
                             self.signals.update.emit("Trigger measurement...")
-                            self.vna.pna_trigger_measurement(self.vna_meas_name)
+                            self.vna.pna_trigger_measurement(self.vna_meas_name)    # Comment here when testing without VNA
                             self.signals.update.emit("Measurement done! Read data from VNA and write to file...")
 
                             x_coor_antennas = x_coor - self.origin[0]
@@ -206,7 +211,7 @@ class BodyScan(QRunnable):
                                     # read data to buffer property
                                     self.signals.update.emit(
                                         f"JSON-routine reads {json_dic['parameter']}-Parameter Values...")
-                                    data = self.vna.pna_read_meas_data(self.vna_meas_name, json_dic['parameter'])
+                                    data = self.vna.pna_read_meas_data(self.vna_meas_name, json_dic['parameter'])   # comment here when testing without VNA
                                     for freq_point in data:
                                         pointer = complex(real=freq_point[1], imag=freq_point[2])
                                         json_dic['values'].append(

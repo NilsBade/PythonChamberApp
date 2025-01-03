@@ -9,6 +9,7 @@ import user_interface as ui_pkg
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 from .AutoMeasurement_Thread import AutoMeasurement
+from .BodyScan_Thread import BodyScan
 from .multithread_worker import Worker
 from .CalibrationRoutine_Thread import CalibrationRoutine
 from vna_net_interface import E8361RemoteGPIB
@@ -25,6 +26,7 @@ class ProcessController:
 
     threadpool: QThreadPool = None
     auto_measurement_process: AutoMeasurement = None  # Automation thread that runs in parallel
+    body_scan_process: BodyScan = None  # Body scan thread that runs in parallel
     ui_chamber_control_process: Worker = None  # Assure that only one jog command at a time is requested
     ui_vna_control_process: Worker = None   # Assure that only one GPIB command/request is sent to VNA at a time
     ui_chamber_control_calibration_process: CalibrationRoutine = None  # Stores the calibration routine thread for convenience
@@ -105,7 +107,7 @@ class ProcessController:
         # setup AutoMeasurement
         self.zero_pos_x = 258.0     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
         self.zero_pos_y = 225.5     # measured with V1 BL Touch sensor mount and ProbeHead V4, 03.07.2024
-        self.zero_pos_z = 100.0 #None todo set none again after debug
+        self.zero_pos_z = None
         self.gui_mainWindow.ui_auto_measurement_window.update_current_zero_pos(self.zero_pos_x, self.zero_pos_y,
                                                                                self.zero_pos_z)
         # connect all Slots & Signals Auto measurement window
@@ -128,6 +130,8 @@ class ProcessController:
             self.body_scan_set_origin_button_handler)
         self.gui_mainWindow.ui_body_scan_window.vna_config_filepath_check_button.pressed.connect(
             self.body_scan_check_vna_config_button_handler)
+        self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.pressed.connect(
+            self.body_scan_start_button_handler)
 
         # connect all Slots & Signals display measurement window
         self.gui_mainWindow.ui_display_measurement_window.file_select_refresh_button.pressed.connect(
@@ -172,7 +176,7 @@ class ProcessController:
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-    # General Callbacks
+    # **General Callbacks** ################################################
     def chamber_control_update_live_position(self, pos_update_info: dict):
         """
         This function **must be connected to POSITION_UPDATE SIGNAL of every method that requests movement by the chamber** and therefore changes its head position.
@@ -272,6 +276,36 @@ class ProcessController:
             return False
         else:
             return True
+
+    def check_if_busy(self):
+        """
+        This function checks the process controller for running threads (e.g. Worker, AutoMeasurement, BodyScan, CalibrationRoutine).
+        Returns True if any thread is running and False if not.
+
+        Use this method to check if a new thread can be started or not.
+
+        :return: bool >> True if any thread is running, False if not ; string >> string with all running threads
+
+        """
+        process_running_flag = False
+        process_running_string = ""
+        if self.ui_chamber_control_process is not None:
+            process_running = True
+            process_running_string += "Chamber control routine is running.\n"
+        if self.ui_vna_control_process is not None:
+            process_running = True
+            process_running_string += "VNA control routine is running.\n"
+        if self.auto_measurement_process is not None:
+            process_running = True
+            process_running_string += "Auto Measurement process is running.\n"
+        if self.body_scan_process is not None:
+            process_running = True
+            process_running_string += "Body Scan process is running.\n"
+        if self.ui_chamber_control_calibration_process is not None:
+            process_running = True
+            process_running_string += "Calibration routine is running.\n"
+        return process_running_flag, process_running_string
+
 
     # **UI_config_window Callbacks** ################################################
     def chamber_connect_button_handler_threaded(self):
@@ -1018,12 +1052,13 @@ class ProcessController:
 
         Gets config data from auto measurement window, creates auto measurement thread and starts operation
         """
-
-        #   Check that no measurement is currently running
-        if self.ui_chamber_control_process is not None:
-            self.gui_mainWindow.prompt_warning("Please wait until process from chamber control menu is "
-                                               "finished before starting the measurement.",
-                                               "Chamber is in operation")
+        #   Check if process controller has busy thread running / avoid collision
+        busy_flag, busy_thread = self.check_if_busy()
+        if busy_flag is True:
+            self.gui_mainWindow.prompt_warning("Please wait until all other processes "
+                                               "finished before starting the measurement.\n"
+                                               "Found Processes:\n" + busy_thread,
+                                               "Busy Thread found")
             return
 
         #   Setup results directory
@@ -1052,6 +1087,13 @@ class ProcessController:
             self.gui_mainWindow.prompt_warning("Configured mesh defines coordinates out of workspace "
                                                "boundaries.\n Please modify mesh config.",
                                                "Invalid mesh configuration")
+            return
+
+        #   Check if zero position is known
+        if self.zero_pos_x is None or self.zero_pos_y is None or self.zero_pos_z is None:
+            self.gui_mainWindow.prompt_warning("Zero position is not known. Please home all axis and set a "
+                                               "zero position before starting the measurement.",
+                                               "Unknown Zero Position")
             return
 
         #   Get vna config info
@@ -1083,36 +1125,33 @@ class ProcessController:
         #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
         self.gui_mainWindow.disable_vna_control_window()
+        self.gui_mainWindow.disable_body_scan_window()
         self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(False)
 
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
         zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
 
-        if self.auto_measurement_process is None:
-            self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
-                                                            x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
-                                                            z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
-                                                            zero_position=zero_pos, file_location=generic_file_path,
-                                                            file_type_json=file_type_json_flag,
-                                                            file_type_json_readable=file_type_json_readable)
+        self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
+                                                        x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
+                                                        z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
+                                                        zero_position=zero_pos, file_location=generic_file_path,
+                                                        file_type_json=file_type_json_flag,
+                                                        file_type_json_readable=file_type_json_readable)
 
-            self.auto_measurement_process.signals.update.connect(
-                self.gui_mainWindow.ui_config_window.append_message2console)
-            self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        self.auto_measurement_process.signals.update.connect(
+            self.gui_mainWindow.ui_config_window.append_message2console)
+        self.auto_measurement_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
 
-            self.auto_measurement_process.signals.position_update.connect(self.chamber_control_update_live_position)
+        self.auto_measurement_process.signals.position_update.connect(self.chamber_control_update_live_position)
 
-            self.auto_measurement_process.signals.progress.connect(
-                self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
+        self.auto_measurement_process.signals.progress.connect(
+            self.gui_mainWindow.ui_auto_measurement_window.update_auto_measurement_progress_state)
 
-            self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
-            # Error handler to be implemented once error messages are more detailed
-            # self.auto_measurement_process.signals.error.connect()
+        self.auto_measurement_process.signals.finished.connect(self.auto_measurement_finished_handler)
+        # Error handler to be implemented once error messages are more detailed
+        # self.auto_measurement_process.signals.error.connect()
 
-            self.threadpool.start(self.auto_measurement_process)
-        else:
-            self.gui_mainWindow.prompt_warning("An Automated Measurement Process Thread is already running!",
-                                               "More than one Measurement Process")
+        self.threadpool.start(self.auto_measurement_process)
         return
 
     def auto_measurement_vna_config_check_button_handler(self):
@@ -1170,6 +1209,7 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.append_message2console("Auto Measurement Instance deleted.")
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_vna_control_window()
+        self.gui_mainWindow.enable_body_scan_window()
         self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(True)
 
     def auto_measurement_goZero_button_handler(self):
@@ -1262,7 +1302,7 @@ class ProcessController:
 
     def auto_measurement_terminate_thread_handler(self):
         """
-        Issues a QThred::terminate() on the auto measurement thread that is stored in the process controller
+        Issues a QThread::terminate() on the auto measurement thread that is stored in the process controller
         """
         if self.auto_measurement_process is not None:
             if self.__accept_stop_meas_dialog():
@@ -1354,43 +1394,98 @@ class ProcessController:
 
         body_scan_finished handler must re-enable all functionalities.
         """
-        # check if chamber ok, check movement boundaries by auto_measurement_check_move_boundary
+        #   Check if process controller has busy thread running / avoid collision
+        busy_flag, busy_thread = self.check_if_busy()
+        if busy_flag is True:
+            self.gui_mainWindow.prompt_warning("Please wait until all other processes "
+                                               "finished before starting the measurement.\n"
+                                               "Found Processes:\n" + busy_thread,
+                                               "Busy Thread found")
+            return
 
-        # check if pna ok
+        #   Check if chamber ok
+        if self.chamber is None:
+            self.gui_mainWindow.prompt_warning("Chamber not connected or not available!", "Chamber not available")
+            return
 
-        # check if valid file path given to store results
+        #   Check if pna ok
+        if self.vna is None:
+            self.gui_mainWindow.prompt_warning("VNA not connected or not available!", "VNA not available")
+            return
 
-        # initialize worker thread
+        #   Check if origin is set
+        if self.origin_x is None or self.origin_y is None or self.origin_z is None:
+            self.gui_mainWindow.prompt_warning("Origin not set!\nPlease set origin before starting the measurement.",
+                                               "Origin not set")
+            return
 
-        # connect finished signal to handler
+        #   Check movement boundaries by auto_measurement_check_move_boundary
+        mesh_info = self.gui_mainWindow.ui_body_scan_window.get_mesh_data()
+        if self.auto_measurement_check_move_boundary(x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec']) is not True:
+            self.gui_mainWindow.prompt_warning("Configured mesh defines coordinates out of workspace "
+                                               "boundaries.\n Please modify mesh config.",
+                                               "Invalid mesh configuration")
+            return
 
-        # connect update signal / position update signal to handlers
+        #   Check if VNA config is valid
+        """ Same procedure as in AutoMeasurement start_handler """
+        vna_info = self.gui_mainWindow.ui_body_scan_window.get_vna_configuration()
+        vna_info['meas_name'] = 'BodyScan'   # default BodyScan meas_name
+        # Configure vna by .cst file if selected
+        extra_info = self.vna.pna_preset_from_file(vna_info['vna_preset_from_file'], vna_info['meas_name'])
+        # error handling
+        if extra_info is None:
+            self.gui_mainWindow.prompt_warning("Invalid .cst file path given!\n"
+                                               "Please check the path and try again.",
+                                               "Invalid .cst file path")
+            return
+        vna_info['parameter'] = extra_info['parameter']
+        vna_info['freq_start'] = extra_info['freq_start']
+        vna_info['freq_stop'] = extra_info['freq_stop']
+        vna_info['if_bw'] = extra_info['if_bw']
+        vna_info['sweep_num_points'] = extra_info['sweep_num_points']
+        vna_info['output_power'] = extra_info['output_power']
+        vna_info['avg_num'] = extra_info['avg_num']
+        self.gui_mainWindow.ui_body_scan_window.update_vna_measurement_config_textEdit(vna_info)
 
-        # start worker thread with body_scan_process_routine
+        #   Setup results directory
+        path_workdirectory = os.path.dirname(os.getcwd())
+        if not os.path.exists(os.path.join(path_workdirectory + '/results')):
+            os.makedirs(os.path.join(path_workdirectory + '/results'))
+        path_results_folder = os.path.join(os.getcwd() + '/results')
+        #   Check if valid file path given to store results
+        meas_file_name = self.gui_mainWindow.ui_body_scan_window.filename_lineEdit.text()
+        new_file_path = os.path.join(path_results_folder + '/' + meas_file_name + '.json')
+        if os.path.isfile(new_file_path):
+            self.gui_mainWindow.prompt_warning("A json-measurement file with the given name is already stored. \n"
+                                               "Overrride is not permitted. Please change the desired file name.",
+                                               "Duplicate json Filename")
+            return
 
-    def body_scan_process_routine(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict,
-                                  x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...],
-                                  mov_speed: float, origin: tuple[float, float, float], file_location: str,
-                                  update_callback, progress_callback, position_update_callback):
-        """
-        Routine that is run in a separate worker thread.
-        It receives necessary mesh data vna-info etc. as well as the chamber object and the VNA object!
-        This should prevent multiple processes from reaching for the same resource.
-        (Note: Questionable if that works because call by value or by reference...)
-        """
-        # Preset PNA with config file
+        #   initialize BodyScan thread
+        self.body_scan_process = BodyScan(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
+                                          x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec'],
+                                          mov_speed=mesh_info['jog_speed'],
+                                          origin=(self.origin_x, self.origin_y, self.origin_z),
+                                          file_location=new_file_path, z_move_sleep_time=mesh_info['z_move_sleep_time'])
 
-        # setup data buffer for results with pna info, mesh info, origin info
+        #   connect update signal / position update signal to handlers
+        self.body_scan_process.signals.update.connect(self.gui_mainWindow.ui_body_scan_window.append_message2log)
+        self.body_scan_process.signals.update.connect(self.gui_mainWindow.update_status_bar)
+        self.body_scan_process.signals.position_update.connect(self.chamber_control_update_live_position)
+        self.body_scan_process.signals.progress.connect(self.gui_mainWindow.ui_body_scan_window.update_body_scan_progress_state)
 
-        # signal start of process
+        #   connect finished signal to handler
+        self.body_scan_process.signals.finished.connect(self.body_scan_finished_handler)
 
-        # send first progress signal
+        #   disable conflicting functionalities in the GUI
+        self.gui_mainWindow.disable_chamber_control_window()
+        self.gui_mainWindow.disable_vna_control_window()
+        self.gui_mainWindow.disable_auto_measurement_window()
+        self.gui_mainWindow.ui_body_scan_window.disable_inputs()
 
-        # start body scan process, loop through mesh point by point.
-        # At each point do full z-elevation, then go for the next point.
-
-        # send update signal with info where results were saved and how long the measurement took overall
-
+        #   start worker thread with body_scan_process_routine
+        self.threadpool.start(self.body_scan_process)
         return
 
     def body_scan_finished_handler(self):
@@ -1399,6 +1494,11 @@ class ProcessController:
         Re-enables all functionalities in the GUI.
         """
         # re-enable all functionalities previously disabled by start-handler
+        self.gui_mainWindow.enable_chamber_control_window()
+        self.gui_mainWindow.enable_vna_control_window()
+        self.gui_mainWindow.enable_auto_measurement_window()
+        self.gui_mainWindow.ui_body_scan_window.enable_inputs()
+        return
 
 
     # **UI_display_measurement_window Callbacks** ################################################

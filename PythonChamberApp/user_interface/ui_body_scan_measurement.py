@@ -6,7 +6,7 @@ from PyQt6.QtSvgWidgets import QSvgWidget
 from PyQt6.QtGui import QPixmap
 import pyqtgraph as pg
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class UI_body_scan_measurement_window(QWidget):
@@ -148,6 +148,8 @@ class UI_body_scan_measurement_window(QWidget):
         # Initialize mesh config inputs
         sub_layout = QGridLayout()
         frame_layout.addLayout(sub_layout)
+        jog_speed_label = QLabel("Jog Speed [mm/s]:")
+        self.body_scan_jogSpeed_LineEdit = QLineEdit("200.0")
         label_len_x = QLabel("Length X [mm]:")
         label_len_y = QLabel("Length Y [mm]:")
         label_len_z = QLabel("Length Z [mm]:")
@@ -167,23 +169,25 @@ class UI_body_scan_measurement_window(QWidget):
         self.mesh_z_num_of_steps_lineEdit = QLineEdit("0")
         self.z_move_sleepTime_lineEdit = QLineEdit("0.0")
         # Assemble layout
-        sub_layout.addWidget(label_len_x, 0, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_x_length_lineEdit, 0, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_x_max_length_label, 0, 2, 1, 1)
-        sub_layout.addWidget(label_num_x, 1, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_x_num_of_steps_lineEdit, 1, 1, 1, 1)
-        sub_layout.addWidget(label_len_y, 2, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_y_length_lineEdit, 2, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_y_max_length_label, 2, 2, 1, 1)
-        sub_layout.addWidget(label_num_y, 3, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_y_num_of_steps_lineEdit, 3, 1, 1, 1)
-        sub_layout.addWidget(label_len_z, 4, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_z_length_lineEdit, 4, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_z_max_length_label, 4, 2, 1, 1)
-        sub_layout.addWidget(label_num_z, 5, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_z_num_of_steps_lineEdit, 5, 1, 1, 1)
-        sub_layout.addWidget(label_sleep_time, 6, 0, 1, 1)
-        sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 6, 1, 1, 1)
+        sub_layout.addWidget(jog_speed_label,0,0,1,1)
+        sub_layout.addWidget(self.body_scan_jogSpeed_LineEdit,0,1,1,1)
+        sub_layout.addWidget(label_len_x, 1, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_length_lineEdit, 1, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_x_max_length_label, 1, 2, 1, 1)
+        sub_layout.addWidget(label_num_x, 2, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_num_of_steps_lineEdit, 2, 1, 1, 1)
+        sub_layout.addWidget(label_len_y, 3, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_length_lineEdit, 3, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_y_max_length_label, 3, 2, 1, 1)
+        sub_layout.addWidget(label_num_y, 4, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_num_of_steps_lineEdit, 4, 1, 1, 1)
+        sub_layout.addWidget(label_len_z, 5, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_length_lineEdit, 5, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_z_max_length_label, 5, 2, 1, 1)
+        sub_layout.addWidget(label_num_z, 6, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_num_of_steps_lineEdit, 6, 1, 1, 1)
+        sub_layout.addWidget(label_sleep_time, 7, 0, 1, 1)
+        sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 7, 1, 1, 1)
 
         # connect callbacks for plot updates when mesh changed
         self.mesh_x_length_lineEdit.editingFinished.connect(self.update_2d_plots)
@@ -562,6 +566,61 @@ class UI_body_scan_measurement_window(QWidget):
         info_string += "Number of Averages: " + str(vna_info['avg_num']) + "\n"
         self.vna_config_info_textEdit.setText(info_string)
 
+    def update_body_scan_progress_state(self, state_info: dict):
+        """
+        Function receives state info dictionary and updates the gui display accordingly.
+        expected state_info keywords are following:
+         state_info: dict = {
+            'total_points_in_measurement': int,
+
+            'total_current_point_number': int,
+
+            'num_of_layers_in_measurement': int,
+
+            'current_layer_number': int,
+
+            'num_of_points_in_current_layer': int,
+
+            'current_point_number_in_layer': int,
+
+            'status_flag': string (optional),
+
+            'time_to_go': float >> estimated time in seconds
+          }
+
+        :param state_info: dictionary
+        """
+        num_of_points_in_current_layer = state_info['num_of_points_in_current_layer']
+        current_point_number_in_layer = state_info['current_point_number_in_layer']
+        num_of_layers_in_measurement = state_info['num_of_layers_in_measurement']
+        current_layer_number = state_info['current_layer_number']
+        total_points_in_measurement = state_info['total_points_in_measurement']
+        total_current_point_number = state_info['total_current_point_number']
+        time_to_go = state_info['time_to_go']
+
+        self.meas_progress_points_in_layer.setText(str(num_of_points_in_current_layer))
+        self.meas_progress_current_point_in_layer.setText(str(current_point_number_in_layer))
+        self.meas_progress_in_layer_progressBar.setMinimum(0)
+        self.meas_progress_in_layer_progressBar.setMaximum(num_of_points_in_current_layer)
+        self.meas_progress_in_layer_progressBar.setValue(current_point_number_in_layer)
+
+        self.meas_progress_layer_max_count.setText(str(num_of_layers_in_measurement))
+        self.meas_progress_layer_current.setText(str(current_layer_number))
+        self.meas_progress_layer_progressBar.setMinimum(0)
+        self.meas_progress_layer_progressBar.setMaximum(num_of_layers_in_measurement)
+        self.meas_progress_layer_progressBar.setValue(current_layer_number)
+
+        self.meas_progress_total_point_max_count.setText(str(total_points_in_measurement))
+        self.meas_progress_total_point_current.setText(str(total_current_point_number))
+        self.meas_progress_total_point_progressBar.setMinimum(0)
+        self.meas_progress_total_point_progressBar.setMaximum(total_points_in_measurement)
+        self.meas_progress_total_point_progressBar.setValue(total_current_point_number)
+
+        self.meas_progress_time_to_go.setText(str(timedelta(seconds=time_to_go)))
+
+        if 'status_flag' in state_info:
+            self.meas_progress_status_label.setText(state_info['status_flag'])
+
     def append_message2log(self, message: str):
         """
         Adds the given 'message: str' with extra timestamp to the console field in the chamber_control_window.
@@ -585,6 +644,8 @@ class UI_body_scan_measurement_window(QWidget):
                     'x_vec' : tuple(float,...) , vector that stores all x coordinates for chamber movement in growing order
                     'y_vec' : tuple(float,...) , vector that stores all y coordinates for chamber movement in growing order
                     'z_vec' : tuple(float,...) , vector that stores all z coordinates for chamber movement in growing order
+                    'jog_speed' : float , speed in [mm/s] for chamber movement
+                    'z_move_sleep_time' : float , sleep time in [s] after each z-movement
                     }
 
                 *Coordinates are already transferred to chamber-movement coordinate system based on set origin!*
@@ -626,6 +687,8 @@ class UI_body_scan_measurement_window(QWidget):
         info_dict['x_vec'] = tuple(x_vec)
         info_dict['y_vec'] = tuple(y_vec)
         info_dict['z_vec'] = tuple(z_vec)
+        info_dict['jog_speed'] = float(self.body_scan_jogSpeed_LineEdit.text())
+        info_dict['z_move_sleep_time'] = float(self.z_move_sleepTime_lineEdit.text())
 
         return info_dict
 
@@ -639,3 +702,35 @@ class UI_body_scan_measurement_window(QWidget):
             }
         """
         return {'vna_preset_from_file': self.vna_config_filepath_lineEdit.text()}
+
+    def disable_inputs(self):
+        """
+        Disables all inputs in the body scan tab. Use when body scan is started.
+        """
+        self.mesh_x_length_lineEdit.setEnabled(False)
+        self.mesh_x_num_of_steps_lineEdit.setEnabled(False)
+        self.mesh_y_length_lineEdit.setEnabled(False)
+        self.mesh_y_num_of_steps_lineEdit.setEnabled(False)
+        self.mesh_z_length_lineEdit.setEnabled(False)
+        self.mesh_z_num_of_steps_lineEdit.setEnabled(False)
+        self.z_move_sleepTime_lineEdit.setEnabled(False)
+        self.vna_config_filepath_lineEdit.setEnabled(False)
+        self.vna_config_filepath_check_button.setEnabled(False)
+        self.filename_lineEdit.setEnabled(False)
+        self.body_scan_start_button.setEnabled(False)
+
+    def enable_inputs(self):
+        """
+        Enables all inputs in the body scan tab. Use when body scan is stopped.
+        """
+        self.mesh_x_length_lineEdit.setEnabled(True)
+        self.mesh_x_num_of_steps_lineEdit.setEnabled(True)
+        self.mesh_y_length_lineEdit.setEnabled(True)
+        self.mesh_y_num_of_steps_lineEdit.setEnabled(True)
+        self.mesh_z_length_lineEdit.setEnabled(True)
+        self.mesh_z_num_of_steps_lineEdit.setEnabled(True)
+        self.z_move_sleepTime_lineEdit.setEnabled(True)
+        self.vna_config_filepath_lineEdit.setEnabled(True)
+        self.vna_config_filepath_check_button.setEnabled(True)
+        self.filename_lineEdit.setEnabled(True)
+        self.body_scan_start_button.setEnabled(True)

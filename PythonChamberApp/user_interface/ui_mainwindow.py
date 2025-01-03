@@ -61,10 +61,10 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.ui_body_scan_window, 'Body Scan')     # Tab 4
         self.tabs.addTab(self.ui_display_measurement_window, 'Display Measurements')    # Tab 5
         self.tabs.setTabEnabled(0, True)
-        self.tabs.setTabEnabled(1, True)       # Modify here when testing GUI elements without valid app config
-        self.tabs.setTabEnabled(2, True)        # todo set all to false after debug
-        self.tabs.setTabEnabled(3, True)
-        self.tabs.setTabEnabled(4, True)
+        self.tabs.setTabEnabled(1, False)       # Modify here when testing GUI elements without valid app config
+        self.tabs.setTabEnabled(2, False)
+        self.tabs.setTabEnabled(3, False)
+        self.tabs.setTabEnabled(4, False)
         self.tabs.setTabEnabled(5, True)        # always enable!
 
         self.setCentralWidget(self.tabs)
@@ -129,4 +129,10 @@ class MainWindow(QMainWindow):
 
     def disable_auto_measurement_window(self):
         self.tabs.setTabEnabled(3, False)
+
+    def enable_body_scan_window(self):
+        self.tabs.setTabEnabled(4, True)
+
+    def disable_body_scan_window(self):
+        self.tabs.setTabEnabled(4, False)
 
