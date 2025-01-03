@@ -43,6 +43,11 @@ class ProcessController:
     zero_pos_y: float = None
     zero_pos_z: float = None
 
+    # Body Scan data
+    origin_x: float = None
+    origin_y: float = None
+    origin_z: float = None
+
     # Measurement Display Data
     read_in_measurement_data_buffer: dict = None
 
@@ -118,6 +123,11 @@ class ProcessController:
             self.auto_measurement_terminate_thread_handler)
 
         # todo connect all Slots & Signals of body scan window. Define all necessary methods!
+        # connect all Slots & Signals body scan window
+        self.gui_mainWindow.ui_body_scan_window.button_set_current_as_origin.pressed.connect(
+            self.body_scan_set_origin_button_handler)
+        self.gui_mainWindow.ui_body_scan_window.vna_config_filepath_check_button.pressed.connect(
+            self.body_scan_check_vna_config_button_handler)
 
         # connect all Slots & Signals display measurement window
         self.gui_mainWindow.ui_display_measurement_window.file_select_refresh_button.pressed.connect(
@@ -200,10 +210,12 @@ class ProcessController:
         if 'rel_z' in pos_update_info:
             self.__z_live += pos_update_info['rel_z']
 
+        # Update all GUI 'current position' displays here!
         self.gui_mainWindow.ui_chamber_control_window.update_live_coor_display(self.__x_live, self.__y_live,
                                                                                self.__z_live)
         self.gui_mainWindow.ui_auto_measurement_window.update_live_coor_display(self.__x_live, self.__y_live,
                                                                                 self.__z_live)
+        self.gui_mainWindow.ui_body_scan_window.update_live_coor_display(self.__x_live, self.__y_live, self.__z_live)
 
         return
 
@@ -1108,6 +1120,7 @@ class ProcessController:
         Callback for 'Check'-button in ui_auto_measurement > VNA configuration window.
         Sets up the PNA according to given filename and updates UI below accordingly.
         If invalid filename is given, error will occur in terminal due to pna not reacting etc.
+        In addition, a warning dialog will be prompted.
         """
         """ Same procedure as in AutoMeasurement start_handler """
         #   Get vna config info
@@ -1117,6 +1130,13 @@ class ProcessController:
         #   Configure vna by .cst file if selected
         if 'vna_preset_from_file' in vna_info:
             extra_info = self.vna.pna_preset_from_file(vna_info['vna_preset_from_file'], vna_info['meas_name'])
+            # error handling
+            if extra_info is None:
+                self.gui_mainWindow.prompt_warning("Invalid .cst file path given!\n"
+                                                   "Please check the path and try again.",
+                                                   "Invalid .cst file path")
+                return
+
             vna_info['parameter'] = extra_info['parameter']
             vna_info['freq_start'] = extra_info['freq_start']
             vna_info['freq_stop'] = extra_info['freq_stop']
@@ -1250,11 +1270,11 @@ class ProcessController:
 
     def __accept_stop_meas_dialog(self):
         """
-        prompts a dialog window asking for automeasurement process termination.
+        prompts a dialog window asking for measurement-process termination.
         :return: True >> ok clicked, False >> cancel clicked
         """
         dlg = QMessageBox(self.gui_mainWindow)
-        dlg.setWindowTitle("Terminate Auto Measurement")
+        dlg.setWindowTitle("Terminate Measurement")
         dlg.setText("Do you really want to stop the measurement process?\n"
                     "Once stopped it can not be resumed again!\n\n"
                     "Data collected so far will be in desired file-location.")
@@ -1266,6 +1286,120 @@ class ProcessController:
             return True
         else:
             return False
+
+    # **UI_body_scan_window Callbacks** ################################################
+    def body_scan_set_origin_button_handler(self):
+        """
+        Callback for 'set origin from current position' button, that gets the current chamber position and stores it
+        in the origin property of the process controller.
+        """
+        if self.__x_live is None or self.__y_live is None or self.__z_live is None:
+            self.gui_mainWindow.prompt_warning("Position currently unknown!", "Invalid Live Position")
+            return
+
+        self.origin_x = self.__x_live
+        self.origin_y = self.__y_live
+        self.origin_z = self.__z_live
+
+        self.gui_mainWindow.ui_body_scan_window.update_current_origin(self.origin_x, self.origin_y, self.origin_z)
+        self.gui_mainWindow.ui_body_scan_window.update_2d_plots()
+        console_msg = "Updated origin to X:" + str(self.origin_x) + " Y:" + str(self.origin_y) + " Z:" + str(
+            self.origin_z)
+        self.gui_mainWindow.ui_chamber_control_window.append_message2console(console_msg)
+        self.gui_mainWindow.update_status_bar(console_msg)
+        self.gui_mainWindow.ui_body_scan_window.append_message2log(console_msg)
+
+        return
+
+    def body_scan_check_vna_config_button_handler(self):
+        """
+        Callback for 'Check'-button in ui_body_scan > VNA configuration window.
+        Sets up the PNA according to given filename and updates UI below accordingly.
+
+        """
+        """ Same procedure as in AutoMeasurement start_handler """
+        #   Get vna config info
+        vna_info = self.gui_mainWindow.ui_body_scan_window.get_vna_configuration()
+        vna_info['meas_name'] = 'CheckMeasurement'
+
+        extra_info = self.vna.pna_preset_from_file(vna_info['vna_preset_from_file'], vna_info['meas_name'])
+        # error handling
+        if extra_info is None:
+            self.gui_mainWindow.ui_body_scan_window.vna_config_info_textEdit.setText("Invalid .cst file path given!")
+            self.gui_mainWindow.ui_body_scan_window.append_message2log("Invalid .cst file path given!")
+            self.gui_mainWindow.prompt_warning("Invalid .cst file path given!\n"
+                                               "Please check the path and try again.",
+                                               "Invalid .cst file path")
+            return
+
+        vna_info['parameter'] = extra_info['parameter']
+        vna_info['freq_start'] = extra_info['freq_start']
+        vna_info['freq_stop'] = extra_info['freq_stop']
+        vna_info['if_bw'] = extra_info['if_bw']
+        vna_info['sweep_num_points'] = extra_info['sweep_num_points']
+        vna_info['output_power'] = extra_info['output_power']
+        vna_info['avg_num'] = extra_info['avg_num']
+        self.gui_mainWindow.ui_body_scan_window.update_vna_measurement_config_textEdit(vna_info)
+        return
+
+    def body_scan_start_button_handler(self):
+        """
+        Callback for 'Start' button in ui_body_scan_window.
+        Checks if chamber is not in operation and present. Checks in VNA is available, operating and if a filepath
+        to a valid .cst config file is given.
+
+        Initializes a routine and starts the body scan process via a worker thread.
+        It disables the chamber control, VNA control and automeasurement window during the process.
+        It also disables new inputs and button clicks on the body scan window.
+
+        body_scan_finished handler must re-enable all functionalities.
+        """
+        # check if chamber ok, check movement boundaries by auto_measurement_check_move_boundary
+
+        # check if pna ok
+
+        # check if valid file path given to store results
+
+        # initialize worker thread
+
+        # connect finished signal to handler
+
+        # connect update signal / position update signal to handlers
+
+        # start worker thread with body_scan_process_routine
+
+    def body_scan_process_routine(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict,
+                                  x_vec: tuple[float, ...], y_vec: tuple[float, ...], z_vec: tuple[float, ...],
+                                  mov_speed: float, origin: tuple[float, float, float], file_location: str,
+                                  update_callback, progress_callback, position_update_callback):
+        """
+        Routine that is run in a separate worker thread.
+        It receives necessary mesh data vna-info etc. as well as the chamber object and the VNA object!
+        This should prevent multiple processes from reaching for the same resource.
+        (Note: Questionable if that works because call by value or by reference...)
+        """
+        # Preset PNA with config file
+
+        # setup data buffer for results with pna info, mesh info, origin info
+
+        # signal start of process
+
+        # send first progress signal
+
+        # start body scan process, loop through mesh point by point.
+        # At each point do full z-elevation, then go for the next point.
+
+        # send update signal with info where results were saved and how long the measurement took overall
+
+        return
+
+    def body_scan_finished_handler(self):
+        """
+        Callback that is called once the body scan process is finished.
+        Re-enables all functionalities in the GUI.
+        """
+        # re-enable all functionalities previously disabled by start-handler
+
 
     # **UI_display_measurement_window Callbacks** ################################################
     def display_measurement_refresh_file_dropdown(self):
