@@ -342,7 +342,7 @@ class AutoMeasurement(QRunnable):
             for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
                 if par_dict is not None:
                     num_points_measured = par_dict['values'].__len__()
-                    base_buffer = par_dict
+                    base_buffer = par_dict      # base_buffer always overridden since same XYZ and Freq for all S-params
             # 3. run through base-buffer list to get all coordinates and frequencies and append the measured
             # amplitudes and phases to the data-list as ONE list-entry for all measured S-parameters in one point
             # at one frequency.
