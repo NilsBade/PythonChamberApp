@@ -1596,6 +1596,7 @@ class ProcessController:
         value_list = self.read_in_measurement_data_buffer['data']
         list_idx = 0
         # value_list setup like [ [x0, y0, z0, f0, s11amp0, s11phase0, s12amp0, s12phase0, s22amp0, s22phase0], ...] runs through 1. frequency, 2. x-coor, 3. y-coor, 4. z-coor
+        # NOTE: This loop is the reason why the data must be sorted in that list by x > y > z
         for z_idx in range(self.read_in_measurement_data_buffer['z_vec'].__len__()):
             for y_idx in range(self.read_in_measurement_data_buffer['y_vec'].__len__()):
                 for x_idx in range(self.read_in_measurement_data_buffer['x_vec'].__len__()):
