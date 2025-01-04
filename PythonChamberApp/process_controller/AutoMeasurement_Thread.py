@@ -9,6 +9,7 @@ import math
 from datetime import datetime, timedelta
 import json
 import os
+import numpy as np
 
 
 class AutoMeasurementSignals(QObject):
@@ -71,9 +72,9 @@ class AutoMeasurement(QRunnable):
     vna_info_buffer: dict = None
     vna_meas_name: str = None
 
-    mesh_x_vector: tuple[float, ...] = None
-    mesh_y_vector: tuple[float, ...] = None
-    mesh_z_vector: tuple[float, ...] = None
+    mesh_x_vector: np.ndarray = None
+    mesh_y_vector: np.ndarray = None
+    mesh_z_vector: np.ndarray = None
     chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
     zero_position: tuple[float, ...] = [0, 0, 0]  # zero position must be known to write relative antenna coordinates to meas file
 
@@ -103,9 +104,9 @@ class AutoMeasurement(QRunnable):
         # Note: AutoMeasurement Thread assumes that the start-method already set up the PNA / VNA successfully and uses
         # vna_info just for docu in json file. If the PNA / VNA is not set up correctly, the thread will fail.
 
-        self.mesh_x_vector = x_vec
-        self.mesh_y_vector = y_vec
-        self.mesh_z_vector = z_vec
+        self.mesh_x_vector = np.array(x_vec, dtype=float)
+        self.mesh_y_vector = np.array(y_vec, dtype=float)
+        self.mesh_z_vector = np.array(z_vec, dtype=float)
         self.chamber_mov_speed = mov_speed
         self.zero_position = zero_position
         self.store_as_json = file_type_json
@@ -197,10 +198,16 @@ class AutoMeasurement(QRunnable):
         visa_timeout_error_counter = 0
         VISA_TIMEOUTS_BEFORE_RESET = 3
 
+        #    Initialize vector copies to realize snake-like movement
+        x_move_vec = np.flip(self.mesh_x_vector.copy())
+        y_move_vec = np.flip(self.mesh_y_vector.copy())
+
         for z_coor in self.mesh_z_vector:
             layer_count += 1
+            y_move_vec = np.flip(y_move_vec)    # snake movement in y-direction
             # measure one layer
             for y_coor in self.mesh_y_vector:
+                x_move_vec = np.flip(x_move_vec)    # snake movement in x-direction
                 for x_coor in self.mesh_x_vector:
                     point_in_layer_count += 1
                     total_point_count += 1
@@ -347,10 +354,10 @@ class AutoMeasurement(QRunnable):
             # amplitudes and phases to the data-list as ONE list-entry for all measured S-parameters in one point
             # at one frequency.
             for idx in range(num_points_measured):
-                point_list_entry_buffer[0] = base_buffer['values'][idx][0]  # X-coor
-                point_list_entry_buffer[1] = base_buffer['values'][idx][1]  # Y-coor
-                point_list_entry_buffer[2] = base_buffer['values'][idx][2]  # Z-coor
-                point_list_entry_buffer[3] = base_buffer['values'][idx][3]  # Frequency
+                point_list_entry_buffer[0] = float(base_buffer['values'][idx][0])  # X-coor, typecast to float because numpy
+                point_list_entry_buffer[1] = float(base_buffer['values'][idx][1])  # Y-coor, typecast to float because numpy
+                point_list_entry_buffer[2] = float(base_buffer['values'][idx][2])  # Z-coor, typecast to float because numpy
+                point_list_entry_buffer[3] = float(base_buffer['values'][idx][3])  # Frequency
                 for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
                     if par_dict is not None:
                         point_list_entry_buffer[par_dict['amp_idx']] = par_dict['values'][idx][4]
@@ -361,6 +368,17 @@ class AutoMeasurement(QRunnable):
             indent = None
             if self.json_format_readable:
                 indent = 4
+
+            # New 04.01.25 -- Sort list to be independent of movement pattern!
+            # List always looks like one ran through the mesh in
+            # 1. x-positive-direction, 2. y-positive-direction, 3. z-positive-direction
+            # Frequency is sorted as well, but should not be necessary to sort it again since PNA always measures
+            # from low to high frequency.
+            self.json_data_storage['data'] = sorted(self.json_data_storage['data'], key=lambda sublist: (sublist[2], #z
+                                                                                                         sublist[1], #y
+                                                                                                         sublist[0], #x
+                                                                                                         sublist[3]))#f
+
 
             self.measurement_file_json.write(json.dumps(self.json_data_storage, indent=indent))
             self.signals.update.emit(f"Data written to {self.measurement_file_json.name}")
