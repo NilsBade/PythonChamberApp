@@ -329,10 +329,10 @@ class BodyScan(QRunnable):
         # amplitudes and phases to the data-list as ONE list-entry for all measured S-parameters in one point
         # at one frequency.
         for idx in range(num_points_measured):
-            point_list_entry_buffer[0] = base_buffer['values'][idx][0]  # X-coor
-            point_list_entry_buffer[1] = base_buffer['values'][idx][1]  # Y-coor
-            point_list_entry_buffer[2] = base_buffer['values'][idx][2]  # Z-coor
-            point_list_entry_buffer[3] = base_buffer['values'][idx][3]  # Frequency
+            point_list_entry_buffer[0] = float(base_buffer['values'][idx][0])  # X-coor, typecast to regular float for json library
+            point_list_entry_buffer[1] = float(base_buffer['values'][idx][1])  # Y-coor, typecast to regular float for json library
+            point_list_entry_buffer[2] = float(base_buffer['values'][idx][2])  # Z-coor, typecast to regular float for json library
+            point_list_entry_buffer[3] = float(base_buffer['values'][idx][3])  # Frequency, typecast to regular float for json library
             for par_dict in [self.json_S11, self.json_S12, self.json_S22]:
                 if par_dict is not None:
                     point_list_entry_buffer[par_dict['amp_idx']] = par_dict['values'][idx][4]
