@@ -40,9 +40,9 @@ class BodyScan(QRunnable):
     vna_info_buffer: dict = None
     vna_meas_name: str = None
 
-    mesh_x_vector: tuple[float, ...] = None
-    mesh_y_vector: tuple[float, ...] = None
-    mesh_z_vector: tuple[float, ...] = None
+    mesh_x_vector: np.ndarray = None
+    mesh_y_vector: np.ndarray = None
+    mesh_z_vector: np.ndarray = None
     chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
     z_move_sleep_time: float = 0.0  # unit [s], sleep time after z-movement to let chamber/body settle
     origin: tuple[float, ...] = None
