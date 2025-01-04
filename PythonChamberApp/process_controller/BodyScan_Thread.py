@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import json
 import os
 from .AutoMeasurement_Thread import AutoMeasurementSignals
+import numpy as np
 
 
 class BodyScan(QRunnable):
@@ -45,6 +46,7 @@ class BodyScan(QRunnable):
     chamber_mov_speed: float = 0  # unit [mm/s], see jog command doc-string!
     z_move_sleep_time: float = 0.0  # unit [s], sleep time after z-movement to let chamber/body settle
     origin: tuple[float, ...] = None
+    z_move_below: float = 0.5  # unit [mm], offset to move below next XY-point before measurement to avoid z-direction lack ~0.2mm when chamber changes direction
 
     measurement_file_json = None
     json_data_storage: dict = None
@@ -70,9 +72,9 @@ class BodyScan(QRunnable):
         # successfully and uses vna_info just for docu in json file.
         # If the PNA / VNA is not set up correctly, the thread will fail.
 
-        self.mesh_x_vector = x_vec
-        self.mesh_y_vector = y_vec
-        self.mesh_z_vector = z_vec
+        self.mesh_x_vector = np.array(x_vec, dtype=float)
+        self.mesh_y_vector = np.array(y_vec, dtype=float)
+        self.mesh_z_vector = np.array(z_vec, dtype=float)
         self.chamber_mov_speed = mov_speed
         self.z_move_sleep_time = z_move_sleep_time
         self.origin = origin
@@ -161,10 +163,17 @@ class BodyScan(QRunnable):
 
         # START MEASUREMENT LOOP
         # >> changed order compared to AutoMeasurement to comply with bartosz suggestion for body scan
+        # Snake Movement in XY-Plane
+        x_move_vec = np.flip(self.mesh_x_vector.copy())  # Copy the x_vec and flip it because first run flips as well
         for y_coor in self.mesh_y_vector:
-            for x_coor in self.mesh_x_vector:
+            x_move_vec = np.flip(x_move_vec)
+            for x_coor in x_move_vec:
                 layer_count = 0             # reset layer count at each new point
                 point_in_layer_count += 1   # increment point in layer count for each new XY point addressed
+                # Move below point, avoid chamber z-direction lack
+                self.signals.update.emit(f"Move below next XY-point: ({x_coor}, {y_coor})")
+                self.chamber.chamber_jog_abs(x=x_coor, y=y_coor, z=float(self.mesh_z_vector[0]) - self.z_move_below,
+                                             speed=self.chamber_mov_speed)  # Comment here when testing without chamber
                 for z_coor in self.mesh_z_vector:
                     layer_count += 1
                     total_point_count += 1
@@ -330,6 +339,13 @@ class BodyScan(QRunnable):
                     point_list_entry_buffer[par_dict['phase_idx']] = par_dict['values'][idx][5]
             self.json_data_storage['data'].append(
                 point_list_entry_buffer.copy())  # Must use copy(), otherwise only reference handed to list!
+
+        # Sort list to be independent of movement pattern // comply with read-method of processController
+        self.json_data_storage['data'] = sorted(self.json_data_storage['data'],
+                                                key=lambda sublist: (sublist[2],  # z
+                                                                     sublist[1],  # y
+                                                                     sublist[0],  # x
+                                                                     sublist[3]))  # f
 
         # decide if formatting readable
         indent = 4
