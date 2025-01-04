@@ -329,6 +329,7 @@ class ProcessController:
         self.gui_mainWindow.ui_config_window.set_chamber_connected(False)
         self.gui_mainWindow.disable_chamber_control_window()
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)      # Comment here when testing without chamber
+        self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.setEnabled(False)                    # Comment here when testing without chamber
 
         connect_thread = Worker(self.chamber_connect_routine, ip_address, api_key)
         connect_thread.signals.update.connect(self.gui_mainWindow.ui_config_window.append_message2console)
@@ -368,11 +369,13 @@ class ProcessController:
         self.chamber = new_chamber
         self.gui_mainWindow.enable_chamber_control_window()
         self.gui_mainWindow.enable_auto_measurement_window()
+        self.gui_mainWindow.enable_body_scan_window()
         self.gui_mainWindow.ui_config_window.set_chamber_connected(True)
         self.gui_mainWindow.ui_config_window.append_message2console(
             "Printer object was generated and saved to app. Chamber control enabled.")
         if self.vna is not None:                                                                            # Comment here when testing without chamber
             self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)   # Comment here when testing without chamber
+            self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.setEnabled(True)                 # Comment here when testing without chamber
         return
 
     def vna_list_resources_button_handler(self):
@@ -399,7 +402,11 @@ class ProcessController:
         self.vna = None
         self.gui_mainWindow.ui_config_window.set_vna_connected(False)
         self.gui_mainWindow.disable_vna_control_window()
+        # reset GUI elements for more functionality
         self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(False)      # Comment here when testing without chamber
+        self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.setEnabled(False)                    # Comment here when testing without chamber
+        self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(False)
+        self.gui_mainWindow.ui_body_scan_window.vna_config_filepath_check_button.setEnabled(False)
 
         # start connect routine
         connect_thread = Worker(self.vna_connect_routine, visa_address, self.gui_mainWindow.ui_config_window.get_use_keysight())
@@ -442,12 +449,20 @@ class ProcessController:
         """
         if new_vna is not None:
             self.vna = new_vna
+            #   Enable windows
             self.gui_mainWindow.enable_vna_control_window()
+            self.gui_mainWindow.enable_auto_measurement_window()
+            self.gui_mainWindow.enable_body_scan_window()
+            #   Enable additional functionality GUI elements
+            self.gui_mainWindow.ui_auto_measurement_window.vna_config_filepath_check_button.setEnabled(True)
+            self.gui_mainWindow.ui_body_scan_window.vna_config_filepath_check_button.setEnabled(True)
+            #   Set connected flag and append update
             self.gui_mainWindow.ui_config_window.set_vna_connected(True)
             self.gui_mainWindow.ui_config_window.append_message2console(
                 "VNA object was generated and saved to app. VNA control tab enabled.")
             if self.chamber is not None:                                                                        # Comment here when testing without chamber
                 self.gui_mainWindow.ui_auto_measurement_window.auto_measurement_start_button.setEnabled(True)   # Comment here when testing without chamber
+                self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.setEnabled(True)                 # Comment here when testing without chamber
         return
 
     # **UI_chamber_control_window Callbacks** ################################################
