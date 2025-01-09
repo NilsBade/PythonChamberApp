@@ -707,6 +707,8 @@ class UI_body_scan_measurement_window(QWidget):
         """
         Disables all inputs in the body scan tab. Use when body scan is started.
         """
+        self.button_set_current_as_origin.setEnabled(False)
+        self.body_scan_jogSpeed_LineEdit.setEnabled(False)
         self.mesh_x_length_lineEdit.setEnabled(False)
         self.mesh_x_num_of_steps_lineEdit.setEnabled(False)
         self.mesh_y_length_lineEdit.setEnabled(False)
@@ -723,6 +725,8 @@ class UI_body_scan_measurement_window(QWidget):
         """
         Enables all inputs in the body scan tab. Use when body scan is stopped.
         """
+        self.button_set_current_as_origin.setEnabled(True)
+        self.body_scan_jogSpeed_LineEdit.setEnabled(True)
         self.mesh_x_length_lineEdit.setEnabled(True)
         self.mesh_x_num_of_steps_lineEdit.setEnabled(True)
         self.mesh_y_length_lineEdit.setEnabled(True)
