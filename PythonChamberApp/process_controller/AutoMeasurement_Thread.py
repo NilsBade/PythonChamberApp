@@ -206,9 +206,9 @@ class AutoMeasurement(QRunnable):
             layer_count += 1
             y_move_vec = np.flip(y_move_vec)    # snake movement in y-direction
             # measure one layer
-            for y_coor in self.mesh_y_vector:
+            for y_coor in y_move_vec:
                 x_move_vec = np.flip(x_move_vec)    # snake movement in x-direction
-                for x_coor in self.mesh_x_vector:
+                for x_coor in x_move_vec:
                     point_in_layer_count += 1
                     total_point_count += 1
 
