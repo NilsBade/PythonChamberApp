@@ -48,32 +48,32 @@ for f in range(num_freq_points):
             print("Amplitude offset variation (linear): ", freq_offset_variation)
 
 
-# Window Config
-main_fig, main_axes = plt.subplots(nrows=1, ncols=num_freq_points)
-manager_main_fig = plt.get_current_fig_manager()
-manager_main_fig.set_window_title('Maximum Amplitude Offset Difference (linear) in XY-Plane')
-main_fig.text(0.5, 0.975, str('Amplitude Offset Variation in XY-Plane // Data drawn from ' + __filename), ha='center', fontsize=12)
-info_string = "Maximum/Minimum measured amplitude difference [?] at "
-for i in range(num_freq_points):
-    x = x_val
-    y = y_val[i]
-    xmax = x[np.argmax(y)]
-    ymax = max(y)
-    xmin = x[np.argmin(y)]
-    ymin = min(y)
-    info_string = info_string + '@' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + 'GHz: ' + str(round(ymax,5)) + '/' + str(round(ymin,5)) + ' '
-
-    main_axes[i].plot(x, y, marker='o', linestyle='', color='b')
-    main_axes[i].grid(True)
-    main_axes[i].set_ylabel('Amplitude difference []')
-    main_axes[i].set_xlabel('XY-point number')
-    main_axes[i].set_title('Frequency: ' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + 'GHz')
-
-main_fig.text(0.5, 0.04, info_string, ha='center', fontsize=12, bbox=dict(facecolor='yellow', alpha=0.5))
-plt.tight_layout()
-
-
-
+# # Window Config
+# main_fig, main_axes = plt.subplots(nrows=1, ncols=num_freq_points)
+# manager_main_fig = plt.get_current_fig_manager()
+# manager_main_fig.set_window_title('Maximum Amplitude Offset Difference (linear) in XY-Plane')
+# main_fig.text(0.5, 0.975, str('Amplitude Offset Variation in XY-Plane // Data drawn from ' + __filename), ha='center', fontsize=12)
+# info_string = "Maximum/Minimum measured amplitude difference [?] at "
+# for i in range(num_freq_points):
+#     x = x_val
+#     y = y_val[i]
+#     xmax = x[np.argmax(y)]
+#     ymax = max(y)
+#     xmin = x[np.argmin(y)]
+#     ymin = min(y)
+#     info_string = info_string + '@' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + 'GHz: ' + str(round(ymax,5)) + '/' + str(round(ymin,5)) + ' '
+#
+#     main_axes[i].plot(x, y, marker='o', linestyle='', color='b')
+#     main_axes[i].grid(True)
+#     main_axes[i].set_ylabel('Amplitude difference []')
+#     main_axes[i].set_xlabel('XY-point number')
+#     main_axes[i].set_title('Frequency: ' + str(round(meas_data_dict['f_vec'][i]*1e-9,1)) + 'GHz')
+#
+# main_fig.text(0.5, 0.04, info_string, ha='center', fontsize=12, bbox=dict(facecolor='yellow', alpha=0.5))
+# plt.tight_layout()
+#
+#
+#
 # Plot phase offset as line over repetitions for each point in XY plane
 amplitude_offsets = np.zeros([num_freq_points, meas_data_dict['x_vec'].__len__()*meas_data_dict['y_vec'].__len__(), meas_data_dict['z_vec'].__len__()])
 for f in range(num_freq_points):
@@ -99,6 +99,26 @@ for i in range(num_freq_points):
                   ha='center', fontsize=12)
     new_fig.text(0.5, 0.04, 'Each line corresponds to one point in XY-Plane. Each point was probed ' + str(meas_data_dict['z_vec'].__len__()) + ' times.', ha='center', fontsize=12)
 
+# ### Plot calibration matrix in 3D plot if data available >> NOT POSSIBLE since calibration matrix only holds phase values
+# if 'calibration_data' in meas_data_dict:
+#     calib_matrix = np.array(meas_data_dict['calibration_data'])
+#     fig = plt.figure()
+#     ax = fig.add_subplot(111, projection='3d')
+#     # x = np.arange(calib_matrix.shape[1])
+#     x = np.array(meas_data_dict['x_vec'])
+#     # y = np.arange(calib_matrix.shape[2])
+#     y = np.array(meas_data_dict['y_vec'])
+#     x, y = np.meshgrid(x, y)
+#     f_string = ''
+#     for f in range(calib_matrix.shape[0]):
+#         z = calib_matrix[f, :, :]
+#         ax.plot_surface(x, y, z, cmap='viridis', label='Phase Cal @ ' + str(round(meas_data_dict['f_vec'][f] * 1e-9, 1)) + 'GHz')
+#         ax.set_xlabel('X-Coordinate')
+#         ax.set_ylabel('Y-Coordinate')
+#         ax.set_zlabel('Phase [°]')
+#         f_string += str(round(meas_data_dict['f_vec'][f] * 1e-9, 1)) + 'GHz '
+#     ax.set_title('Calibration Matrix for ' + f_string)
+#     plt.legend()
 
 plt.tight_layout()
 plt.show()
