@@ -347,6 +347,7 @@ The only part that is meant to be frequently attached and detached from the cham
   * Added 'custom home position' to chamber control tab and linked house-buttons to its position
   * Added 'Override App's position' to chamber control tab to manually set chamber position to [0,0,0] and use 'goTo' afterward to restore position-synchronization
   * Got rid of influence of AUT len and probe len on max inputs in mesh configuration // Automeasurement Tab
+  * Asking for Z-sensor when 'Z-tilt_adjust' pressed in chamber control tab
   * (Maybe) Add configurability to select movement pattern vom "regular line by line" to "snake" [todo!]
 * 1.2
   * Enabled display of measurement-files that have just one point in any axis direction

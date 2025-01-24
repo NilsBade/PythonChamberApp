@@ -556,6 +556,25 @@ class ProcessController:
         else:
             return False
 
+    def __accept_z_tilt_dialog(self):
+        """
+        Function prompts a dialog asking for a mounted BL Touch sensor to the chamber.
+        Homing is started only when sensor-mounting confirmed!
+        """
+        dlg = QMessageBox(self.gui_mainWindow)
+        dlg.setWindowTitle("Start tilt adjustment - Z-sensor mounting")
+        dlg.setText("Do you really want to start tilt adjustment?\n"
+                    "To conduct the z tilt adjustment, the BL-Touch sensor MUST be mounted to the Probehead!\n"
+                    "Click ok once the sensor is mounted and wired correctly.")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setIcon(QMessageBox.Icon.Question)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
+
     def chamber_control_home_xy_button_handler(self):
         if self.ui_chamber_control_process is None:
             custom_home: list = self.gui_mainWindow.ui_chamber_control_window.get_custom_home_position()
@@ -857,6 +876,10 @@ class ProcessController:
 
     def chamber_control_z_tilt_button_handler(self):
         if self.ui_chamber_control_process is None:
+            # Assure that Z-sensor is mounted
+            if self.__accept_z_tilt_dialog() is False:
+                return
+
             self.ui_chamber_control_process = Worker(self.chamber_control_z_tilt_routine,
                                                      self.chamber)
 
