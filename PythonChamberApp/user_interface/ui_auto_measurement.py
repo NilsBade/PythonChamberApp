@@ -331,9 +331,6 @@ class UI_auto_measurement_window(QWidget):
         frame_layout.addWidget(mesh_selection_dropdown)
         frame_layout.addWidget(self.stacked_mesh_config_widget)
 
-        #   Connect Signals & Slots to update maximum input labels
-        self.probe_antenna_length_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
-        self.aut_height_lineEdit.editingFinished.connect(self.update_mesh_max_input_labels)
         #   Connect Signals & Slots to update 2d plots when mesh input changed
         self.mesh_cubic_x_length_lineEdit.editingFinished.connect(self.update_2d_plots)
         self.mesh_cubic_x_num_of_steps_lineEdit.editingFinished.connect(self.update_2d_plots)
@@ -814,8 +811,7 @@ class UI_auto_measurement_window(QWidget):
         min_y_distance2border = self.current_zero_y
         if self.current_zero_y > self.chamber_y_max_coor / 2:
             min_y_distance2border = self.chamber_y_max_coor - self.current_zero_y
-        min_z_distance2border = (self.chamber_z_max_coor - self.get_probe_antenna_length() -
-                                 self.get_aut_height() + self.chamber_z_head_bed_offset)
+        min_z_distance2border = (self.chamber_z_max_coor - self.current_zero_z)
 
         self.mesh_cubic_x_max_length_label.setText("< max " + str(2 * min_x_distance2border) + " mm")
         self.mesh_cubic_y_max_length_label.setText("< max " + str(2 * min_y_distance2border) + " mm")

@@ -337,16 +337,17 @@ The only part that is meant to be frequently attached and detached from the cham
 
 ## Release History
 > [!NOTE] Version Numbering is changed in [PythonChamberApp's mainwindow.py](PythonChamberApp/user_interface/ui_mainwindow.py) line 33
-* 1.3 - development state
+* Future plans (optional)
   * Extra Tab 'Postprocessing'
     * to generate calibration matrix from measurement file [To Do 11.9.24]
-    * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
-      * maybe also amplitude compensation?
+    * to generate phase/amplitude-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
+* 1.3 - development state
   * Switched color map of phase data in Display measurements tab to periodic 'hsv' colormap
   * Deleted 'Calibration Routine' from 'Chamber Control'-GUI and ProcessController
-  * Added 'custom home position' to chamber control tab and linked house-buttons to its position [todo]
-  * Added 'Override App's position' to chamber control tab to manually set chamber position if Klipper running but app is restarted [todo]
-  * (Maybe) Add configurability to select movement pattern vom "regular line by line" to "snake" [todo]
+  * Added 'custom home position' to chamber control tab and linked house-buttons to its position
+  * Added 'Override App's position' to chamber control tab to manually set chamber position to [0,0,0] and use 'goTo' afterward to restore position-synchronization
+  * Got rid of influence of AUT len and probe len on max inputs in mesh configuration // Automeasurement Tab
+  * (Maybe) Add configurability to select movement pattern vom "regular line by line" to "snake" [todo!]
 * 1.2
   * Enabled display of measurement-files that have just one point in any axis direction
   * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber)

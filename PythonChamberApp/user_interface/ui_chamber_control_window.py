@@ -14,10 +14,14 @@ class UI_chamber_control_window(QWidget):
     # Properties
     button_navigation_widget: QWidget = None    # whole left column of UI
     control_buttons_widget: QWidget = None      # sums up all control buttons and goTo functionality. Can be disabled before first time homed.
-    # control_buttons_widget - Button Menu
+    # main buttons
     home_all_axis_button: QPushButton = None
     z_tilt_adjust_button: QPushButton = None
-    calibration_routine_button: QPushButton = None
+    # custom home position
+    custom_home_x_editfield: QLineEdit = None
+    custom_home_y_editfield: QLineEdit = None
+    custom_home_z_editfield: QLineEdit = None
+    # control_buttons_widget - Button Menu
     button_move_x_inc: QPushButton = None
     button_move_x_dec: QPushButton = None
     button_move_y_inc: QPushButton = None
@@ -89,13 +93,28 @@ class UI_chamber_control_window(QWidget):
         self.z_tilt_adjust_button.setToolTip("Starts the Klipper Z-Tilt-Adjustment routine.\nBefore starting make sure the BL-Touch sensor is attached and\ncorrectly wired to the chamber.")
         main_layout.addWidget(self.z_tilt_adjust_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        self.calibration_routine_button = QPushButton()
-        self.calibration_routine_button.setText("Calibration Routine")
-        self.calibration_routine_button.setFixedSize(200,30)
-        self.calibration_routine_button.setEnabled(False)
-        self.calibration_routine_button.setToolTip("Starts a hardcoded calibration routine that marks the center \nwith a cross and draws multiple squares around it.\n"
-                                                   "This routine should only be started after attaching the pen-holder \nto the probehead and navigating the tip of the pen to the print-bed (paper).")
-        main_layout.addWidget(self.calibration_routine_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        # Custom Home position inputs - Header
+        home_pos_label = QLabel("Custom Home Position [mm]:")
+        home_pos_label.setStyleSheet("text-decoration: underline; font-size: 14px;")
+        main_layout.addWidget(home_pos_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        # - Inputs
+        custom_home_pos_layout = QHBoxLayout()
+        cust_x_label = QLabel("X: ")
+        cust_y_label = QLabel("Y: ")
+        cust_z_label = QLabel("Z: ")
+        self.custom_home_x_editfield = QLineEdit("000.00")
+        self.custom_home_x_editfield.setInputMask("000.00")
+        self.custom_home_y_editfield = QLineEdit("000.00")
+        self.custom_home_y_editfield.setInputMask("000.00")
+        self.custom_home_z_editfield = QLineEdit("200.00")
+        self.custom_home_z_editfield.setInputMask("000.00")
+        custom_home_pos_layout.addWidget(cust_x_label)
+        custom_home_pos_layout.addWidget(self.custom_home_x_editfield)
+        custom_home_pos_layout.addWidget(cust_y_label)
+        custom_home_pos_layout.addWidget(self.custom_home_y_editfield)
+        custom_home_pos_layout.addWidget(cust_z_label)
+        custom_home_pos_layout.addWidget(self.custom_home_z_editfield)
+        main_layout.addLayout(custom_home_pos_layout)
 
         self.control_buttons_widget = QWidget()     # Summed up widget to enable/disable all together
         buttons_layout = QGridLayout()
@@ -177,10 +196,12 @@ class UI_chamber_control_window(QWidget):
         buttons_layout.addWidget(self.button_move_home_z, 2, 4)
         buttons_layout.addWidget(self.button_move_z_dec, 3, 4)
 
+        main_layout.addWidget(self.control_buttons_widget)
+
         # Add Menu to go to absolut coordinates
         label_go_abs_coor = QLabel("Go to absolute coordinates [mm]:")
         label_go_abs_coor.setStyleSheet("text-decoration: underline; font-size: 14px;")
-        buttons_layout.addWidget(label_go_abs_coor,6,0,1,4)
+        main_layout.addWidget(label_go_abs_coor)
 
         xyz_go_abs_layout = QHBoxLayout()
         go_abs_coor_x_label = QLabel("X: ")
@@ -207,15 +228,21 @@ class UI_chamber_control_window(QWidget):
         xyz_go_abs_layout.addWidget(self.go_abs_coor_z_editfield)
         xyz_go_abs_layout.addWidget(self.go_abs_coor_go_button)
 
-        buttons_layout.addLayout(xyz_go_abs_layout, 7, 0, 1, 5)
-
-        main_layout.addWidget(self.control_buttons_widget)
-        #self.control_buttons_widget.setEnabled(False)
+        self.go_abs_coor_x_editfield.setEnabled(False)
+        self.go_abs_coor_y_editfield.setEnabled(False)
+        self.go_abs_coor_z_editfield.setEnabled(False)
+        self.go_abs_coor_go_button.setEnabled(False)
+        main_layout.addLayout(xyz_go_abs_layout)
 
         # setup console chamber control
         self.chamber_control_console = QTextEdit()
         self.chamber_control_console.setReadOnly(True)
         main_layout.addWidget(self.chamber_control_console)
+
+        # Override position button
+        self.override_position_button = QPushButton("Override App's Position")
+        self.override_position_button.setToolTip("Override the current position with [0,0,0].\nUse with caution!")
+        main_layout.addWidget(self.override_position_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return main_widget
 
@@ -297,6 +324,16 @@ class UI_chamber_control_window(QWidget):
 
         return chamber_position_widget
 
+    def enable_go_to_controls(self):
+        """
+        Enables the go-to functionality only. Buttons and inputs.
+        """
+        self.go_abs_coor_x_editfield.setEnabled(True)
+        self.go_abs_coor_y_editfield.setEnabled(True)
+        self.go_abs_coor_z_editfield.setEnabled(True)
+        self.go_abs_coor_go_button.setEnabled(True)
+        return
+
     def get_go_abs_coor_inputs(self):
         """
         Function gets absolute coordinates put into X,Y,Z fields to react to "GO" button pressed.
@@ -320,6 +357,15 @@ class UI_chamber_control_window(QWidget):
         :returns: desired jog speed in [mm/s]
         """
         return float(self.button_move_jogspeed_input_line.text())
+
+    def get_custom_home_position(self):
+        """
+        :returns: list [x: float, y: float, z: float]
+        """
+        x = float(self.custom_home_x_editfield.text())
+        y = float(self.custom_home_y_editfield.text())
+        z = float(self.custom_home_z_editfield.text())
+        return [x, y, z]
 
     def append_message2console(self, message: str):
         """

@@ -96,6 +96,8 @@ class ProcessController:
             self.chamber_control_z_dec_button_handler)
         self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_go_button.pressed.connect(
             self.chamber_control_go_to_button_handler)
+        self.gui_mainWindow.ui_chamber_control_window.override_position_button.pressed.connect(
+            self.chamber_control_override_position_button_handler)
 
         # connect all Slots & Signals VNA control window
         self.gui_mainWindow.ui_vna_control_window.visa_read_button.pressed.connect(self.vna_read_button_handler)
@@ -506,6 +508,7 @@ class ProcessController:
         """
         if progress['status_code'] == 204:
             self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+            self.gui_mainWindow.ui_chamber_control_window.enable_go_to_controls()
             self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(True)
             self.gui_mainWindow.ui_auto_measurement_window.enable_chamber_move_interaction()
             self.gui_mainWindow.prompt_info(
@@ -555,7 +558,11 @@ class ProcessController:
 
     def chamber_control_home_xy_button_handler(self):
         if self.ui_chamber_control_process is None:
-            self.ui_chamber_control_process = Worker(self.chamber_control_home_xy_routine, self.chamber)
+            custom_home: list = self.gui_mainWindow.ui_chamber_control_window.get_custom_home_position()
+            jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
+
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
+                                                         self.chamber, custom_home[0], custom_home[1], self.__z_live, jogspeed)
 
             self.ui_chamber_control_process.signals.update.connect(
                 self.gui_mainWindow.ui_chamber_control_window.append_message2console)
@@ -570,27 +577,16 @@ class ProcessController:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
-        return
-
-    def chamber_control_home_xy_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
-                                        position_update_callback):
-        """
-        This routine can be given to a worker to request xy-axis-homing in separate thread
-        """
-        update_callback.emit("Request to home xy-axis")
-        response = chamber.chamber_home_with_flag(axis='xy')
-        if response['status_code'] == 204:
-            update_callback.emit("OK")
-            position_update_callback.emit({'abs_x': 0.0, 'abs_y': 0.0})
-        else:
-            update_callback.emit(
-                "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
-                    'content'])
         return
 
     def chamber_control_home_z_button_handler(self):
         if self.ui_chamber_control_process is None:
-            self.ui_chamber_control_process = Worker(self.chamber_control_home_z_routine, self.chamber)
+            custom_home: list = self.gui_mainWindow.ui_chamber_control_window.get_custom_home_position()
+            jogspeed = self.gui_mainWindow.ui_chamber_control_window.get_button_move_jogspeed()
+
+            self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
+                                                     self.chamber, self.__x_live, self.__y_live, custom_home[2],
+                                                     jogspeed)
 
             self.ui_chamber_control_process.signals.update.connect(
                 self.gui_mainWindow.ui_chamber_control_window.append_message2console)
@@ -605,22 +601,6 @@ class ProcessController:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
                 "Too many Requests")
-        return
-
-    def chamber_control_home_z_routine(self, chamber: ChamberNetworkCommands, update_callback, progress_callback,
-                                       position_update_callback):
-        """
-        This routine can be given to a worker to request z-axis-homing in separate thread
-        """
-        update_callback.emit("Request to home z-axis")
-        response = chamber.chamber_home_with_flag(axis='z')
-        if response['status_code'] == 204:
-            update_callback.emit("OK")
-            position_update_callback.emit({'abs_z': 0.0})
-        else:
-            update_callback.emit(
-                "Something went wrong! HTTP response status code: " + response['status_code'] + ' ' + response[
-                    'content'])
         return
 
     def chamber_control_x_inc_button_handler(self):
@@ -823,6 +803,10 @@ class ProcessController:
             new_z = new_coordinates['z']
 
             if self.check_movement_valid({'abs_x': new_x, 'abs_y': new_y, 'abs_z': new_z}):
+                # enable relative movement in case override was used before
+                self.gui_mainWindow.ui_chamber_control_window.control_buttons_widget.setEnabled(True)
+
+                # start request...
                 self.ui_chamber_control_process = Worker(self.chamber_control_jog_to_abs_coor_routine,
                                                          self.chamber, new_x, new_y, new_z, jogspeed)
 
@@ -836,6 +820,7 @@ class ProcessController:
                 self.ui_chamber_control_process.signals.finished.connect(self.chamber_control_thread_finished_handler)
 
                 self.threadpool.start(self.ui_chamber_control_process)
+
         else:
             self.gui_mainWindow.prompt_warning(
                 "Another chamber control request is processing at the moment!\nPlease wait until it is finished.",
@@ -906,6 +891,44 @@ class ProcessController:
         position_update_callback.emit({'abs_x': self.zero_pos_x, 'abs_y': self.zero_pos_y, 'abs_z': 150.0})
 
         return
+
+    def chamber_control_override_position_button_handler(self):
+        """
+        Overrides live position in python chamber app.
+        Must be used with care, thus this method handler asks user for confirmation explicitly.
+        """
+        dlg = QMessageBox(self.gui_mainWindow)
+        dlg.setWindowTitle("Override Chamber Position")
+        dlg.setText("Do you really want to override the current chamber position with [0,0,0] position?\n"
+                    "This action cannot be undone and the app is not be able to track the chamber position afterwards!\n\n"
+                    "After Override use the 'GoTo' function to move to a safe position and synchronize App's and Chamber's position again. "
+                    "From there you can move on as the chamber was homed.")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setIcon(QMessageBox.Icon.Warning)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            self.chamber_control_override_position()
+        return
+
+    def chamber_control_override_position(self):
+        """
+        Asks for XYZ user input and sets as current position.
+        """
+        self.chamber_control_update_live_position({'abs_x': 0.0, 'abs_y': 0.0, 'abs_z': 0.0})
+        self.gui_mainWindow.ui_chamber_control_window.append_message2console("Position overridden to [0,0,0]!")
+
+        # fill safe values in goto-inputs to avoid accidental collision
+        self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_x_editfield.setText("250.0")
+        self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_y_editfield.setText("225.0")
+        self.gui_mainWindow.ui_chamber_control_window.go_abs_coor_z_editfield.setText("880.0")
+
+        # enable as home all apart from relative movement buttons
+        self.gui_mainWindow.ui_chamber_control_window.enable_go_to_controls()
+        self.gui_mainWindow.ui_chamber_control_window.z_tilt_adjust_button.setEnabled(True)
+        self.gui_mainWindow.ui_auto_measurement_window.enable_chamber_move_interaction()
+        return
+
 
     # **UI_vna_control_window Callbacks** ################################################
 
