@@ -252,9 +252,9 @@ class UI_display_measurement_window(QWidget):
         self.xz_plot = self.xz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
         self.yz_plot = self.yz_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
         self.xy_plot = self.xy_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
-        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(x, y, z, cmap='Spectral_r', vmin=z_min, vmax=z_max)
+        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(x, y, z, cmap='hsv', vmin=z_min, vmax=z_max)
+        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(x, y, z, cmap='hsv', vmin=z_min, vmax=z_max)
+        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(x, y, z, cmap='hsv', vmin=z_min, vmax=z_max)
 
         self.xz_axes.axis([x.min(), x.max(), y.min(), y.max()])
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
@@ -592,7 +592,7 @@ class UI_display_measurement_window(QWidget):
         self.xz_plot = self.xz_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                             vmax=max_amp)
         self.xz_colorbar = self.xz_figure.colorbar(self.xz_plot, ax=self.xz_axes)
-        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.xz_phase_plot = self.xz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='hsv')
         self.xz_phase_colorbar = self.xz_figure.colorbar(self.xz_phase_plot, ax=self.xz_phase_axes)
         self.xz_canvas.draw()
 
@@ -638,7 +638,7 @@ class UI_display_measurement_window(QWidget):
         self.yz_plot = self.yz_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                vmax=max_amp)
         self.yz_colorbar = self.yz_figure.colorbar(self.yz_plot, ax=self.yz_axes)
-        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.yz_phase_plot = self.yz_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='hsv')
         self.yz_phase_colorbar = self.yz_figure.colorbar(self.yz_phase_plot, ax=self.yz_phase_axes)
         self.yz_canvas.draw()
         return
@@ -683,7 +683,7 @@ class UI_display_measurement_window(QWidget):
         self.xy_plot = self.xy_axes.pcolormesh(xmeshv, ymeshv, data_amp_array, cmap='Spectral_r', vmin=min_amp,
                                                vmax=max_amp)
         self.xy_colorbar = self.xy_figure.colorbar(self.xy_plot, ax=self.xy_axes)
-        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='Spectral_r')
+        self.xy_phase_plot = self.xy_phase_axes.pcolormesh(xmeshv, ymeshv, data_phase_array, cmap='hsv')
         self.xy_phase_colorbar = self.xy_figure.colorbar(self.xy_phase_plot, ax=self.xy_phase_axes)
         self.xy_canvas.draw()
         return
