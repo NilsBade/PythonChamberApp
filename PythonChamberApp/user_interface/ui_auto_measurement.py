@@ -811,11 +811,15 @@ class UI_auto_measurement_window(QWidget):
         min_y_distance2border = self.current_zero_y
         if self.current_zero_y > self.chamber_y_max_coor / 2:
             min_y_distance2border = self.chamber_y_max_coor - self.current_zero_y
-        min_z_distance2border = (self.chamber_z_max_coor - self.current_zero_z)
+        if self.current_zero_z is None:
+            self.mesh_cubic_z_max_distance_label.setText("zero-position missing")
+        else:
+            min_z_distance2border = (self.chamber_z_max_coor - self.current_zero_z)
+            self.mesh_cubic_z_max_distance_label.setText("< max " + str(min_z_distance2border) + " mm")
 
         self.mesh_cubic_x_max_length_label.setText("< max " + str(2 * min_x_distance2border) + " mm")
         self.mesh_cubic_y_max_length_label.setText("< max " + str(2 * min_y_distance2border) + " mm")
-        self.mesh_cubic_z_max_distance_label.setText("< max " + str(min_z_distance2border) + " mm")
+
 
         # Update cylindrical mesh max inputs
 
