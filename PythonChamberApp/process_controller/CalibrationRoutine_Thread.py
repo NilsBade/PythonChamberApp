@@ -1,4 +1,7 @@
 """
+##########################################################################
+OUT OF OPERATION 24.01.2025 >> This procedure is not needed anymore
+##########################################################################
 The CalibrationRoutine class is meant to implement a routine that moves the probehead over the print-bed in a predefined,
 hardcoded fashion, to validate the movement accuracy of the chamber.
 

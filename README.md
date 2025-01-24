@@ -342,6 +342,11 @@ The only part that is meant to be frequently attached and detached from the cham
     * to generate calibration matrix from measurement file [To Do 11.9.24]
     * to generate phase-compensated data from measurement file and selectable calibration matrix [To Do 11.9.24]
       * maybe also amplitude compensation?
+  * Switched color map of phase data in Display measurements tab to periodic 'hsv' colormap
+  * Deleted 'Calibration Routine' from 'Chamber Control'-GUI and ProcessController
+  * Added 'custom home position' to chamber control tab and linked house-buttons to its position [todo]
+  * Added 'Override App's position' to chamber control tab to manually set chamber position if Klipper running but app is restarted [todo]
+  * (Maybe) Add configurability to select movement pattern vom "regular line by line" to "snake" [todo]
 * 1.2
   * Enabled display of measurement-files that have just one point in any axis direction
   * Added Try-Block to AutoMeasurement-Thread to prevent crashes in case of communication errors (with PNA or chamber)
