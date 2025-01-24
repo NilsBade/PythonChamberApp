@@ -36,6 +36,10 @@ class UI_chamber_control_window(QWidget):
     go_abs_coor_y_editfield: QLineEdit = None
     go_abs_coor_z_editfield: QLineEdit = None
     go_abs_coor_go_button: QPushButton = None
+    # control_buttons_widget - Console
+    chamber_control_console: QTextEdit = None
+    # Override position button
+    override_position_button: QPushButton = None
     # live_position_widget
     live_x_coor_label: QLabel = None
     live_y_coor_label: QLabel = None
