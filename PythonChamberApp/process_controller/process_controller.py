@@ -132,6 +132,8 @@ class ProcessController:
             self.body_scan_check_vna_config_button_handler)
         self.gui_mainWindow.ui_body_scan_window.body_scan_start_button.pressed.connect(
             self.body_scan_start_button_handler)
+        self.gui_mainWindow.ui_body_scan_window.body_scan_stop_button.pressed.connect(
+            self.body_scan_terminate_thread_handler)
 
         # connect all Slots & Signals display measurement window
         self.gui_mainWindow.ui_display_measurement_window.file_select_refresh_button.pressed.connect(
@@ -1496,6 +1498,14 @@ class ProcessController:
         self.gui_mainWindow.enable_auto_measurement_window()
         self.gui_mainWindow.ui_body_scan_window.enable_inputs()
         return
+
+    def body_scan_terminate_thread_handler(self):
+        """
+        Issues a QThread::terminate() on the auto measurement thread that is stored in the process controller
+        """
+        if self.body_scan_process is not None:
+            if self.__accept_stop_meas_dialog():
+                self.body_scan_process.stop()
 
 
     # **UI_display_measurement_window Callbacks** ################################################
