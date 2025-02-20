@@ -105,7 +105,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         Receives x,y,z parameters, desired speed and coordinate-context and requests chamber movement via custom
         G-Code list via http. This enables busy waiting for chamber movements to finish!
 
-        **This function only returns once the jog operation is finished! Polls every 0.5 sec**
+        **This function only returns once the jog operation is finished! Polls every 0.05 sec**
         :param x: x-direction distance or coordinate [mm], 2 decimal
         :param y: y-direction distance or coordinate [mm], 2 decimal
         :param z: z-direction distance or coordinate [mm], 2 decimal
@@ -113,6 +113,7 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
         :param abs_coordinate: boolean flag if total coordinates should be used
         :return: dict {'status code' : str, 'content' : str} of server response
         """
+        # todo: Check why the coordinates are rounded to two decimals! why did I set this limit? this limits accuracy to +/- 5um. Did not find any reason in klipper or octoprint documentation (11.02.2025)
         # round numbers and build XYZ-parts
         x_code = ' X' + str(round(x, 2))
         y_code = ' Y' + str(round(y, 2))

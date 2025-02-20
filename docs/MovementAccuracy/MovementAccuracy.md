@@ -3,6 +3,50 @@ To validate the movement accuracy in all directions, as well as the orthogoanlit
 These tests were done after all the measurements that are presented in Nils Bade's master thesis. 
 So the observed positioning errors have all been part of the first Horn-measurements for system validation and improvement.
 
+## Theoretical Movement Accuracy (Limits)
+From a theoretical point of view, the movement accuracy is limited by the selection of motors, leadscrews, [Timming Pulleys](https://ratrig.com/catalog/product/view/id/673/s/openbuilds-gt2-2mm-aluminum-timing-pulley-9mm/category/41/)
+and control algorithm. The theoretical limit was already calculated in the Projekarbeit presentation by Nils Bade and is
+briefly summarized here.
+
+### General
+The stepper motors used in both actuation systems (XY, Z) are the "Nema 17 Stepper Motor - LDO 1.8º/step", specifically 
+the "[LDO-42STH48-2504AC](https://ratrig.com/electronics/motors/nema-17-stepper-motor.html)". These motors feature a
+step angle of $1.8°$ and a holding torque of $4.4 kg/cm$. The motors are driven by [BigTreeTech TMC2209 Driver](https://ratrig.com/electronics/controller-boards/btt-tmc2209-spi.html),
+mounted to a [BigTreeTech SKRat V1.0 Motherboard](https://us.ratrig.com/bigtreetech-skrat-v1-0-motherboard.html).
+
+For accuracy calculation this sets the base step angles to:
+* Hardware step angle: $\alpha_{hardware} = 360°/200 STEPS = 1.8°/STEP$, full torque
+* Controls RatRig default, 64 Microsteps: $\alpha_{control} = \frac{1.8°}{64}$, 2.45% torque
+
+> [!CAUTION]
+> Update 11.02.2025:
+> In the '__chamber_jog_with_flag' method defined in [chamber_net_interface](/PythonChamberApp/chamber_net_interface/chamber_net_interface.py)
+> all movement requests are rounded to 2 decimals! For X,Y,Z coordinates this means, that the controls already round each
+> requested movement to the nearest $0.01 mm = 10 um$! This is important to consider when measuring the achieved accuracies!
+> They are limited by controls to $\pm 5 um$!
+
+### X- and Y-axis
+The used pulley translates the $360°$ rotation by its $2 mm$ pitch & 20 teeth into a linear movement of $40 mm$.
+The CoreXY actuation system relies on diagonal movement in case one motor rotates. Thus pythagoras must be used to map the
+movement distance of the motor rotation to resulting movement in X, Y direction.
+This idea leads to different minimal step sizes dependent if microstepping is used (prone to errors once torque is not 
+enough to facilitate movement) or not.
+
+Without microsteps: $sqrt(2)*40 mm* \frac{1 Rev}{200 STEPS} = 0.283 mm/STEP$
+
+With microsteps: $sqrt(2)*40 mm* \frac{1 Rev}{12800 STEPS} = 0.00442 mm/STEP = 4.42 um/STEP$
+
+### Z-axis
+For the Z movement the pitch/angle of the leadscrew is important. The used leadscrew has a pitch of $8 mm/rev$. 
+Thus the minimum step distance can be calculated analog to the above calculation.
+
+Without microsteps: $8 mm* \frac{1 Rev}{200 STEPS} = 0.04 mm/STEP$
+
+With microsteps: $8 mm* \frac{1 Rev}{12800 STEPS} = 0.000625 mm/STEP = 0.625 um/STEP$
+
+### Slide excerpt Project Thesis
+![ProjectThesisSlide](/docs/MovementAccuracy/Figures/Projekt_thesis_movementSlide.JPG)
+
 ## Drawing on a piece of paper - 09.12.2024
 In a first approach, a pen (for technical drawings, width 0.35 mm) was fixed to the probehead and used to draw rectangles with specific 
 side lengths on a piece of paper. Challenging was firstly the positioning of the pen on the paper. Since one does not
