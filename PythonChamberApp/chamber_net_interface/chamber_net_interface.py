@@ -146,9 +146,9 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     def chamber_jog_abs(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 5.0):
         """
         Takes absolute coordinates to move to.
-        :param x: desired x position [mm]
-        :param y: desired y position [mm]
-        :param z: desired z position [mm]
+        :param x: desired x position [mm], 2 decimal
+        :param y: desired y position [mm], 2 decimal
+        :param z: desired z position [mm], 2 decimal
         :param speed: speed for movement in [mm/s]
         :return: dict {'status code' : str, 'content' : str} of server response
         """
@@ -158,9 +158,9 @@ class ChamberNetworkCommands(connection_handler.NetworkDevice):
     def chamber_jog_rel(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, speed: float = 5.0):
         """
         Takes relative coordinates to move to from current position.
-        :param x: distance in x-direction [mm]
-        :param y: distance in y-direction [mm]
-        :param z: distance in z-direction [mm]
+        :param x: distance in x-direction [mm], 2 decimal
+        :param y: distance in y-direction [mm], 2 decimal
+        :param z: distance in z-direction [mm], 2 decimal
         :param speed: speed for movement in [mm/s]
         :return: dict {'status code' : str, 'content' : str} of server response
         """
