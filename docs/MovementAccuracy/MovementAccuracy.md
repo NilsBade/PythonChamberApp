@@ -32,9 +32,9 @@ movement distance of the motor rotation to resulting movement in X, Y direction.
 This idea leads to different minimal step sizes dependent if microstepping is used (prone to errors once torque is not 
 enough to facilitate movement) or not.
 
-Without microsteps: $sqrt(2)*40 mm* \frac{1 Rev}{200 STEPS} = 0.283 mm/STEP$
+Without microsteps: $\sqrt{2}*40 mm* \frac{1 Rev}{200 STEPS} = 0.283 mm/STEP$
 
-With microsteps: $sqrt(2)*40 mm* \frac{1 Rev}{12800 STEPS} = 0.00442 mm/STEP = 4.42 um/STEP$
+With microsteps: $\sqrt{2}*40 mm* \frac{1 Rev}{12800 STEPS} = 0.00442 mm/STEP = 4.42 um/STEP$
 
 ### Z-axis
 For the Z movement the pitch/angle of the leadscrew is important. The used leadscrew has a pitch of $8 mm/rev$. 
