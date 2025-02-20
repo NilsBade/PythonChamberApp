@@ -161,7 +161,7 @@ class BodyScan(QRunnable):
         visa_timeout_error_counter = 0
         VISA_TIMEOUTS_BEFORE_RESET = 3
 
-        # START MEASUREMENT LOOP
+        # START MEASUREMENT LOOP #todo: implement that movement pattern can be selected in app!
         # >> changed order compared to AutoMeasurement to comply with bartosz suggestion for body scan
         # Snake Movement in XY-Plane
         x_move_vec = np.flip(self.mesh_x_vector.copy())  # Copy the x_vec and flip it because first run flips as well
