@@ -1134,11 +1134,12 @@ class ProcessController:
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
         zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
 
-        # todo hand desired movement pattern to auto_measurement_process initialization
+        # todo check if movement pattern alternation works!
         self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
                                                         x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
                                                         z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
                                                         zero_position=zero_pos, file_location=generic_file_path,
+                                                        move_pattern=mesh_info['move_pattern'],
                                                         file_type_json=file_type_json_flag,
                                                         file_type_json_readable=file_type_json_readable)
 
