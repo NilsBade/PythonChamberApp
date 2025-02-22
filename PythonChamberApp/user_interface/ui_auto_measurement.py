@@ -34,6 +34,7 @@ class UI_auto_measurement_window(QWidget):
     #   measurement_mesh_config_field
     stacked_mesh_config_widget: QStackedWidget = None
     #   > cubic mesh [1]
+    mesh_cubic_move_pattern_dropdown: QComboBox = None  # select movement line-by-line or snake
     mesh_cubic_x_length_lineEdit: QLineEdit = None
     mesh_cubic_x_max_length_label: QLabel = None
     mesh_cubic_x_num_of_steps_lineEdit: QLineEdit = None
@@ -252,6 +253,22 @@ class UI_auto_measurement_window(QWidget):
         cubic_mesh_config_widget_layout = QGridLayout()
         cubic_mesh_config_widget.setLayout(cubic_mesh_config_widget_layout)
 
+        cubic_move_pattern_label = QLabel("Move Pattern:")
+        self.mesh_cubic_move_pattern_dropdown = QComboBox()
+        self.mesh_cubic_move_pattern_dropdown.setToolTip("Select movement pattern to go through measurement volume.")
+        pattern_items = [
+            "line-by-line",
+            "snake"
+        ]
+        pattern_tooltips = [
+            "Regular line-by-line movement. First X_min to X_max, then Y_min to Y_max, then Z_min to Z_max.\n(+)By sticking to one movement direction along X assures more systematic coax-cable position and cable error.",
+            "Snake-like movement. Probe moves always to next closest possible measurement position in mesh.\n(+)Faster measurement process, (-)Less systematic cable error due to changing movement directions through mesh."
+        ]
+        for i, item in enumerate(pattern_items):
+            self.mesh_cubic_move_pattern_dropdown.addItem(item)
+            self.mesh_cubic_move_pattern_dropdown.setItemData(i, pattern_tooltips[i], role=3)  # Qt.ToolTipRole = 3
+
+
         cubic_x_length_label = QLabel("Length in X:")
         self.mesh_cubic_x_length_lineEdit = QLineEdit("100")
         self.mesh_cubic_x_length_lineEdit.setToolTip(
@@ -279,27 +296,30 @@ class UI_auto_measurement_window(QWidget):
         self.mesh_cubic_z_max_distance_label = QLabel(
             str("< max " + str(self.chamber_z_max_coor - float(self.probe_antenna_length_lineEdit.text())) + " mm"))
         self.mesh_cubic_z_num_of_steps_lineEdit = QLineEdit("50")
+        #   move pattern
+        cubic_mesh_config_widget_layout.addWidget(cubic_move_pattern_label, 0, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_move_pattern_dropdown, 0, 1, 1, 2)
         #   X inputs
-        cubic_mesh_config_widget_layout.addWidget(cubic_x_length_label, 0, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_length_lineEdit, 0, 1, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_max_length_label, 0, 2, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(cubic_x_num_of_steps_label, 1, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_num_of_steps_lineEdit, 1, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_x_length_label, 1, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_length_lineEdit, 1, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_max_length_label, 1, 2, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_x_num_of_steps_label, 2, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_x_num_of_steps_lineEdit, 2, 1, 1, 1)
         #   Y inputs
-        cubic_mesh_config_widget_layout.addWidget(cubic_y_length_label, 2, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_length_lineEdit, 2, 1, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_max_length_label, 2, 2, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(cubic_y_num_of_steps_label, 3, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_num_of_steps_lineEdit, 3, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_y_length_label, 3, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_length_lineEdit, 3, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_max_length_label, 3, 2, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_y_num_of_steps_label, 4, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_y_num_of_steps_lineEdit, 4, 1, 1, 1)
         #   Z inputs
-        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label, 4, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_start_lineEdit, 4, 1, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label_hint, 4, 2, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(cubic_z_stop_label, 5, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_stop_lineEdit, 5, 1, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_max_distance_label, 5, 2, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(cubic_z_num_of_steps_label, 6, 0, 1, 1)
-        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_num_of_steps_lineEdit, 6, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label, 5, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_start_lineEdit, 5, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_start_label_hint, 5, 2, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_stop_label, 6, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_stop_lineEdit, 6, 1, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_max_distance_label, 6, 2, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(cubic_z_num_of_steps_label, 7, 0, 1, 1)
+        cubic_mesh_config_widget_layout.addWidget(self.mesh_cubic_z_num_of_steps_lineEdit, 7, 1, 1, 1)
 
         #   cylindrical mesh [2]
         cylindrical_mesh_config_widget = QWidget()
@@ -398,8 +418,11 @@ class UI_auto_measurement_window(QWidget):
         # manual config inputs
         self.vna_S11_checkbox = QCheckBox('S11')
         self.vna_S12_checkbox = QCheckBox('S12')
-        self.vna_S12_checkbox.setChecked(True)
         self.vna_S22_checkbox = QCheckBox('S22')
+        # default nothing selected. Simple check in start method assures that vna was consciously configured before start.
+        self.vna_S11_checkbox.setChecked(False)
+        self.vna_S22_checkbox.setChecked(False)
+        self.vna_S12_checkbox.setChecked(False)
         freq_start_label = QLabel("Start frequency:")
         self.vna_freq_start_lineEdit = QLineEdit("60e9")
         freq_start_unit_label = QLabel("[Hz]")
@@ -965,6 +988,7 @@ class UI_auto_measurement_window(QWidget):
         The x,y,z vectors describe the necessary points to move to by the chamber, to do the measurement.
         dict:
             {
+            'move_pattern' : string, 'line-by-line' or 'snake'
             'tot_num_of_points' : int
             'num_steps_x' : int
             'num_steps_y' : int
@@ -979,6 +1003,7 @@ class UI_auto_measurement_window(QWidget):
         """
         info_dict = {}
         #   get inputs
+        move_pattern = self.mesh_cubic_move_pattern_dropdown.currentText()
         x_length = float(self.mesh_cubic_x_length_lineEdit.text())
         x_num_steps = int(self.mesh_cubic_x_num_of_steps_lineEdit.text())
         y_length = float(self.mesh_cubic_y_length_lineEdit.text())
@@ -1008,6 +1033,7 @@ class UI_auto_measurement_window(QWidget):
             z_vec.append(i + z_offset)
 
         #   fill info dict
+        info_dict['move_pattern'] = move_pattern
         info_dict['tot_num_of_points'] = x_num_steps * y_num_steps * z_num_steps
         info_dict['num_steps_x'] = x_num_steps
         info_dict['num_steps_y'] = y_num_steps

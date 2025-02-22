@@ -95,6 +95,8 @@ class AutoMeasurement(QRunnable):
                  file_location: str, file_type_json: bool = True, file_type_json_readable: bool = True):
         super(AutoMeasurement, self).__init__()
 
+        # todo - get the desired movement pattern and adapt code to accord to line-by-line or snake movement pattern
+
         self.signals = AutoMeasurementSignals()
         self.chamber = chamber  # Comment here when testing without chamber
         self.vna = vna

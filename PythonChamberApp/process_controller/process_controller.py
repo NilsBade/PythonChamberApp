@@ -1111,6 +1111,12 @@ class ProcessController:
             vna_info['avg_num'] = extra_info['avg_num']
             self.gui_mainWindow.ui_auto_measurement_window.update_vna_measurement_config_entries(vna_info)
         else:   # Configure vna by manual input
+            # check if at least one S-parameter selected for measurement
+            if vna_info['parameter'].__len__() == 0:
+                self.gui_mainWindow.prompt_warning("Please select at least one S-parameter for measurement.",
+                                                   "No S-parameter selected")
+                return
+
             self.vna.pna_preset()   # clean up vna
             self.vna.pna_add_measurement_detailed(meas_name=vna_info['meas_name'], parameter=vna_info['parameter'],
                                                   freq_start=vna_info['freq_start'], freq_stop=vna_info['freq_stop'],
@@ -1118,8 +1124,6 @@ class ProcessController:
                                                   sweep_num_points=vna_info['sweep_num_points'],
                                                   output_power=vna_info['output_power'], trigger_manual=True,
                                                   average_number=vna_info['avg_num'])
-
-        #ToDo implement checks to prevent start of invalid auto measurements because invalid vna config
 
         #   Checks done. Start auto measurement configuration & process
         self.gui_mainWindow.disable_chamber_control_window()
@@ -1130,6 +1134,7 @@ class ProcessController:
         jog_speed = self.gui_mainWindow.ui_auto_measurement_window.get_auto_measurement_jogspeed()
         zero_pos = (self.zero_pos_x, self.zero_pos_y, self.zero_pos_z)
 
+        # todo hand desired movement pattern to auto_measurement_process initialization
         self.auto_measurement_process = AutoMeasurement(chamber=self.chamber, vna=self.vna, vna_info=vna_info,
                                                         x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'],
                                                         z_vec=mesh_info['z_vec'], mov_speed=jog_speed,
