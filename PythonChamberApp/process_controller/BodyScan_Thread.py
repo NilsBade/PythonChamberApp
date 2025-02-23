@@ -40,6 +40,7 @@ class BodyScan(QRunnable):
     vna_info_buffer: dict = None
     vna_meas_name: str = None
 
+    move_pattern: str = None
     mesh_x_vector: np.ndarray = None
     mesh_y_vector: np.ndarray = None
     mesh_z_vector: np.ndarray = None
@@ -60,7 +61,7 @@ class BodyScan(QRunnable):
 
     def __init__(self, chamber: ChamberNetworkCommands, vna: E8361RemoteGPIB, vna_info: dict, x_vec: tuple[float, ...],
                  y_vec: tuple[float, ...], z_vec: tuple[float, ...], mov_speed: float, origin: tuple[float, ...],
-                 file_location: str, z_move_sleep_time: float = 0.0):
+                 file_location: str, move_pattern: str, z_move_sleep_time: float = 0.0):
         super(BodyScan, self).__init__()
 
         self.signals = AutoMeasurementSignals()
@@ -72,6 +73,7 @@ class BodyScan(QRunnable):
         # successfully and uses vna_info just for docu in json file.
         # If the PNA / VNA is not set up correctly, the thread will fail.
 
+        self.move_pattern = move_pattern
         self.mesh_x_vector = np.array(x_vec, dtype=float)
         self.mesh_y_vector = np.array(y_vec, dtype=float)
         self.mesh_z_vector = np.array(z_vec, dtype=float)
@@ -100,6 +102,7 @@ class BodyScan(QRunnable):
             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'zero_position': origin,    # redundant information, but for better readability with automeasurement methods
             'origin_position': origin,
+            'move_pattern': move_pattern,
             'mesh_x_min': x_vec[0],  # [mm]
             'mesh_x_max': x_vec[-1],  # [mm]
             'mesh_x_steps': len(x_vec),
@@ -162,11 +165,14 @@ class BodyScan(QRunnable):
         VISA_TIMEOUTS_BEFORE_RESET = 3
 
         # START MEASUREMENT LOOP #todo: implement that movement pattern can be selected in app!
-        # >> changed order compared to AutoMeasurement to comply with bartosz suggestion for body scan
-        # Snake Movement in XY-Plane
-        x_move_vec = np.flip(self.mesh_x_vector.copy())  # Copy the x_vec and flip it because first run flips as well
+        if self.move_pattern == "snake":
+            x_move_vec = np.flip(self.mesh_x_vector.copy())  # Copy the x_vec and flip it because first run flips as well
+        else:
+            x_move_vec = self.mesh_x_vector.copy()
+
         for y_coor in self.mesh_y_vector:
-            x_move_vec = np.flip(x_move_vec)
+            if self.move_pattern == "snake":    # flip in case of snake movement
+                x_move_vec = np.flip(x_move_vec)
             for x_coor in x_move_vec:
                 layer_count = 0             # reset layer count at each new point
                 point_in_layer_count += 1   # increment point in layer count for each new XY point addressed

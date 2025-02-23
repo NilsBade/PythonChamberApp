@@ -137,6 +137,7 @@ class AutoMeasurement(QRunnable):
                 'type':             'Auto Measurement Data JSON',
                 'timestamp':        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 'zero_position':    zero_position,
+                'move_pattern':     move_pattern,
                 'mesh_x_min':       x_vec[0], #[mm]
                 'mesh_x_max':       x_vec[-1], #[mm]
                 'mesh_x_steps':     len(x_vec),

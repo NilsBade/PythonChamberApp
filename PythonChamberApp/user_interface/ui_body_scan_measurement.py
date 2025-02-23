@@ -1,6 +1,6 @@
 import os
 from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTextEdit, \
-    QProgressBar, QFrame, QCheckBox
+    QProgressBar, QFrame, QCheckBox, QComboBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtSvgWidgets import QSvgWidget
 from PyQt6.QtGui import QPixmap
@@ -25,6 +25,7 @@ class UI_body_scan_measurement_window(QWidget):
     label_show_current_position: QLabel = None
     body_scan_jogSpeed_LineEdit: QLineEdit = None  # input jogspeed in [mm/s]
 
+    mesh_move_pattern_dropdown: QComboBox = None  # 'line-by-line' or 'snake' pattern
     mesh_x_length_lineEdit: QLineEdit = None
     mesh_x_max_length_label: QLabel = None
     mesh_x_num_of_steps_lineEdit: QLineEdit = None
@@ -148,6 +149,22 @@ class UI_body_scan_measurement_window(QWidget):
         # Initialize mesh config inputs
         sub_layout = QGridLayout()
         frame_layout.addLayout(sub_layout)
+
+        move_pattern_label = QLabel("Move Pattern:")
+        self.mesh_move_pattern_dropdown = QComboBox()
+        self.mesh_move_pattern_dropdown.setToolTip("Select movement pattern to go through measurement volume.\nBodyScan always cycles through all Z-coordinates per position first.")
+        pattern_items = [
+            "line-by-line",
+            "snake"
+        ]
+        pattern_tooltips = [
+            "Regular line-by-line movement. BodyScan always cycles through all Z-coordinates per position first, but line-by-line sticks to X_min -> X_max movement direction.",
+            "Snake-like movement. Probe moves always to next closest possible measurement position in XY-mesh.\n(+)Faster measurement process, (-)Less systematic cable error due to changing movement directions through mesh."
+        ]
+        for i, item in enumerate(pattern_items):
+            self.mesh_move_pattern_dropdown.addItem(item)
+            self.mesh_move_pattern_dropdown.setItemData(i, pattern_tooltips[i], role=3)  # Qt.ToolTipRole = 3
+
         jog_speed_label = QLabel("Jog Speed [mm/s]:")
         self.body_scan_jogSpeed_LineEdit = QLineEdit("200.0")
         label_len_x = QLabel("Length X [mm]:")
@@ -169,25 +186,27 @@ class UI_body_scan_measurement_window(QWidget):
         self.mesh_z_num_of_steps_lineEdit = QLineEdit("0")
         self.z_move_sleepTime_lineEdit = QLineEdit("0.0")
         # Assemble layout
-        sub_layout.addWidget(jog_speed_label,0,0,1,1)
-        sub_layout.addWidget(self.body_scan_jogSpeed_LineEdit,0,1,1,1)
-        sub_layout.addWidget(label_len_x, 1, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_x_length_lineEdit, 1, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_x_max_length_label, 1, 2, 1, 1)
-        sub_layout.addWidget(label_num_x, 2, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_x_num_of_steps_lineEdit, 2, 1, 1, 1)
-        sub_layout.addWidget(label_len_y, 3, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_y_length_lineEdit, 3, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_y_max_length_label, 3, 2, 1, 1)
-        sub_layout.addWidget(label_num_y, 4, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_y_num_of_steps_lineEdit, 4, 1, 1, 1)
-        sub_layout.addWidget(label_len_z, 5, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_z_length_lineEdit, 5, 1, 1, 1)
-        sub_layout.addWidget(self.mesh_z_max_length_label, 5, 2, 1, 1)
-        sub_layout.addWidget(label_num_z, 6, 0, 1, 1)
-        sub_layout.addWidget(self.mesh_z_num_of_steps_lineEdit, 6, 1, 1, 1)
-        sub_layout.addWidget(label_sleep_time, 7, 0, 1, 1)
-        sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 7, 1, 1, 1)
+        sub_layout.addWidget(move_pattern_label, 0, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_move_pattern_dropdown, 0, 1, 1, 2)
+        sub_layout.addWidget(jog_speed_label,1,0,1,1)
+        sub_layout.addWidget(self.body_scan_jogSpeed_LineEdit,1,1,1,1)
+        sub_layout.addWidget(label_len_x, 2, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_length_lineEdit, 2, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_x_max_length_label, 2, 2, 1, 1)
+        sub_layout.addWidget(label_num_x, 3, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_x_num_of_steps_lineEdit, 3, 1, 1, 1)
+        sub_layout.addWidget(label_len_y, 4, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_length_lineEdit, 4, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_y_max_length_label, 4, 2, 1, 1)
+        sub_layout.addWidget(label_num_y, 5, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_y_num_of_steps_lineEdit, 5, 1, 1, 1)
+        sub_layout.addWidget(label_len_z, 6, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_length_lineEdit, 6, 1, 1, 1)
+        sub_layout.addWidget(self.mesh_z_max_length_label, 6, 2, 1, 1)
+        sub_layout.addWidget(label_num_z, 7, 0, 1, 1)
+        sub_layout.addWidget(self.mesh_z_num_of_steps_lineEdit, 7, 1, 1, 1)
+        sub_layout.addWidget(label_sleep_time, 8, 0, 1, 1)
+        sub_layout.addWidget(self.z_move_sleepTime_lineEdit, 8, 1, 1, 1)
 
         # connect callbacks for plot updates when mesh changed
         self.mesh_x_length_lineEdit.editingFinished.connect(self.update_2d_plots)
@@ -638,6 +657,7 @@ class UI_body_scan_measurement_window(QWidget):
                 dict:
                     {
                     'tot_num_of_points' : int
+                    'move_pattern' : str, either 'line-by-line' or 'snake'
                     'num_steps_x' : int
                     'num_steps_y' : int
                     'num_steps_z' : int
@@ -652,6 +672,7 @@ class UI_body_scan_measurement_window(QWidget):
                 """
         info_dict = {}
         #   get inputs
+        move_pattern = self.mesh_move_pattern_dropdown.currentText()
         x_length = float(self.mesh_x_length_lineEdit.text())
         x_num_steps = int(self.mesh_x_num_of_steps_lineEdit.text())
         y_length = float(self.mesh_y_length_lineEdit.text())
@@ -689,6 +710,7 @@ class UI_body_scan_measurement_window(QWidget):
         info_dict['z_vec'] = tuple(z_vec)
         info_dict['jog_speed'] = float(self.body_scan_jogSpeed_LineEdit.text())
         info_dict['z_move_sleep_time'] = float(self.z_move_sleepTime_lineEdit.text())
+        info_dict['move_pattern'] = move_pattern
 
         return info_dict
 

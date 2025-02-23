@@ -1472,7 +1472,8 @@ class ProcessController:
                                           x_vec=mesh_info['x_vec'], y_vec=mesh_info['y_vec'], z_vec=mesh_info['z_vec'],
                                           mov_speed=mesh_info['jog_speed'],
                                           origin=(self.origin_x, self.origin_y, self.origin_z),
-                                          file_location=new_file_path, z_move_sleep_time=mesh_info['z_move_sleep_time'])
+                                          file_location=new_file_path, move_pattern=mesh_info['move_pattern'],
+                                          z_move_sleep_time=mesh_info['z_move_sleep_time'])
 
         #   connect update signal / position update signal to handlers
         self.body_scan_process.signals.update.connect(self.gui_mainWindow.ui_body_scan_window.append_message2log)
