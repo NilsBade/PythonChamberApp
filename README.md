@@ -45,9 +45,6 @@ PythonChamberApp/
 │   │   ├── multithread_worker.py
 │   │   └── process_controller.py
 │   │
-│   ├── figure_generator/ (NOT USED)
-│   │   └── __init__.py
-│   │
 │   ├── chamber_net_interface/
 │   │	├── __init__.py
 │   │   └── chamber_net_interface.py
@@ -55,10 +52,6 @@ PythonChamberApp/
 │   └── vna_net_interface/
 │    	├── __init__.py
 │       └── vna_net_interface.py
-│
-├── data/ (NOT USED)
-│   ├── figures?
-│   └── logos?
 │
 ├── tests/
 │   ├── integration/
@@ -137,10 +130,28 @@ Otherwise, pyvisa will throw errors trying to import the module.
 
 > [!CAUTION]
 > The keysight visa implementation seems to have various bugs working with pyvisa/windows. 
-> Errors occur that are also dependent on the computer the app is executed on! e.g. one error was: 'error_not_cic = -1073807264: The Interface associated with this session is not currently the Controller-In-Charge'. 
+> Errors occur that are dependent on the computer the app is executed on! e.g. one error was: 'error_not_cic = -1073807264: The Interface associated with this session is not currently the Controller-In-Charge'. 
 > It was solved by installing the NI-visa implementation as well/on top even though this is not recommended.
 > Other error that may was correlated to using keysight-visa was the python kernel completely crashing with a 'segmentation fault' - this error did not occur again once NI-visa was installed.
 > So dependent if the AutoMeasurement-Threads run in some kind of weird error - consider installing the NI Visa package as well and try again...
+
+> [!NOTE]
+> It may be, that when running the app on windows the app throws errors like 'viOpen not found' when including the pyvisa package. This is likely due to the fact that the pyvisa package is not able to find the visa backend.
+> In the [FAQ of pyVISA](https://pyvisa.readthedocs.io/en/latest/faq/faq.html#oserror-could-not-open-visa-library-function-viopen-not-found) a detailed explanation can be found on how to setup the backend properly.
+> These errors were predominantly experienced when trying to run the communication based on the *keysight VISA backend*.
+> By running the 
+> ```sh
+> visa-info
+> ```
+> command in the terminal one can check if the keysight backend is found by the windows system.
+> Several workarounds can be found on the internet to enable the keysight backend in python.
+> The one that solved the issue so far is by explicitly adding the keysight library paths to the dll_directory
+> in *runner.py* when the app is started via
+> ``os.add_dll_directory('C:\\Program Files\\Keysight\\IO Libraries Suite\\bin')``
+> ``os.add_dll_directory('C:\\Program Files (x86)\\Keysight\\IO Libraries Suite\\bin')``
+> before instantiating the ProcessController class --> instantiating a pyvisa.ResourceManager() the first time.
+> **The file paths in these two commands may vary dependent on the installation path of the IO Libraries Suite on your computer.
+> So adapt the paths accordingly to your installation path.**
 
 7. Execute the 'runner.py' script in './PythonChamberApp/PythonChamberApp/runner.py' (in your virtual environment).
 
